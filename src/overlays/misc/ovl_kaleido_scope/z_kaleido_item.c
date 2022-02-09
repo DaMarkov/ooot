@@ -20,7 +20,7 @@ static s16 sEquipMoveTimer = 10;
 static s16 sAmmoVtxOffset[] = {
     0, 2, 4, 6, 99, 99, 8, 99, 99, 10, 99, 99, 99, 99, 99, 99, 12,
 };
-
+void Debug_Cursor(char* Text, PauseContext* pauseCtx);
 void KaleidoScope_DrawAmmoCount(PauseContext* pauseCtx, GraphicsContext* gfxCtx, s16 item) {
     s16 ammo;
     s16 i;
@@ -81,7 +81,9 @@ void KaleidoScope_SetCursorVtx(PauseContext* pauseCtx, u16 index, Vtx* vtx) {
 }
 
 void KaleidoScope_SetItemCursorVtx(PauseContext* pauseCtx) {
+    Debug_Cursor("Before via KaleidoScope_SetItemCursorVtx", pauseCtx);
     KaleidoScope_SetCursorVtx(pauseCtx, pauseCtx->cursorSlot[PAUSE_ITEM] * 4, pauseCtx->itemVtx);
+    Debug_Cursor("After via KaleidoScope_SetItemCursorVtx", pauseCtx);
 }
 
 void KaleidoScope_DrawItemSelect(GlobalContext* globalCtx) {
@@ -347,7 +349,9 @@ void KaleidoScope_DrawItemSelect(GlobalContext* globalCtx) {
 
             if (cursorItem != PAUSE_ITEM_NONE) {
                 index = cursorSlot * 4; // required to match?
+                Debug_Cursor("Before XX", pauseCtx);
                 KaleidoScope_SetCursorVtx(pauseCtx, index, pauseCtx->itemVtx);
+                Debug_Cursor("After XX", pauseCtx);
 
                 if ((pauseCtx->debugState == 0) && (pauseCtx->state == 6) && (pauseCtx->unk_1E4 == 0)) {
                     if (CHECK_BTN_ANY(input->press.button, BTN_CLEFT | BTN_CDOWN | BTN_CRIGHT)) {
@@ -403,6 +407,7 @@ void KaleidoScope_DrawItemSelect(GlobalContext* globalCtx) {
 
                 pauseCtx->cursorVtx[0].v.ob[1] = pauseCtx->cursorVtx[1].v.ob[1] = pauseCtx->cursorVtx[2].v.ob[1] =
                     pauseCtx->cursorVtx[3].v.ob[1] = -200;
+                Debug_Cursor("After dunno", pauseCtx);
             }
         } else {
             pauseCtx->cursorItem[PAUSE_ITEM] = PAUSE_ITEM_NONE;
@@ -412,7 +417,9 @@ void KaleidoScope_DrawItemSelect(GlobalContext* globalCtx) {
             Audio_PlaySoundGeneral(NA_SE_SY_CURSOR, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
         }
     } else if ((pauseCtx->unk_1E4 == 3) && (pauseCtx->pageIndex == PAUSE_ITEM)) {
+        Debug_Cursor("Before Pause", pauseCtx);
         KaleidoScope_SetCursorVtx(pauseCtx, cursorSlot * 4, pauseCtx->itemVtx);
+        Debug_Cursor("After Pause", pauseCtx);
         pauseCtx->cursorColorSet = 4;
     }
 

@@ -17,7 +17,7 @@
 #include "def/z_map_exp.h"
 #include "def/z_rcp.h"
 #include "def/z_room.h"
-
+void Debug_Cursor(char* Text, PauseContext* pauseCtx);
 void KaleidoScope_DrawDungeonMap(GlobalContext* globalCtx, GraphicsContext* gfxCtx) {
     static void* dungeonItemTexs[] = {
         gBossKeyIconTex,
@@ -155,7 +155,9 @@ void KaleidoScope_DrawDungeonMap(GlobalContext* globalCtx, GraphicsContext* gfxC
                 pauseCtx->cursorSlot[PAUSE_MAP] = pauseCtx->cursorPoint[PAUSE_MAP] = pauseCtx->dungeonMapSlot;
                 pauseCtx->cursorX[PAUSE_MAP] = 0;
                 j = 72 + (pauseCtx->cursorSlot[PAUSE_MAP] * 4);
+                Debug_Cursor("Before PL", pauseCtx);
                 KaleidoScope_SetCursorVtx(pauseCtx, j, pauseCtx->mapPageVtx);
+                Debug_Cursor("After PL", pauseCtx);
                 Audio_PlaySoundGeneral(NA_SE_SY_CURSOR, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
             }
         } else {
@@ -185,7 +187,9 @@ void KaleidoScope_DrawDungeonMap(GlobalContext* globalCtx, GraphicsContext* gfxC
 
                 osSyncPrintf("kscope->cursor_point====%d\n", pauseCtx->cursorPoint[PAUSE_MAP]);
                 j = 72 + (pauseCtx->cursorSlot[PAUSE_MAP] * 4);
+                Debug_Cursor("Before cope->cursor_point=", pauseCtx);
                 KaleidoScope_SetCursorVtx(pauseCtx, j, pauseCtx->mapPageVtx);
+                Debug_Cursor("After cope->cursor_point=", pauseCtx);
                 Audio_PlaySoundGeneral(NA_SE_SY_CURSOR, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
             }
         }
@@ -205,7 +209,9 @@ void KaleidoScope_DrawDungeonMap(GlobalContext* globalCtx, GraphicsContext* gfxC
         pauseCtx->cursorSlot[PAUSE_MAP] = pauseCtx->cursorPoint[PAUSE_MAP];
 
         j = 72 + (pauseCtx->cursorSlot[PAUSE_MAP] * 4);
+        Debug_Cursor("Before cursorSlot", pauseCtx);
         KaleidoScope_SetCursorVtx(pauseCtx, j, pauseCtx->mapPageVtx);
+        Debug_Cursor("After cursorSlot", pauseCtx);
 
         if (pauseCtx->cursorX[PAUSE_MAP] == 0) {
             pauseCtx->mapPageVtx[j + 0].v.ob[0] = pauseCtx->mapPageVtx[j + 2].v.ob[0] =
@@ -451,7 +457,9 @@ void KaleidoScope_DrawWorldMap(GlobalContext* globalCtx, GraphicsContext* gfxCtx
 
             pauseCtx->cursorItem[PAUSE_MAP] = pauseCtx->cursorPoint[PAUSE_WORLD_MAP];
             pauseCtx->cursorSlot[PAUSE_MAP] = pauseCtx->cursorPoint[PAUSE_WORLD_MAP] + 0x1F;
+            Debug_Cursor("Before PAUSE_WORLD_MAP", pauseCtx);
             KaleidoScope_SetCursorVtx(pauseCtx, pauseCtx->cursorSlot[PAUSE_MAP] * 4, pauseCtx->mapPageVtx);
+            Debug_Cursor("After PAUSE_WORLD_MAP", pauseCtx);
         } else {
             pauseCtx->cursorItem[PAUSE_MAP] = gSaveContext.worldMapArea + 0x18;
             if (pauseCtx->cursorSpecialPos == PAUSE_CURSOR_PAGE_LEFT) {
@@ -465,7 +473,9 @@ void KaleidoScope_DrawWorldMap(GlobalContext* globalCtx, GraphicsContext* gfxCtx
 
                     pauseCtx->cursorItem[PAUSE_MAP] = pauseCtx->cursorPoint[PAUSE_WORLD_MAP];
                     pauseCtx->cursorSlot[PAUSE_MAP] = pauseCtx->cursorPoint[PAUSE_WORLD_MAP] + 0x1F;
+                    Debug_Cursor("Before PAUSE_WORLD_MAP2", pauseCtx);
                     KaleidoScope_SetCursorVtx(pauseCtx, pauseCtx->cursorSlot[PAUSE_MAP] * 4, pauseCtx->mapPageVtx);
+                    Debug_Cursor("After PAUSE_WORLD_MAP2", pauseCtx);
                     Audio_PlaySoundGeneral(NA_SE_SY_CURSOR, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
                     D_8082A6D4 = 0;
                 }
@@ -480,7 +490,9 @@ void KaleidoScope_DrawWorldMap(GlobalContext* globalCtx, GraphicsContext* gfxCtx
 
                     pauseCtx->cursorItem[PAUSE_MAP] = pauseCtx->cursorPoint[PAUSE_WORLD_MAP];
                     pauseCtx->cursorSlot[PAUSE_MAP] = pauseCtx->cursorPoint[PAUSE_WORLD_MAP] + 0x1F;
+                    Debug_Cursor("Before PAUSE_WORLD_MAP 3", pauseCtx);
                     KaleidoScope_SetCursorVtx(pauseCtx, pauseCtx->cursorSlot[PAUSE_MAP] * 4, pauseCtx->mapPageVtx);
+                    Debug_Cursor("After PAUSE_WORLD_MAP 3", pauseCtx);
                     Audio_PlaySoundGeneral(NA_SE_SY_CURSOR, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
                     D_8082A6D4 = 0;
                 }

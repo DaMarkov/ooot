@@ -23,7 +23,7 @@ static u8 sEquipmentItemOffsets[] = {
 };
 
 static s16 sEquipTimer = 0;
-
+void Debug_Cursor(char* Text, PauseContext* pauseCtx);
 void KaleidoScope_DrawEquipmentImage(GlobalContext* globalCtx, void* source, u32 width, u32 height) {
     PauseContext* pauseCtx = &globalCtx->pauseCtx;
     u8* curTexture;
@@ -464,7 +464,9 @@ void KaleidoScope_DrawEquipment(GlobalContext* globalCtx) {
             }
         }
 
+        Debug_Cursor("Before KaleidoScope_SetCursorVtx CX", pauseCtx);
         KaleidoScope_SetCursorVtx(pauseCtx, cursorSlot * 4, pauseCtx->equipVtx);
+        Debug_Cursor("After KaleidoScope_SetCursorVtx CX", pauseCtx);
 
         if ((pauseCtx->cursorSpecialPos == 0) && (cursorItem != PAUSE_ITEM_NONE) && (pauseCtx->state == 6) &&
             (pauseCtx->unk_1E4 == 0) && CHECK_BTN_ALL(input->press.button, BTN_A) &&
@@ -507,7 +509,9 @@ void KaleidoScope_DrawEquipment(GlobalContext* globalCtx) {
             Audio_PlaySoundGeneral(NA_SE_SY_CURSOR, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
         }
     } else if ((pauseCtx->unk_1E4 == 7) && (pauseCtx->pageIndex == PAUSE_EQUIP)) {
+        Debug_Cursor("Before KaleidoScope_SetCursorVtx CY", pauseCtx);
         KaleidoScope_SetCursorVtx(pauseCtx, pauseCtx->cursorSlot[PAUSE_EQUIP] * 4, pauseCtx->equipVtx);
+        Debug_Cursor("Before KaleidoScope_SetCursorVtx CY", pauseCtx);
         pauseCtx->cursorColorSet = 8;
 
         sEquipTimer--;

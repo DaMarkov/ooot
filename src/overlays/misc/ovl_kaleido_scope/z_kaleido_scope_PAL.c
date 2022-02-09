@@ -40,6 +40,22 @@
 #include "def/z_std_dma.h"
 #include "def/z_view.h"
 
+#include <stdio.h>
+void Debug_Cursor(char* Text, PauseContext* pauseCtx)
+{
+    s16 k = 0;
+    FILE* f;
+    fopen("cur.txt", "w");
+    fprintf(f, Text);
+    fprintf(f, "\n");
+    for (; k < 16; k++)
+    {
+        fprintf(f, "%d - %d, %d, %d\n", k, pauseCtx->cursorVtx[k].v.ob[0], pauseCtx->cursorVtx[k].v.ob[1], pauseCtx->cursorVtx[k].v.ob[2]);
+    }
+    fprintf(f, "\n\n");
+    fclose(f);
+}
+
 static void* sEquipmentFRATexs[] = {
     gPauseEquipment00FRATex, gPauseEquipment01Tex, gPauseEquipment02Tex, gPauseEquipment03Tex, gPauseEquipment04Tex,
     gPauseEquipment10FRATex, gPauseEquipment11Tex, gPauseEquipment12Tex, gPauseEquipment13Tex, gPauseEquipment14Tex,
@@ -474,6 +490,13 @@ void KaleidoScope_HandlePageToggles(PauseContext* pauseCtx, Input* input) {
     }
 }
 
+static Vtx sBeatingHeartVtx[] = {
+    VTX(-8,  8, 0, 0,   0,   0, 255, 255, 255, 255),
+    VTX(8,  8, 0, 0, 512,   0, 255, 255, 255, 255),
+    VTX(-8, -8, 0, 0,   0, 512, 255, 255, 255, 255),
+    VTX(8, -8, 0, 0, 512, 512, 255, 255, 255, 255)
+};
+
 void KaleidoScope_DrawCursor(GlobalContext* globalCtx, u16 pageIndex) {
     PauseContext* pauseCtx = &globalCtx->pauseCtx;
     u16 temp;
@@ -488,6 +511,8 @@ void KaleidoScope_DrawCursor(GlobalContext* globalCtx, u16 pageIndex) {
         if (pauseCtx->pageIndex == pageIndex) {
             s16 i;
             s16 j;
+
+            Debug_Cursor("Before rendering", pauseCtx);
 
             gDPPipeSync(POLY_OPA_DISP++);
             gDPSetCombineLERP(POLY_OPA_DISP++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0,
@@ -1886,8 +1911,8 @@ void KaleidoScope_InitVertices(GlobalContext* globalCtx, GraphicsContext* gfxCtx
 
     pauseCtx->questPageVtx = Graph_Alloc(gfxCtx, 60 * sizeof(Vtx));
     func_80823A0C(globalCtx, pauseCtx->questPageVtx, 3, 0);
-
-    pauseCtx->cursorVtx = Graph_Alloc(gfxCtx, 20 * sizeof(Vtx));
+    Debug_Cursor("Before zeroing", pauseCtx);
+    //pauseCtx->cursorVtx = Graph_Alloc(gfxCtx, 20 * sizeof(Vtx));
 
     for (phi_t2 = 0; phi_t2 < 20; phi_t2++) {
         pauseCtx->cursorVtx[phi_t2].v.ob[0] = pauseCtx->cursorVtx[phi_t2].v.ob[1] =
@@ -1910,7 +1935,7 @@ void KaleidoScope_InitVertices(GlobalContext* globalCtx, GraphicsContext* gfxCtx
 
     pauseCtx->cursorVtx[17].v.tc[0] = pauseCtx->cursorVtx[18].v.tc[1] = pauseCtx->cursorVtx[19].v.tc[0] =
         pauseCtx->cursorVtx[19].v.tc[1] = 0x400;
-
+    Debug_Cursor("After zeroing", pauseCtx);
     pauseCtx->itemVtx = Graph_Alloc(gfxCtx, 164 * sizeof(Vtx));
 
     for (phi_t4 = 0, phi_t2 = 0, phi_t5 = 58; phi_t4 < 4; phi_t4++, phi_t5 -= 32) {
@@ -2299,7 +2324,7 @@ void KaleidoScope_DrawGameOver(GlobalContext* globalCtx) {
 
     CLOSE_DISPS(gfxCtx, "../z_kaleido_scope_PAL.c", 3169);
 }
-
+void KaleidoScopeCall_Update(GlobalContext* globalCtx);
 void KaleidoScope_Draw(GlobalContext* globalCtx) {
     Input* input = &globalCtx->state.input[0];
     PauseContext* pauseCtx = &globalCtx->pauseCtx;
@@ -2320,9 +2345,9 @@ void KaleidoScope_Draw(GlobalContext* globalCtx) {
 
     if (pauseCtx->debugState == 0) {
         KaleidoScope_SetView(pauseCtx, pauseCtx->eye.x, pauseCtx->eye.y, pauseCtx->eye.z);
-
+        Debug_Cursor("New frame", pauseCtx);
         func_800949A8(globalCtx->state.gfxCtx);
-        KaleidoScope_InitVertices(globalCtx, globalCtx->state.gfxCtx);
+        KaleidoScope_InitVertices(globalCtx, globalCtx->state.gfxCtx);        
         KaleidoScope_DrawPages(globalCtx, globalCtx->state.gfxCtx);
 
         func_800949A8(globalCtx->state.gfxCtx);
@@ -2515,6 +2540,8 @@ void KaleidoScope_UpdateCursorSize(GlobalContext* globalCtx) {
         temp4 = 16;
     }
 
+    Debug_Cursor("Before KaleidoScope_UpdateCursorSize", pauseCtx);
+
     pauseCtx->cursorVtx[0].v.ob[0] = pauseCtx->cursorVtx[2].v.ob[0] = pauseCtx->cursorVtx[0].v.ob[0] + temp1;
     pauseCtx->cursorVtx[1].v.ob[0] = pauseCtx->cursorVtx[3].v.ob[0] = pauseCtx->cursorVtx[0].v.ob[0] + 16;
     pauseCtx->cursorVtx[0].v.ob[1] = pauseCtx->cursorVtx[1].v.ob[1] = pauseCtx->cursorVtx[0].v.ob[1] + temp2;
@@ -2534,6 +2561,8 @@ void KaleidoScope_UpdateCursorSize(GlobalContext* globalCtx) {
     pauseCtx->cursorVtx[13].v.ob[0] = pauseCtx->cursorVtx[15].v.ob[0] = pauseCtx->cursorVtx[12].v.ob[0] + 16;
     pauseCtx->cursorVtx[12].v.ob[1] = pauseCtx->cursorVtx[13].v.ob[1] = pauseCtx->cursorVtx[0].v.ob[1] - temp4;
     pauseCtx->cursorVtx[14].v.ob[1] = pauseCtx->cursorVtx[15].v.ob[1] = pauseCtx->cursorVtx[12].v.ob[1] - 16;
+
+    Debug_Cursor("After KaleidoScope_UpdateCursorSize", pauseCtx);
 }
 
 void KaleidoScope_LoadDungeonMap(GlobalContext* globalCtx) {

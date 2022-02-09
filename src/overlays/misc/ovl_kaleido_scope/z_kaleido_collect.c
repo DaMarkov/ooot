@@ -9,7 +9,7 @@
 #include "def/code_800F7260.h"
 #include "def/z_common_data.h"
 #include "def/z_message_PAL.h"
-
+void Debug_Cursor(PauseContext* pauseCtx);
 void KaleidoScope_DrawQuestStatus(GlobalContext* globalCtx, GraphicsContext* gfxCtx) {
     static s16 D_8082A070[][4] = {
         { 255, 0, 0, 255 },
@@ -179,7 +179,9 @@ void KaleidoScope_DrawQuestStatus(GlobalContext* globalCtx, GraphicsContext* gfx
                 pauseCtx->cursorSlot[pauseCtx->pageIndex] = sp216;
             }
 
+            Debug_Cursor("Before KaleidoScope_SetCursorVtx C3", pauseCtx);
             KaleidoScope_SetCursorVtx(pauseCtx, sp216 * 4, pauseCtx->questVtx);
+            Debug_Cursor("Before KaleidoScope_SetCursorVtx C3", pauseCtx);
 
             if ((pauseCtx->state == 6) && (pauseCtx->unk_1E4 == 0) && (pauseCtx->cursorSpecialPos == 0)) {
                 if ((sp216 >= QUEST_SONG_MINUET) && (sp216 < QUEST_KOKIRI_EMERALD)) {
@@ -226,7 +228,9 @@ void KaleidoScope_DrawQuestStatus(GlobalContext* globalCtx, GraphicsContext* gfx
                 pauseCtx->nameDisplayTimer = 0;
                 pauseCtx->cursorSpecialPos = 0;
                 sp216 = pauseCtx->cursorPoint[PAUSE_QUEST];
+                Debug_Cursor("Before KaleidoScope_SetCursorVtx C4", pauseCtx);
                 KaleidoScope_SetCursorVtx(pauseCtx, sp216 * 4, pauseCtx->questVtx);
+                Debug_Cursor("After KaleidoScope_SetCursorVtx C4", pauseCtx);
                 Audio_PlaySoundGeneral(NA_SE_SY_CURSOR, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
                 if (CHECK_QUEST_ITEM(pauseCtx->cursorPoint[PAUSE_QUEST])) {
                     phi_s0_2 = pauseCtx->cursorPoint[PAUSE_QUEST] + 0x5A;
@@ -243,7 +247,9 @@ void KaleidoScope_DrawQuestStatus(GlobalContext* globalCtx, GraphicsContext* gfx
                 pauseCtx->nameDisplayTimer = 0;
                 pauseCtx->cursorSpecialPos = 0;
                 sp216 = pauseCtx->cursorPoint[PAUSE_QUEST];
+                Debug_Cursor("Before KaleidoScope_SetCursorVtx C5", pauseCtx);
                 KaleidoScope_SetCursorVtx(pauseCtx, sp216 * 4, pauseCtx->questVtx);
+                Debug_Cursor("After KaleidoScope_SetCursorVtx C5", pauseCtx);
                 Audio_PlaySoundGeneral(NA_SE_SY_CURSOR, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
                 if (CHECK_QUEST_ITEM(pauseCtx->cursorPoint[PAUSE_QUEST])) {
                     if (pauseCtx->cursorPoint[PAUSE_QUEST] < 6) {
@@ -287,11 +293,15 @@ void KaleidoScope_DrawQuestStatus(GlobalContext* globalCtx, GraphicsContext* gfx
                 pauseCtx->ocarinaStaff = Audio_OcaGetDisplayingStaff();
                 pauseCtx->ocarinaStaff->pos = 0;
                 sp216 = pauseCtx->cursorSlot[PAUSE_QUEST];
+                Debug_Cursor("Before KaleidoScope_SetCursorVtx 2", pauseCtx);
                 KaleidoScope_SetCursorVtx(pauseCtx, sp216 * 4, pauseCtx->questVtx);
+                Debug_Cursor("After KaleidoScope_SetCursorVtx 2", pauseCtx);
             }
         } else {
             sp216 = pauseCtx->cursorSlot[PAUSE_QUEST];
+            Debug_Cursor("Before KaleidoScope_SetCursorVtx", pauseCtx);
             KaleidoScope_SetCursorVtx(pauseCtx, sp216 * 4, pauseCtx->questVtx);
+            Debug_Cursor("After KaleidoScope_SetCursorVtx", pauseCtx);
         }
     }
 

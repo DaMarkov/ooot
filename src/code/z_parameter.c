@@ -186,7 +186,7 @@ static Gfx sSetupDL_80125A60[] = {
     gsDPSetCombineMode(G_CC_PRIMITIVE, G_CC_PRIMITIVE),
     gsSPEndDisplayList(),
 };
-
+void Debug_Cursor(char* Text, PauseContext* pauseCtx);
 // original name: "alpha_change"
 void Interface_ChangeAlpha(u16 alphaType) {
     if (alphaType != gSaveContext.unk_13EA) {
@@ -3312,6 +3312,8 @@ void Interface_Draw(GlobalContext* globalCtx) {
             pauseCtx->cursorVtx[18].v.ob[1] = pauseCtx->cursorVtx[19].v.ob[1] = svar2 =
                 pauseCtx->cursorVtx[svar3].v.ob[1] - WREG(90) / 10;
 
+            Debug_Cursor("After Inventory Equip Effects", pauseCtx);
+
             if (pauseCtx->equipTargetItem < 0xBF) {
                 // Normal Equip (icon goes from the inventory slot to the C button when equipping it)
                 gDPSetPrimColor(OVERLAY_DISP++, 0, 0, 255, 255, 255, pauseCtx->equipAnimAlpha);
@@ -3337,7 +3339,7 @@ void Interface_Draw(GlobalContext* globalCtx) {
                     pauseCtx->cursorVtx[18].v.ob[1] = pauseCtx->cursorVtx[19].v.ob[1] = svar2 =
                         pauseCtx->cursorVtx[16].v.ob[1] - svar1 * 2 - 32;
                 }
-
+                Debug_Cursor("After Magic Arrow Equip Effect", pauseCtx);
                 gSPVertex(OVERLAY_DISP++, &pauseCtx->cursorVtx[16], 4, 0);
                 gDPLoadTextureBlock(OVERLAY_DISP++, gMagicArrowEquipEffectTex, G_IM_FMT_IA, G_IM_SIZ_8b, 32, 32, 0,
                                     G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK,
