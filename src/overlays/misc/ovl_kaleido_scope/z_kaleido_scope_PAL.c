@@ -44,8 +44,7 @@
 void Debug_Cursor(char* Text, PauseContext* pauseCtx)
 {
     s16 k = 0;
-    FILE* f;
-    fopen("cur.txt", "w");
+    FILE* f = fopen("cur.txt", "a+");
     fprintf(f, Text);
     fprintf(f, "\n");
     for (; k < 16; k++)
