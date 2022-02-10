@@ -494,11 +494,6 @@ void KaleidoScope_DrawCursor(GlobalContext* globalCtx, u16 pageIndex) {
     PauseContext* pauseCtx = &globalCtx->pauseCtx;
     u16 temp;
 
-    Vtx cursor_temp[16];
-    s16 k;
-    for (k = 0; k < 16; k++)
-        cursor_temp[k] = pauseCtx->cursorVtx[k];
-
     KaleidoScope_UpdateCursorSize(globalCtx);
     Debug_Cursor("Before rendering", pauseCtx);
     
@@ -535,9 +530,6 @@ void KaleidoScope_DrawCursor(GlobalContext* globalCtx, u16 pageIndex) {
     }
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_kaleido_scope_PAL.c", 985);
-
-    //for (k = 0; k < 16; k++)
-        //pauseCtx->cursorVtx[k] = cursor_temp[k];
 }
 
 Gfx* KaleidoScope_DrawPageSections(Gfx* gfx, Vtx* vertices, void** textures) {
