@@ -44,15 +44,15 @@
 void Debug_Cursor(char* Text, PauseContext* pauseCtx)
 {
     s16 k = 0;
-    FILE* f = fopen("cur.txt", "a+");
-    fprintf(f, Text);
-    fprintf(f, "\n");
+    //FILE* f = fopen("cur.txt", "a+");
+    printf(Text);
+    printf("\n");
     for (; k < 16; k++)
     {
-        fprintf(f, "%d - %d, %d, %d\n", k, pauseCtx->cursorVtx[k].v.ob[0], pauseCtx->cursorVtx[k].v.ob[1], pauseCtx->cursorVtx[k].v.ob[2]);
+        printf("%d - %d, %d, %d\n", k, pauseCtx->cursorVtx[k].v.ob[0], pauseCtx->cursorVtx[k].v.ob[1], pauseCtx->cursorVtx[k].v.ob[2]);
     }
-    fprintf(f, "\n\n");
-    fclose(f);
+    printf("\n\n");
+    //fclose(f);
 }
 
 static void* sEquipmentFRATexs[] = {
@@ -489,17 +489,19 @@ void KaleidoScope_HandlePageToggles(PauseContext* pauseCtx, Input* input) {
     }
 }
 
-static Vtx sBeatingHeartVtx[] = {
-    VTX(-8,  8, 0, 0,   0,   0, 255, 255, 255, 255),
-    VTX(8,  8, 0, 0, 512,   0, 255, 255, 255, 255),
-    VTX(-8, -8, 0, 0,   0, 512, 255, 255, 255, 255),
-    VTX(8, -8, 0, 0, 512, 512, 255, 255, 255, 255)
-};
-
+void KaleidoScope_UpdateCursorSize(GlobalContext* globalCtx);
 void KaleidoScope_DrawCursor(GlobalContext* globalCtx, u16 pageIndex) {
     PauseContext* pauseCtx = &globalCtx->pauseCtx;
     u16 temp;
 
+    Vtx cursor_temp[16];
+    s16 k;
+    for (k = 0; k < 16; k++)
+        cursor_temp[k] = pauseCtx->cursorVtx[k];
+
+    KaleidoScope_UpdateCursorSize(globalCtx);
+    Debug_Cursor("Before rendering", pauseCtx);
+    
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_kaleido_scope_PAL.c", 955);
 
     temp = pauseCtx->unk_1E4;
@@ -510,8 +512,6 @@ void KaleidoScope_DrawCursor(GlobalContext* globalCtx, u16 pageIndex) {
         if (pauseCtx->pageIndex == pageIndex) {
             s16 i;
             s16 j;
-
-            Debug_Cursor("Before rendering", pauseCtx);
 
             gDPPipeSync(POLY_OPA_DISP++);
             gDPSetCombineLERP(POLY_OPA_DISP++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0,
@@ -535,6 +535,9 @@ void KaleidoScope_DrawCursor(GlobalContext* globalCtx, u16 pageIndex) {
     }
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_kaleido_scope_PAL.c", 985);
+
+    //for (k = 0; k < 16; k++)
+        //pauseCtx->cursorVtx[k] = cursor_temp[k];
 }
 
 Gfx* KaleidoScope_DrawPageSections(Gfx* gfx, Vtx* vertices, void** textures) {
