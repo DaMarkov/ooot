@@ -15,6 +15,8 @@ namespace hid
 	public:
 		static const u32 MAX_PLAYERS = 1;
 
+		static Players& get();
+		static void Update();
 		static const N64Controller* GetController();
 
 		Players() = default;

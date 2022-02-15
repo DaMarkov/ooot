@@ -65,7 +65,7 @@ namespace hid
 		virtual void ResetMotorPack() {}
 		virtual void SendMotorVib(int level) {}
 
-		//virtual bool updateRebind(int input);
+		//virtual bool updateRebind(Button input);
 
 	protected:
 		State m_state;

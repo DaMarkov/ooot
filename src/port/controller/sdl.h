@@ -32,9 +32,9 @@ namespace hid
 		inline int8_t stickRightX();
 		inline int8_t stickRightY();
 
-		bool canRebind(SDL_GameControllerButton button, int input);
+		bool canRebind(SDL_GameControllerButton button, Button input);
 
-		bool updateRebind(int input) override;
+		bool updateRebind(Button input) override;
 
 		void update() override;
 
@@ -47,7 +47,7 @@ namespace hid
 
 		SDL_GameController* m_context = nullptr;
 		SDL_Haptic* m_haptic = nullptr;
-		std::unordered_map<SDL_GameControllerButton, int> m_keyBindings;
+		std::unordered_map<SDL_GameControllerButton, Button> m_keyBindings;
 		u8 m_buttonState[SDL_CONTROLLER_BUTTON_MAX];
 	};
 }

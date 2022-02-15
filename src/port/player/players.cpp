@@ -13,12 +13,26 @@ Players g_players;
 
 extern "C" {
 void hid_init() {
-    controllers().scan();
+	InputDeviceManager::get().scan();
 }
 
 void hid_update() {
-	g_players.update();
+	Players::Update();
 }
+}
+
+
+
+Players& Players::get()
+{
+	return g_players;
+}
+
+
+
+void Players::Update()
+{
+	g_players.update();
 }
 
 
