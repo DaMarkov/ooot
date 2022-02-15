@@ -22,7 +22,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
       
     - name: Extract Assets
-      run: cp ../baserom_original.z64 . ; setup.py
+      run: cp ../baserom_original.z64 . ; python setup.py
       
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
