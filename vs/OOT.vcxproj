@@ -1924,11 +1924,15 @@
     <ClCompile Include="..\src\overlays\misc\ovl_map_mark_data\z_map_mark_data.cpp" />
     <ClCompile Include="..\src\port\audio\audio_sdl.cpp" />
     <ClCompile Include="..\src\port\configfile.cpp" />
-    <ClCompile Include="..\src\port\controller\controller.cpp" />
+    <ClCompile Include="..\src\port\controller\controller.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\src\port\controller\controllers.cpp" />
     <ClCompile Include="..\src\port\controller\keyboard.cpp" />
     <ClCompile Include="..\src\port\controller\sdl.cpp" />
-    <ClCompile Include="..\src\port\controller\tas.cpp" />
+    <ClCompile Include="..\src\port\controller\tas.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\src\port\debug.cpp" />
     <ClCompile Include="..\src\port\main.cpp" />
     <ClCompile Include="..\src\port\mixer.cpp" />

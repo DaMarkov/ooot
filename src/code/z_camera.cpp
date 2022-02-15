@@ -36,6 +36,9 @@
 #include "def/z_play.h"
 #include "def/z_quake.h"
 #include "def/z_view.h"
+#ifndef N64_VERSION
+#include "port/controller/sdl.h"
+#endif
 
 GlobalContext* D_8015BD7C;
 DbCamera D_8015BD80;
@@ -1603,10 +1606,16 @@ s32 Camera_Normal1(Camera* camera) {
             Camera_LERPCeilS(anim->swing.unk_14, atEyeNextGeo.pitch, 1.0f / camera->yawUpdateRateInv, 0xA);
     } else {
         // rotate yaw to follow player.
+#ifdef N64_VERSION
         eyeAdjustment.yaw =
             Camera_CalcDefaultYaw(camera, atEyeNextGeo.yaw, camera->playerPosRot.rot.y, norm1->unk_14, sp94);
         eyeAdjustment.pitch =
             Camera_CalcDefaultPitch(camera, atEyeNextGeo.pitch, norm1->pitchTarget, anim->slopePitchAdj);
+#else
+        //sm64::hid::
+        //eyeAdjustment.yaw   += 100;
+        //eyeAdjustment.pitch += 100;//!!!!!!!
+#endif
     }
 
     // set eyeAdjustment pitch from 79.65 degrees to -85 degrees
