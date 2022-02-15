@@ -22,7 +22,7 @@ extern "C"
 	void set_fullscreen(bool value);
 }
 
-extern Players g_players;
+extern hid::Players g_players;
 
 u8 Get_Language();
 void Set_Language(u8 language_id);

@@ -30,7 +30,7 @@
 
 static bool init_ok;
 
-extern Players g_players;
+extern hid::Players g_players;
 
 #define INITIAL_PEAK 0x8000
 

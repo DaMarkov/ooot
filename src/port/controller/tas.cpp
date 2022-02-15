@@ -7,7 +7,7 @@
 static u64 g_counter = 0;
 static  bool g_tasPlaying = false;
 
-extern Players g_players;
+extern hid::Players g_players;
 
 
 bool Tas::isTasPlaying()

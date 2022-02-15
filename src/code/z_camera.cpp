@@ -37,7 +37,7 @@
 #include "def/z_quake.h"
 #include "def/z_view.h"
 #ifndef N64_VERSION
-#include "port/controller/sdl.h"
+#include "port/player/players.h"
 #endif
 
 GlobalContext* D_8015BD7C;
@@ -1596,14 +1596,18 @@ s32 Camera_Normal1(Camera* camera) {
         Camera_ClampDist(camera, eyeAdjustment.r, norm1->distMin, norm1->distMax, anim->unk_28);
 
     if (anim->startSwingTimer <= 0) {
+#ifdef N64_VERSION
         eyeAdjustment.pitch = atEyeNextGeo.pitch;
         eyeAdjustment.yaw =
             Camera_LERPCeilS(anim->swingYawTarget, atEyeNextGeo.yaw, 1.0f / camera->yawUpdateRateInv, 0xA);
+#endif
     } else if (anim->swing.unk_18 != 0) {
+#ifdef N64_VERSION
         eyeAdjustment.yaw =
             Camera_LERPCeilS(anim->swing.unk_16, atEyeNextGeo.yaw, 1.0f / camera->yawUpdateRateInv, 0xA);
         eyeAdjustment.pitch =
             Camera_LERPCeilS(anim->swing.unk_14, atEyeNextGeo.pitch, 1.0f / camera->yawUpdateRateInv, 0xA);
+#endif
     } else {
         // rotate yaw to follow player.
 #ifdef N64_VERSION
@@ -1612,9 +1616,20 @@ s32 Camera_Normal1(Camera* camera) {
         eyeAdjustment.pitch =
             Camera_CalcDefaultPitch(camera, atEyeNextGeo.pitch, norm1->pitchTarget, anim->slopePitchAdj);
 #else
-        //sm64::hid::
-        //eyeAdjustment.yaw   += 100;
-        //eyeAdjustment.pitch += 100;//!!!!!!!
+        auto joypad = hid::Players::GetController();
+        if (joypad)
+        {
+            eyeAdjustment.yaw   += joypad->state().r_stick_x * 10;
+            eyeAdjustment.pitch += joypad->state().r_stick_y * 10;
+
+            /*if (joypad->state().r_stick_x >)
+                eyeAdjustment.yaw += joypad->state().r_stick;
+            else
+                eyeAdjustment.yaw += joypad->state().r_stick;*/
+                //sm64::hid::
+             
+                //eyeAdjustment.pitch += 100;//!!!!!!!
+        }
 #endif
     }
 
