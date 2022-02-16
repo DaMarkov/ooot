@@ -21,6 +21,7 @@
 #define FLAGS (ACTOR_FLAG_4 | ACTOR_FLAG_5)
 
 void BgYdanHasi_Init(Actor* thisx, GlobalContext* globalCtx);
+void BgYdanHasi_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BgYdanHasi_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BgYdanHasi_Update(Actor* thisx, GlobalContext* globalCtx);
 void BgYdanHasi_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -32,6 +33,9 @@ void BgYdanHasi_MoveWater(BgYdanHasi* pthis, GlobalContext* globalCtx);
 void BgYdanHasi_DecWaterTimer(BgYdanHasi* pthis, GlobalContext* globalCtx);
 void BgYdanHasi_UpdateThreeBlocks(BgYdanHasi* pthis, GlobalContext* globalCtx);
 
+static Gfx* dLists_38[] = { gDTSlidingPlatformDL, gDTWaterPlaneDL, gDTRisingPlatformsDL };
+
+
 ActorInit Bg_Ydan_Hasi_InitVars = {
     ACTOR_BG_YDAN_HASI,
     ACTORCAT_BG,
@@ -42,6 +46,7 @@ ActorInit Bg_Ydan_Hasi_InitVars = {
     (ActorFunc)BgYdanHasi_Destroy,
     (ActorFunc)BgYdanHasi_Update,
     (ActorFunc)BgYdanHasi_Draw,
+    (ActorFunc)BgYdanHasi_Reset,
 };
 
 static InitChainEntry sInitChain[] = {
@@ -181,11 +186,10 @@ void BgYdanHasi_Update(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void BgYdanHasi_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static Gfx* dLists[] = { gDTSlidingPlatformDL, gDTWaterPlaneDL, gDTRisingPlatformsDL };
     BgYdanHasi* pthis = (BgYdanHasi*)thisx;
 
     if (pthis->dyna.actor.params == HASI_WATER_BLOCK || pthis->dyna.actor.params == HASI_THREE_BLOCKS) {
-        Gfx_DrawDListOpa(globalCtx, dLists[pthis->dyna.actor.params]);
+        Gfx_DrawDListOpa(globalCtx, dLists_38[pthis->dyna.actor.params]);
     } else {
         OPEN_DISPS(globalCtx->state.gfxCtx, "../z_bg_ydan_hasi.c", 577);
 
@@ -200,4 +204,20 @@ void BgYdanHasi_Draw(Actor* thisx, GlobalContext* globalCtx) {
 
         CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_bg_ydan_hasi.c", 597);
     }
+}
+
+void BgYdanHasi_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    Bg_Ydan_Hasi_InitVars = {
+        ACTOR_BG_YDAN_HASI,
+        ACTORCAT_BG,
+        FLAGS,
+        OBJECT_YDAN_OBJECTS,
+        sizeof(BgYdanHasi),
+        (ActorFunc)BgYdanHasi_Init,
+        (ActorFunc)BgYdanHasi_Destroy,
+        (ActorFunc)BgYdanHasi_Update,
+        (ActorFunc)BgYdanHasi_Draw,
+        (ActorFunc)BgYdanHasi_Reset,
+    };
+
 }

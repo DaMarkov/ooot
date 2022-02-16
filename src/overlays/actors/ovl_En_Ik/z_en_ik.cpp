@@ -37,6 +37,7 @@
 typedef void (*EnIkDrawFunc)(struct EnIk*, GlobalContext*);
 
 void EnIk_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnIk_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnIk_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnIk_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnIk_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -74,6 +75,19 @@ void func_80A77ED0(EnIk* pthis, GlobalContext* globalCtx);
 void func_80A77EDC(EnIk* pthis, GlobalContext* globalCtx);
 void func_80A78160(EnIk* pthis, GlobalContext* globalCtx);
 void func_80A781CC(Actor* thisx, GlobalContext* globalCtx);
+
+static Vec3f D_80A78514_115[] = {
+    { 1000.0, -1000.0, 1000.0 },  { 0.0, -1000.0, 0.0 },        { -1000.0, -5000.0, -4000.0 },
+    { 1000.0, -5000.0, -3000.0 }, { -1000.0, 1000.0, -6000.0 }, { -1000.0, 3000.0, -5000.0 },
+    { -800.0, 1000.0, -3000.0 },  { 0.0, -4000.0, -2000.0 },    { -1000.0, -2000.0, -6000.0 },
+    { 1000.0, -3000.0, 0.0 },     { 2000.0, -2000.0, -4000.0 }, { -1000.0, 0.0, -6000.0 },
+    { 1000.0, -2000.0, -2000.0 }, { 0.0, -2000.0, 2100.0 },     { 0.0, 0.0, 0.0 },
+    { 1000.0, -1000.0, -6000.0 }, { 2000.0, 0.0, -3000.0 },     { -1000.0, -1000.0, -4000.0 },
+    { 900.0, -800.0, 2700.0 },    { 720.0f, 900.0f, 2500.0f },
+};
+
+static Vec3f D_80A78FA0_126;
+
 
 static ColliderCylinderInit sCylinderInit = {
     {
@@ -1012,15 +1026,6 @@ void func_80A76DDC(EnIk* pthis, GlobalContext* globalCtx, Vec3f* pos) {
 }
 
 void func_80A76E2C(EnIk* pthis, GlobalContext* globalCtx, Vec3f* pos) {
-    static Vec3f D_80A78514[] = {
-        { 1000.0, -1000.0, 1000.0 },  { 0.0, -1000.0, 0.0 },        { -1000.0, -5000.0, -4000.0 },
-        { 1000.0, -5000.0, -3000.0 }, { -1000.0, 1000.0, -6000.0 }, { -1000.0, 3000.0, -5000.0 },
-        { -800.0, 1000.0, -3000.0 },  { 0.0, -4000.0, -2000.0 },    { -1000.0, -2000.0, -6000.0 },
-        { 1000.0, -3000.0, 0.0 },     { 2000.0, -2000.0, -4000.0 }, { -1000.0, 0.0, -6000.0 },
-        { 1000.0, -2000.0, -2000.0 }, { 0.0, -2000.0, 2100.0 },     { 0.0, 0.0, 0.0 },
-        { 1000.0, -1000.0, -6000.0 }, { 2000.0, 0.0, -3000.0 },     { -1000.0, -1000.0, -4000.0 },
-        { 900.0, -800.0, 2700.0 },    { 720.0f, 900.0f, 2500.0f },
-    };
 
     if (pthis->unk_4D4 == 0) {
         s32 pad;
@@ -1028,13 +1033,13 @@ void func_80A76E2C(EnIk* pthis, GlobalContext* globalCtx, Vec3f* pos) {
         Vec3f effectAccel = { 0.0f, 0.3f, 0.0f };
         s32 i;
 
-        for (i = ARRAY_COUNT(D_80A78514) - 1; i >= 0; i--) {
+        for (i = ARRAY_COUNT(D_80A78514_115) - 1; i >= 0; i--) {
             Color_RGBA8 primColor = { 200, 200, 200, 255 };
             Color_RGBA8 envColor = { 150, 150, 150, 0 };
             s32 temp_v0;
             Vec3f effectPos;
 
-            Matrix_MultVec3f(&D_80A78514[i], &effectPos);
+            Matrix_MultVec3f(&D_80A78514_115[i], &effectPos);
             temp_v0 = (Rand_ZeroOne() * 20.0f) - 10.0f;
             primColor.r += temp_v0;
             primColor.g += temp_v0;
@@ -1120,12 +1125,11 @@ void func_80A772A4(EnIk* pthis) {
 }
 
 void func_80A772EC(EnIk* pthis, GlobalContext* globalCtx) {
-    static Vec3f D_80A78FA0;
     s32 pad[2];
     f32 wDest;
 
-    SkinMatrix_Vec3fMtxFMultXYZW(&globalCtx->viewProjectionMtxF, &pthis->actor.world.pos, &D_80A78FA0, &wDest);
-    Audio_PlaySoundGeneral(NA_SE_EN_IRONNACK_DEAD, &D_80A78FA0, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+    SkinMatrix_Vec3fMtxFMultXYZW(&globalCtx->viewProjectionMtxF, &pthis->actor.world.pos, &D_80A78FA0_126, &wDest);
+    Audio_PlaySoundGeneral(NA_SE_EN_IRONNACK_DEAD, &D_80A78FA0_126, 4, &D_801333E0, &D_801333E0, &D_801333E8);
 }
 
 void func_80A7735C(EnIk* pthis, GlobalContext* globalCtx) {
@@ -1480,4 +1484,113 @@ ActorInit En_Ik_InitVars = {
     (ActorFunc)EnIk_Destroy,
     (ActorFunc)EnIk_Update,
     (ActorFunc)EnIk_Draw,
+    (ActorFunc)EnIk_Reset,
 };
+
+void EnIk_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    D_80A78FA0_126 = {0, 0, 0};
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON | BUMP_HOOKABLE,
+            OCELEM_ON,
+        },
+        { 25, 80, 0, { 0, 0, 0 } },
+    };
+
+    sTrisInit = {
+        {
+            COLTYPE_METAL,
+            AT_NONE,
+            AC_ON | AC_HARD | AC_TYPE_PLAYER,
+            OC1_NONE,
+            OC2_NONE,
+            COLSHAPE_TRIS,
+        },
+        2,
+        sTrisElementsInit,
+    };
+
+    sQuadInit = {
+        {
+            COLTYPE_NONE,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_NONE,
+            OC1_NONE,
+            OC2_NONE,
+            COLSHAPE_QUAD,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x20000000, 0x00, 0x40 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NORMAL | TOUCH_UNK7,
+            BUMP_NONE,
+            OCELEM_NONE,
+        },
+        { { { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } } },
+    };
+
+    sDamageTable = {
+        /* Deku nut      */ DMG_ENTRY(0, 0xD),
+        /* Deku stick    */ DMG_ENTRY(2, 0xF),
+        /* Slingshot     */ DMG_ENTRY(1, 0xE),
+        /* Explosive     */ DMG_ENTRY(2, 0xF),
+        /* Boomerang     */ DMG_ENTRY(0, 0xD),
+        /* Normal arrow  */ DMG_ENTRY(2, 0xE),
+        /* Hammer swing  */ DMG_ENTRY(2, 0xF),
+        /* Hookshot      */ DMG_ENTRY(0, 0xD),
+        /* Kokiri sword  */ DMG_ENTRY(1, 0xF),
+        /* Master sword  */ DMG_ENTRY(2, 0xF),
+        /* Giant's Knife */ DMG_ENTRY(4, 0xF),
+        /* Fire arrow    */ DMG_ENTRY(2, 0xE),
+        /* Ice arrow     */ DMG_ENTRY(2, 0xE),
+        /* Light arrow   */ DMG_ENTRY(2, 0xE),
+        /* Unk arrow 1   */ DMG_ENTRY(2, 0xE),
+        /* Unk arrow 2   */ DMG_ENTRY(2, 0xE),
+        /* Unk arrow 3   */ DMG_ENTRY(15, 0xE),
+        /* Fire magic    */ DMG_ENTRY(0, 0x6),
+        /* Ice magic     */ DMG_ENTRY(0, 0x6),
+        /* Light magic   */ DMG_ENTRY(0, 0x6),
+        /* Shield        */ DMG_ENTRY(0, 0x0),
+        /* Mirror Ray    */ DMG_ENTRY(0, 0x0),
+        /* Kokiri spin   */ DMG_ENTRY(1, 0xF),
+        /* Giant spin    */ DMG_ENTRY(4, 0xF),
+        /* Master spin   */ DMG_ENTRY(2, 0xF),
+        /* Kokiri jump   */ DMG_ENTRY(2, 0xF),
+        /* Giant jump    */ DMG_ENTRY(8, 0xF),
+        /* Master jump   */ DMG_ENTRY(4, 0xF),
+        /* Unknown 1     */ DMG_ENTRY(10, 0xF),
+        /* Unblockable   */ DMG_ENTRY(0, 0x0),
+        /* Hammer jump   */ DMG_ENTRY(4, 0xF),
+        /* Unknown 2     */ DMG_ENTRY(0, 0x0),
+    };
+
+    D_80A78470 = { 300.0f, 0.0f, 0.0f };
+
+    En_Ik_InitVars = {
+        ACTOR_EN_IK,
+        ACTORCAT_BOSS,
+        FLAGS,
+        OBJECT_IK,
+        sizeof(EnIk),
+        (ActorFunc)EnIk_Init,
+        (ActorFunc)EnIk_Destroy,
+        (ActorFunc)EnIk_Update,
+        (ActorFunc)EnIk_Draw,
+        (ActorFunc)EnIk_Reset,
+    };
+
+}

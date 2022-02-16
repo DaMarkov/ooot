@@ -24,6 +24,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_2 | ACTOR_FLAG_4)
 
 void EnZf_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnZf_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnZf_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnZf_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnZf_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -63,6 +64,25 @@ void EnZf_Die(EnZf* pthis, GlobalContext* globalCtx);
 void EnZf_SetupCircleAroundPlayer(EnZf* pthis, f32 speed);
 s32 EnZf_DodgeRangedEngaging(GlobalContext* globalCtx, EnZf* pthis);
 s32 EnZf_DodgeRangedWaiting(GlobalContext* globalCtx, EnZf* pthis);
+
+static Vec3f sUnused_144 = { 1100.0f, -700.0f, 0.0f };
+
+static Vec3f footOffset_144 = { 300.0f, 0.0f, 0.0f };
+
+static Vec3f D_80B4A2A4_144 = { 300.0f, -1700.0f, 0.0f };
+
+static Vec3f D_80B4A2B0_144 = { -600.0f, 300.0f, 0.0f };
+
+static Vec3f swordQuadOffset1_144 = { 0.0f, 1500.0f, 0.0f };
+
+static Vec3f swordQuadOffset0_144 = { -600.0f, -3000.0f, 1000.0f };
+
+static Vec3f swordQuadOffset3_144 = { -600.0f, -3000.0f, -1000.0f };
+
+static Vec3f swordQuadOffset2_144 = { 1500.0f, -3000.0f, 0.0f };
+
+static Vec3f zeroVec_144 = { 0.0f, 0.0f, 0.0f };
+
 
 #define PLATFORM_INDEX_DOWNSTAIRS_MIN 0
 #define PLATFORM_INDEX_DOWNSTAIRS_INNER_MAX 5
@@ -123,6 +143,7 @@ ActorInit En_Zf_InitVars = {
     (ActorFunc)EnZf_Destroy,
     (ActorFunc)EnZf_Update,
     (ActorFunc)EnZf_Draw,
+    (ActorFunc)EnZf_Reset,
 };
 
 static ColliderCylinderInit sBodyCylinderInit = {
@@ -164,14 +185,6 @@ static ColliderQuadInit sSwordQuadInit = {
     },
     { { { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } } },
 };
-
-typedef enum {
-    /* 0x0 */ ENZF_DMGEFF_NONE,
-    /* 0x1 */ ENZF_DMGEFF_STUN,
-    /* 0x6 */ ENZF_DMGEFF_IMMUNE = 6,       // Skips damage code, but also skips the top half of Update
-    /* 0xD */ ENZF_DMGEFF_PROJECTILE = 0xD, // Projectiles that don't have another damageeffect
-    /* 0xF */ ENZF_DMGEFF_ICE = 0xF
-} EnZfDamageEffect;
 
 static DamageTable sDamageTable = {
     /* Deku nut      */ DMG_ENTRY(0, ENZF_DMGEFF_STUN),
@@ -2154,30 +2167,23 @@ s32 EnZf_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, 
 }
 
 void EnZf_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx, Gfx** gfx) {
-    static Vec3f sUnused = { 1100.0f, -700.0f, 0.0f };
-    static Vec3f footOffset = { 300.0f, 0.0f, 0.0f };
-    static Vec3f D_80B4A2A4 = { 300.0f, -1700.0f, 0.0f }; // Sword tip?
-    static Vec3f D_80B4A2B0 = { -600.0f, 300.0f, 0.0f };  // Sword hilt?
-    static Vec3f swordQuadOffset1 = { 0.0f, 1500.0f, 0.0f };
-    static Vec3f swordQuadOffset0 = { -600.0f, -3000.0f, 1000.0f };
-    static Vec3f swordQuadOffset3 = { -600.0f, -3000.0f, -1000.0f };
-    static Vec3f swordQuadOffset2 = { 1500.0f, -3000.0f, 0.0f };
-    static Vec3f zeroVec = { 0.0f, 0.0f, 0.0f };
+    static Vec3f D_80B4A2A4_144 = { 300.0f, -1700.0f, 0.0f }; // Sword tip?
+    static Vec3f D_80B4A2B0_144 = { -600.0f, 300.0f, 0.0f };  // Sword hilt?
     Vec3f sp54;
     Vec3f sp48;
     EnZf* pthis = (EnZf*)thisx;
     s32 bodyPart = -1;
 
     if (limbIndex == ENZF_LIMB_SWORD) {
-        Matrix_MultVec3f(&swordQuadOffset1, &pthis->swordCollider.dim.quad[1]);
-        Matrix_MultVec3f(&swordQuadOffset0, &pthis->swordCollider.dim.quad[0]);
-        Matrix_MultVec3f(&swordQuadOffset3, &pthis->swordCollider.dim.quad[3]);
-        Matrix_MultVec3f(&swordQuadOffset2, &pthis->swordCollider.dim.quad[2]);
+        Matrix_MultVec3f(&swordQuadOffset1_144, &pthis->swordCollider.dim.quad[1]);
+        Matrix_MultVec3f(&swordQuadOffset0_144, &pthis->swordCollider.dim.quad[0]);
+        Matrix_MultVec3f(&swordQuadOffset3_144, &pthis->swordCollider.dim.quad[3]);
+        Matrix_MultVec3f(&swordQuadOffset2_144, &pthis->swordCollider.dim.quad[2]);
         Collider_SetQuadVertices(&pthis->swordCollider, &pthis->swordCollider.dim.quad[0],
                                  &pthis->swordCollider.dim.quad[1], &pthis->swordCollider.dim.quad[2],
                                  &pthis->swordCollider.dim.quad[3]);
-        Matrix_MultVec3f(&D_80B4A2A4, &sp54);
-        Matrix_MultVec3f(&D_80B4A2B0, &sp48);
+        Matrix_MultVec3f(&D_80B4A2A4_144, &sp54);
+        Matrix_MultVec3f(&D_80B4A2B0_144, &sp48);
 
         if (pthis->action == ENZF_ACTION_SLASH) {
             if (pthis->skelAnime.curFrame < 14.0f) {
@@ -2187,15 +2193,15 @@ void EnZf_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec
             }
         }
     } else {
-        Actor_SetFeetPos(&pthis->actor, limbIndex, ENZF_LIMB_LEFT_FOOT, &footOffset, ENZF_LIMB_RIGHT_FOOT, &footOffset);
+        Actor_SetFeetPos(&pthis->actor, limbIndex, ENZF_LIMB_LEFT_FOOT, &footOffset_144, ENZF_LIMB_RIGHT_FOOT, &footOffset_144);
     }
 
     switch (limbIndex) {
         case ENZF_LIMB_LEFT_FOOT:
-            Matrix_MultVec3f(&footOffset, &pthis->leftFootPos);
+            Matrix_MultVec3f(&footOffset_144, &pthis->leftFootPos);
             break;
         case ENZF_LIMB_RIGHT_FOOT:
-            Matrix_MultVec3f(&footOffset, &pthis->rightFootPos);
+            Matrix_MultVec3f(&footOffset_144, &pthis->rightFootPos);
             break;
     }
 
@@ -2232,7 +2238,7 @@ void EnZf_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec
                 break;
         }
         if (bodyPart >= 0) {
-            Matrix_MultVec3f(&zeroVec, &pthis->bodyPartsPos[bodyPart]);
+            Matrix_MultVec3f(&zeroVec_144, &pthis->bodyPartsPos[bodyPart]);
         }
     }
 }
@@ -2436,4 +2442,119 @@ s32 EnZf_DodgeRangedWaiting(GlobalContext* globalCtx, EnZf* pthis) {
         return true;
     }
     return false;
+}
+
+void EnZf_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    sUnused_144 = { 1100.0f, -700.0f, 0.0f };
+
+    footOffset_144 = { 300.0f, 0.0f, 0.0f };
+
+    D_80B4A2A4_144 = { 300.0f, -1700.0f, 0.0f };
+
+    D_80B4A2B0_144 = { -600.0f, 300.0f, 0.0f };
+
+    swordQuadOffset1_144 = { 0.0f, 1500.0f, 0.0f };
+
+    swordQuadOffset0_144 = { -600.0f, -3000.0f, 1000.0f };
+
+    swordQuadOffset3_144 = { -600.0f, -3000.0f, -1000.0f };
+
+    swordQuadOffset2_144 = { 1500.0f, -3000.0f, 0.0f };
+
+    zeroVec_144 = { 0.0f, 0.0f, 0.0f };
+
+    D_80B4A1B0 = 0;
+
+    D_80B4A1B4 = 1;
+
+    En_Zf_InitVars = {
+        ACTOR_EN_ZF,
+        ACTORCAT_ENEMY,
+        FLAGS,
+        OBJECT_ZF,
+        sizeof(EnZf),
+        (ActorFunc)EnZf_Init,
+        (ActorFunc)EnZf_Destroy,
+        (ActorFunc)EnZf_Update,
+        (ActorFunc)EnZf_Draw,
+        (ActorFunc)EnZf_Reset,
+    };
+
+    sBodyCylinderInit = {
+        {
+            COLTYPE_HIT0,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_PLAYER,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK1,
+            { 0x00000000, 0x00, 0x00 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 20, 70, 0, { 0, 0, 0 } },
+    };
+
+    sSwordQuadInit = {
+        {
+            COLTYPE_NONE,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_ON | AC_HARD | AC_TYPE_PLAYER,
+            OC1_NONE,
+            OC2_NONE,
+            COLSHAPE_QUAD,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x00, 0x08 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NORMAL | TOUCH_UNK7,
+            BUMP_ON,
+            OCELEM_NONE,
+        },
+        { { { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } } },
+    };
+
+    sDamageTable = {
+        /* Deku nut      */ DMG_ENTRY(0, ENZF_DMGEFF_STUN),
+        /* Deku stick    */ DMG_ENTRY(2, ENZF_DMGEFF_NONE),
+        /* Slingshot     */ DMG_ENTRY(1, ENZF_DMGEFF_PROJECTILE),
+        /* Explosive     */ DMG_ENTRY(2, ENZF_DMGEFF_NONE),
+        /* Boomerang     */ DMG_ENTRY(0, ENZF_DMGEFF_STUN),
+        /* Normal arrow  */ DMG_ENTRY(2, ENZF_DMGEFF_NONE),
+        /* Hammer swing  */ DMG_ENTRY(2, ENZF_DMGEFF_NONE),
+        /* Hookshot      */ DMG_ENTRY(0, ENZF_DMGEFF_STUN),
+        /* Kokiri sword  */ DMG_ENTRY(1, ENZF_DMGEFF_NONE),
+        /* Master sword  */ DMG_ENTRY(2, ENZF_DMGEFF_NONE),
+        /* Giant's Knife */ DMG_ENTRY(4, ENZF_DMGEFF_NONE),
+        /* Fire arrow    */ DMG_ENTRY(2, ENZF_DMGEFF_PROJECTILE),
+        /* Ice arrow     */ DMG_ENTRY(4, ENZF_DMGEFF_ICE),
+        /* Light arrow   */ DMG_ENTRY(2, ENZF_DMGEFF_PROJECTILE),
+        /* Unk arrow 1   */ DMG_ENTRY(2, ENZF_DMGEFF_PROJECTILE),
+        /* Unk arrow 2   */ DMG_ENTRY(2, ENZF_DMGEFF_PROJECTILE),
+        /* Unk arrow 3   */ DMG_ENTRY(2, ENZF_DMGEFF_PROJECTILE),
+        /* Fire magic    */ DMG_ENTRY(0, ENZF_DMGEFF_IMMUNE),
+        /* Ice magic     */ DMG_ENTRY(3, ENZF_DMGEFF_ICE),
+        /* Light magic   */ DMG_ENTRY(0, ENZF_DMGEFF_IMMUNE),
+        /* Shield        */ DMG_ENTRY(0, ENZF_DMGEFF_NONE),
+        /* Mirror Ray    */ DMG_ENTRY(0, ENZF_DMGEFF_NONE),
+        /* Kokiri spin   */ DMG_ENTRY(1, ENZF_DMGEFF_NONE),
+        /* Giant spin    */ DMG_ENTRY(4, ENZF_DMGEFF_NONE),
+        /* Master spin   */ DMG_ENTRY(2, ENZF_DMGEFF_NONE),
+        /* Kokiri jump   */ DMG_ENTRY(2, ENZF_DMGEFF_NONE),
+        /* Giant jump    */ DMG_ENTRY(8, ENZF_DMGEFF_NONE),
+        /* Master jump   */ DMG_ENTRY(4, ENZF_DMGEFF_NONE),
+        /* Unknown 1     */ DMG_ENTRY(0, ENZF_DMGEFF_NONE),
+        /* Unblockable   */ DMG_ENTRY(0, ENZF_DMGEFF_NONE),
+        /* Hammer jump   */ DMG_ENTRY(4, ENZF_DMGEFF_NONE),
+        /* Unknown 2     */ DMG_ENTRY(0, ENZF_DMGEFF_NONE),
+    };
+
+    D_80B4AB30 = 0;
+
 }

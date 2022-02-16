@@ -27,6 +27,7 @@
 #define FLG_COREDONE (0x8000)
 
 void EnFd_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnFd_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnFd_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnFd_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnFd_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -43,6 +44,11 @@ void EnFd_DrawDots(EnFd* pthis, GlobalContext* globalCtx);
 void EnFd_DrawFlames(EnFd* pthis, GlobalContext* globalCtx);
 void EnFd_Land(EnFd* pthis, GlobalContext* globalCtx);
 
+static void* dustTextures_81[] = {
+    gDust8Tex, gDust7Tex, gDust6Tex, gDust5Tex, gDust4Tex, gDust3Tex, gDust2Tex, gDust1Tex,
+};
+
+
 ActorInit En_Fd_InitVars = {
     ACTOR_EN_FD,
     ACTORCAT_ENEMY,
@@ -53,6 +59,7 @@ ActorInit En_Fd_InitVars = {
     (ActorFunc)EnFd_Destroy,
     (ActorFunc)EnFd_Update,
     (ActorFunc)EnFd_Draw,
+    (ActorFunc)EnFd_Reset,
 };
 
 static ColliderJntSphElementInit sJntSphElementsInit[12] = {
@@ -876,9 +883,6 @@ void EnFd_UpdateDots(EnFd* pthis) {
 }
 
 void EnFd_DrawFlames(EnFd* pthis, GlobalContext* globalCtx) {
-    static void* dustTextures[] = {
-        gDust8Tex, gDust7Tex, gDust6Tex, gDust5Tex, gDust4Tex, gDust3Tex, gDust2Tex, gDust1Tex,
-    };
     s32 firstDone;
     s16 i;
     s16 idx;
@@ -904,7 +908,7 @@ void EnFd_DrawFlames(EnFd* pthis, GlobalContext* globalCtx) {
             gSPMatrix(POLY_XLU_DISP++, Matrix_NewMtx(globalCtx->state.gfxCtx, "../z_en_fd.c", 2006),
                       G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
             idx = eff->timer * (8.0f / eff->initialTimer);
-            gSPSegment(POLY_XLU_DISP++, 0x8, SEGMENTED_TO_VIRTUAL(dustTextures[idx]));
+            gSPSegment(POLY_XLU_DISP++, 0x8, SEGMENTED_TO_VIRTUAL(dustTextures_81[idx]));
             gSPDisplayList(POLY_XLU_DISP++, gFlareDancerSquareParticleDL);
         }
     }
@@ -942,4 +946,35 @@ void EnFd_DrawDots(EnFd* pthis, GlobalContext* globalCtx) {
     }
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_fd.c", 2071);
+}
+
+void EnFd_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_Fd_InitVars = {
+        ACTOR_EN_FD,
+        ACTORCAT_ENEMY,
+        FLAGS,
+        OBJECT_FW,
+        sizeof(EnFd),
+        (ActorFunc)EnFd_Init,
+        (ActorFunc)EnFd_Destroy,
+        (ActorFunc)EnFd_Update,
+        (ActorFunc)EnFd_Draw,
+        (ActorFunc)EnFd_Reset,
+    };
+
+    sJntSphInit = {
+        {
+            COLTYPE_NONE,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_JNTSPH,
+        },
+        12,
+        sJntSphElementsInit,
+    };
+
+    sColChkInit = { 24, 2, 25, 25, MASS_IMMOVABLE };
+
 }

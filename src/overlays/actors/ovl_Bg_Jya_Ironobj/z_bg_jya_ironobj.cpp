@@ -25,6 +25,7 @@
 typedef void (*BgJyaIronobjIkFunc)(BgJyaIronobj*, GlobalContext*, EnIk*);
 
 void BgJyaIronobj_Init(Actor* thisx, GlobalContext* globalCtx);
+void BgJyaIronobj_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BgJyaIronobj_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BgJyaIronobj_Update(Actor* thisx, GlobalContext* globalCtx);
 void BgJyaIronobj_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -33,6 +34,9 @@ void func_808992E8(BgJyaIronobj* pthis, GlobalContext* globalCtx);
 
 void BgJyaIronobj_SpawnPillarParticles(BgJyaIronobj* pthis, GlobalContext* globalCtx, EnIk* enIk);
 void BgJyaIronobj_SpawnThoneParticles(BgJyaIronobj* pthis, GlobalContext* arg1, EnIk* enIk);
+
+static BgJyaIronobjIkFunc particleFunc_53[] = { BgJyaIronobj_SpawnPillarParticles, BgJyaIronobj_SpawnThoneParticles };
+
 
 static int sUnused = 0;
 
@@ -46,6 +50,7 @@ ActorInit Bg_Jya_Ironobj_InitVars = {
     (ActorFunc)BgJyaIronobj_Destroy,
     (ActorFunc)BgJyaIronobj_Update,
     (ActorFunc)BgJyaIronobj_Draw,
+    (ActorFunc)BgJyaIronobj_Reset,
 };
 
 static Gfx* sOpaDL[] = { gPillarDL, gThroneDL };
@@ -250,7 +255,6 @@ void func_808992D8(BgJyaIronobj* pthis) {
 }
 
 void func_808992E8(BgJyaIronobj* pthis, GlobalContext* globalCtx) {
-    static BgJyaIronobjIkFunc particleFunc[] = { BgJyaIronobj_SpawnPillarParticles, BgJyaIronobj_SpawnThoneParticles };
     Actor* actor;
     Vec3f dropPos;
     s32 i;
@@ -259,7 +263,7 @@ void func_808992E8(BgJyaIronobj* pthis, GlobalContext* globalCtx) {
         actor = pthis->colCylinder.base.ac;
         pthis->colCylinder.base.acFlags &= ~AC_HIT;
         if (actor != NULL && actor->id == ACTOR_EN_IK) {
-            particleFunc[pthis->dyna.actor.params & 1](pthis, globalCtx, (EnIk*)actor);
+            particleFunc_53[pthis->dyna.actor.params & 1](pthis, globalCtx, (EnIk*)actor);
             Audio_PlaySoundAtPosition(globalCtx, &pthis->dyna.actor.world.pos, 80, NA_SE_EN_IRONNACK_BREAK_PILLAR);
             dropPos.x = pthis->dyna.actor.world.pos.x;
             dropPos.y = pthis->dyna.actor.world.pos.y + 20.0f;
@@ -284,4 +288,42 @@ void BgJyaIronobj_Update(Actor* thisx, GlobalContext* globalCtx) {
 
 void BgJyaIronobj_Draw(Actor* thisx, GlobalContext* globalCtx) {
     Gfx_DrawDListOpa(globalCtx, sOpaDL[thisx->params & 1]);
+}
+
+void BgJyaIronobj_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    sUnused = 0;
+
+    Bg_Jya_Ironobj_InitVars = {
+        ACTOR_BG_JYA_IRONOBJ,
+        ACTORCAT_PROP,
+        FLAGS,
+        OBJECT_JYA_IRON,
+        sizeof(BgJyaIronobj),
+        (ActorFunc)BgJyaIronobj_Init,
+        (ActorFunc)BgJyaIronobj_Destroy,
+        (ActorFunc)BgJyaIronobj_Update,
+        (ActorFunc)BgJyaIronobj_Draw,
+        (ActorFunc)BgJyaIronobj_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_ENEMY,
+            OC1_NONE,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_NONE,
+        },
+        { 30, 150, 0, { 0, 0, 0 } },
+    };
+
 }

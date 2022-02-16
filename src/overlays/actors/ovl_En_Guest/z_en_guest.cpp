@@ -24,6 +24,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3 | ACTOR_FLAG_4)
 
 void EnGuest_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnGuest_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnGuest_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnGuest_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnGuest_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -31,6 +32,13 @@ void EnGuest_Draw(Actor* thisx, GlobalContext* globalCtx);
 void func_80A50518(EnGuest* pthis, GlobalContext* globalCtx);
 void func_80A5057C(EnGuest* pthis, GlobalContext* globalCtx);
 void func_80A505CC(Actor* thisx, GlobalContext* globalCtx);
+
+static void* D_80A50BA4_39[] = {
+    object_boj_Tex_0005FC,
+    object_boj_Tex_0006FC,
+    object_boj_Tex_0007FC,
+};
+
 
 ActorInit En_Guest_InitVars = {
     ACTOR_EN_GUEST,
@@ -42,6 +50,7 @@ ActorInit En_Guest_InitVars = {
     (ActorFunc)EnGuest_Destroy,
     (ActorFunc)EnGuest_Update,
     NULL,
+    (ActorFunc)EnGuest_Reset,
 };
 
 static ColliderCylinderInitType1 sCylinderInit = {
@@ -224,11 +233,6 @@ s32 EnGuest_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dLis
 }
 
 void EnGuest_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static void* D_80A50BA4[] = {
-        object_boj_Tex_0005FC,
-        object_boj_Tex_0006FC,
-        object_boj_Tex_0007FC,
-    };
     EnGuest* pthis = (EnGuest*)thisx;
     s32 pad;
 
@@ -238,10 +242,38 @@ void EnGuest_Draw(Actor* thisx, GlobalContext* globalCtx) {
 
     gSPSegment(POLY_OPA_DISP++, 0x08, func_80A50708(globalCtx->state.gfxCtx, 0xFF, 0xFF, 0xFF, 0xFF));
     gSPSegment(POLY_OPA_DISP++, 0x09, func_80A50708(globalCtx->state.gfxCtx, 0xA0, 0x3C, 0xDC, 0xFF));
-    gSPSegment(POLY_OPA_DISP++, 0x0A, SEGMENTED_TO_VIRTUAL(D_80A50BA4[pthis->unk_30E]));
+    gSPSegment(POLY_OPA_DISP++, 0x0A, SEGMENTED_TO_VIRTUAL(D_80A50BA4_39[pthis->unk_30E]));
 
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           EnGuest_OverrideLimbDraw, NULL, pthis);
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_guest.c", 421);
+}
+
+void EnGuest_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_Guest_InitVars = {
+        ACTOR_EN_GUEST,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_BOJ,
+        sizeof(EnGuest),
+        (ActorFunc)EnGuest_Init,
+        (ActorFunc)EnGuest_Destroy,
+        (ActorFunc)EnGuest_Update,
+        NULL,
+        (ActorFunc)EnGuest_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_ALL,
+            COLSHAPE_CYLINDER,
+        },
+        { 0x00, { 0x00000000, 0x00, 0x00 }, { 0x00000000, 0x00, 0x00 }, 0x00, 0x00, 0x01 },
+        { 10, 60, 0, { 0, 0, 0 } },
+    };
+
 }

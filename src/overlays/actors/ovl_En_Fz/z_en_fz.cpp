@@ -14,6 +14,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_2 | ACTOR_FLAG_4 | ACTOR_FLAG_10)
 
 void EnFz_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnFz_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnFz_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnFz_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnFz_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -55,6 +56,13 @@ void EnFz_SpawnIceSmokeFreeze(EnFz* pthis, Vec3f* pos, Vec3f* velocity, Vec3f* a
 void EnFz_UpdateIceSmoke(EnFz* pthis, GlobalContext* globalCtx);
 void EnFz_DrawIceSmoke(EnFz* pthis, GlobalContext* globalCtx);
 
+static Gfx* displayLists_88[] = {
+    gFreezardIntactDL,              // Body fully intact           (5 or 6 health)
+    gFreezardTopRightHornChippedDL, // Top right horn chipped off  (from Freezards perspective)   (3 or 4 health)
+    gFreezardHeadChippedDL,         // Entire head chipped off     (1 or 2 health)
+};
+
+
 ActorInit En_Fz_InitVars = {
     ACTOR_EN_FZ,
     ACTORCAT_ENEMY,
@@ -65,6 +73,7 @@ ActorInit En_Fz_InitVars = {
     (ActorFunc)EnFz_Destroy,
     (ActorFunc)EnFz_Update,
     (ActorFunc)EnFz_Draw,
+    (ActorFunc)EnFz_Reset,
 };
 
 static ColliderCylinderInitType1 sCylinderInit1 = {
@@ -715,11 +724,6 @@ void EnFz_Update(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void EnFz_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static Gfx* displayLists[] = {
-        gFreezardIntactDL,              // Body fully intact           (5 or 6 health)
-        gFreezardTopRightHornChippedDL, // Top right horn chipped off  (from Freezards perspective)   (3 or 4 health)
-        gFreezardHeadChippedDL,         // Entire head chipped off     (1 or 2 health)
-    };
     EnFz* pthis = (EnFz*)thisx;
     s32 pad;
     s32 index;
@@ -746,7 +750,7 @@ void EnFz_Draw(Actor* thisx, GlobalContext* globalCtx) {
                           PRIMITIVE, ENVIRONMENT, COMBINED, ENVIRONMENT, COMBINED, 0, ENVIRONMENT, 0);
         gDPSetPrimColor(POLY_XLU_DISP++, 0, 128, 155, 255, 255, 255);
         gDPSetEnvColor(POLY_XLU_DISP++, 200, 200, 200, pthis->envAlpha);
-        gSPDisplayList(POLY_XLU_DISP++, displayLists[index]);
+        gSPDisplayList(POLY_XLU_DISP++, displayLists_88[index]);
     }
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_fz.c", 1200);
@@ -899,4 +903,112 @@ void EnFz_DrawIceSmoke(EnFz* pthis, GlobalContext* globalCtx) {
     }
 
     CLOSE_DISPS(gfxCtx, "../z_en_fz.c", 1430);
+}
+
+void EnFz_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_Fz_InitVars = {
+        ACTOR_EN_FZ,
+        ACTORCAT_ENEMY,
+        FLAGS,
+        OBJECT_FZ,
+        sizeof(EnFz),
+        (ActorFunc)EnFz_Init,
+        (ActorFunc)EnFz_Destroy,
+        (ActorFunc)EnFz_Update,
+        (ActorFunc)EnFz_Draw,
+        (ActorFunc)EnFz_Reset,
+    };
+
+    sCylinderInit1 = {
+        {
+            COLTYPE_NONE,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            { 0xFFCE0FDB, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NORMAL,
+            BUMP_ON | BUMP_HOOKABLE,
+            OCELEM_ON,
+        },
+        { 30, 80, 0, { 0, 0, 0 } },
+    };
+
+    sCylinderInit2 = {
+        {
+            COLTYPE_METAL,
+            AT_NONE,
+            AC_ON | AC_HARD | AC_TYPE_PLAYER,
+            OC1_NONE,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            { 0x0001F024, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_NONE,
+        },
+        { 35, 80, 0, { 0, 0, 0 } },
+    };
+
+    sCylinderInit3 = {
+        {
+            COLTYPE_NONE,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_NONE,
+            OC1_NONE,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x20000000, 0x02, 0x08 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NORMAL,
+            BUMP_NONE,
+            OCELEM_NONE,
+        },
+        { 20, 30, -15, { 0, 0, 0 } },
+    };
+
+    sDamageTable = {
+        /* Deku nut      */ DMG_ENTRY(0, 0x0),
+        /* Deku stick    */ DMG_ENTRY(0, 0xF),
+        /* Slingshot     */ DMG_ENTRY(0, 0xF),
+        /* Explosive     */ DMG_ENTRY(2, 0xF),
+        /* Boomerang     */ DMG_ENTRY(0, 0xF),
+        /* Normal arrow  */ DMG_ENTRY(0, 0xF),
+        /* Hammer swing  */ DMG_ENTRY(2, 0xF),
+        /* Hookshot      */ DMG_ENTRY(2, 0xF),
+        /* Kokiri sword  */ DMG_ENTRY(0, 0xF),
+        /* Master sword  */ DMG_ENTRY(2, 0xF),
+        /* Giant's Knife */ DMG_ENTRY(4, 0xF),
+        /* Fire arrow    */ DMG_ENTRY(4, 0x2),
+        /* Ice arrow     */ DMG_ENTRY(0, 0xF),
+        /* Light arrow   */ DMG_ENTRY(0, 0xF),
+        /* Unk arrow 1   */ DMG_ENTRY(0, 0xF),
+        /* Unk arrow 2   */ DMG_ENTRY(0, 0xF),
+        /* Unk arrow 3   */ DMG_ENTRY(0, 0xF),
+        /* Fire magic    */ DMG_ENTRY(4, 0x2),
+        /* Ice magic     */ DMG_ENTRY(0, 0x0),
+        /* Light magic   */ DMG_ENTRY(0, 0x0),
+        /* Shield        */ DMG_ENTRY(0, 0x0),
+        /* Mirror Ray    */ DMG_ENTRY(0, 0x0),
+        /* Kokiri spin   */ DMG_ENTRY(0, 0xF),
+        /* Giant spin    */ DMG_ENTRY(4, 0xF),
+        /* Master spin   */ DMG_ENTRY(2, 0xF),
+        /* Kokiri jump   */ DMG_ENTRY(0, 0xF),
+        /* Giant jump    */ DMG_ENTRY(8, 0xF),
+        /* Master jump   */ DMG_ENTRY(4, 0xF),
+        /* Unknown 1     */ DMG_ENTRY(0, 0x0),
+        /* Unblockable   */ DMG_ENTRY(0, 0x0),
+        /* Hammer jump   */ DMG_ENTRY(0, 0x0),
+        /* Unknown 2     */ DMG_ENTRY(0, 0x0),
+    };
+
 }

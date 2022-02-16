@@ -26,14 +26,9 @@
 #define HONOTRAP_AC_ACTIVE (1 << 1)
 #define HONOTRAP_OC_ACTIVE (1 << 2)
 
-typedef enum {
-    /* 0 */ HONOTRAP_EYE_OPEN,
-    /* 1 */ HONOTRAP_EYE_HALF,
-    /* 2 */ HONOTRAP_EYE_CLOSE,
-    /* 3 */ HONOTRAP_EYE_SHUT
-} EnHonotrapEyeState;
 
 void EnHonotrap_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnHonotrap_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnHonotrap_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnHonotrap_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnHonotrap_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -59,6 +54,18 @@ void EnHonotrap_FlameChase(EnHonotrap* pthis, GlobalContext* globalCtx);
 void EnHonotrap_SetupFlameVanish(EnHonotrap* pthis);
 void EnHonotrap_FlameVanish(EnHonotrap* pthis, GlobalContext* globalCtx);
 
+static Vec3f velocity_76 = { 0.0f, 0.0f, 0.0f };
+
+static Vec3f accel_76 = { 0.0f, 0.1f, 0.0f };
+
+static void* eyeTextures_77[] = {
+    gEyeSwitchSilverOpenTex,
+    gEyeSwitchSilverHalfTex,
+    gEyeSwitchSilverClosedTex,
+    gEyeSwitchSilverClosedTex,
+};
+
+
 ActorInit En_Honotrap_InitVars = {
     ACTOR_EN_HONOTRAP,
     ACTORCAT_PROP,
@@ -69,6 +76,7 @@ ActorInit En_Honotrap_InitVars = {
     (ActorFunc)EnHonotrap_Destroy,
     (ActorFunc)EnHonotrap_Update,
     (ActorFunc)EnHonotrap_Draw,
+    (ActorFunc)EnHonotrap_Reset,
 };
 
 static ColliderTrisElementInit sTrisElementsInit[2] = {
@@ -466,8 +474,6 @@ void EnHonotrap_FlameVanish(EnHonotrap* pthis, GlobalContext* globalCtx) {
 }
 
 void EnHonotrap_Update(Actor* thisx, GlobalContext* globalCtx) {
-    static Vec3f velocity = { 0.0f, 0.0f, 0.0f };
-    static Vec3f accel = { 0.0f, 0.1f, 0.0f };
     s32 pad;
     EnHonotrap* pthis = (EnHonotrap*)thisx;
 
@@ -488,7 +494,7 @@ void EnHonotrap_Update(Actor* thisx, GlobalContext* globalCtx) {
     pthis->actionFunc(pthis, globalCtx);
     if (pthis->actor.params == HONOTRAP_EYE) {
         if (pthis->collider.tris.base.acFlags & AC_HIT) {
-            EffectSsBomb2_SpawnLayered(globalCtx, &pthis->actor.world.pos, &velocity, &accel, 15, 8);
+            EffectSsBomb2_SpawnLayered(globalCtx, &pthis->actor.world.pos, &velocity_76, &accel_76, 15, 8);
             Actor_Kill(&pthis->actor);
         } else if (pthis->eyeState < HONOTRAP_EYE_SHUT) {
             pthis->collider.tris.base.acFlags &= ~AC_HIT;
@@ -498,18 +504,12 @@ void EnHonotrap_Update(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void EnHonotrap_DrawEye(Actor* thisx, GlobalContext* globalCtx) {
-    static void* eyeTextures[] = {
-        gEyeSwitchSilverOpenTex,
-        gEyeSwitchSilverHalfTex,
-        gEyeSwitchSilverClosedTex,
-        gEyeSwitchSilverClosedTex,
-    };
     EnHonotrap* pthis = (EnHonotrap*)thisx;
 
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_en_honotrap.c", 982);
 
     func_80093D18(globalCtx->state.gfxCtx);
-    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures[pthis->eyeState]));
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures_77[pthis->eyeState]));
     gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtx(globalCtx->state.gfxCtx, "../z_en_honotrap.c", 987),
               G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gSPDisplayList(POLY_OPA_DISP++, gEyeSwitch2DL);
@@ -550,4 +550,59 @@ void EnHonotrap_Draw(Actor* thisx, GlobalContext* globalCtx) {
             EnHonotrap_DrawFlame(thisx, globalCtx);
             break;
     }
+}
+
+void EnHonotrap_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    velocity_76 = { 0.0f, 0.0f, 0.0f };
+
+    accel_76 = { 0.0f, 0.1f, 0.0f };
+
+    En_Honotrap_InitVars = {
+        ACTOR_EN_HONOTRAP,
+        ACTORCAT_PROP,
+        FLAGS,
+        OBJECT_GAMEPLAY_DANGEON_KEEP,
+        sizeof(EnHonotrap),
+        (ActorFunc)EnHonotrap_Init,
+        (ActorFunc)EnHonotrap_Destroy,
+        (ActorFunc)EnHonotrap_Update,
+        (ActorFunc)EnHonotrap_Draw,
+        (ActorFunc)EnHonotrap_Reset,
+    };
+
+    sTrisInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_NONE,
+            OC2_NONE,
+            COLSHAPE_TRIS,
+        },
+        2,
+        sTrisElementsInit,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x01, 0x04 },
+            { 0x00100000, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NONE,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 10, 25, 0, { 0, 0, 0 } },
+    };
+
+    sColChkInfoInit = { 0, 9, 23, 1 };
+
 }

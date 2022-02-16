@@ -19,6 +19,7 @@
 #define FLAGS 0
 
 void EnMThunder_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnMThunder_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnMThunder_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnMThunder_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnMThunder_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -26,6 +27,9 @@ void EnMThunder_Draw(Actor* thisx, GlobalContext* globalCtx);
 void func_80A9F314(GlobalContext* globalCtx, f32 arg1);
 void func_80A9F408(EnMThunder* pthis, GlobalContext* globalCtx);
 void func_80A9F9B4(EnMThunder* pthis, GlobalContext* globalCtx);
+
+static f32 D_80AA046C_41[] = { 0.1f, 0.15f, 0.2f, 0.25f, 0.3f, 0.25f, 0.2f, 0.15f };
+
 
 ActorInit En_M_Thunder_InitVars = {
     ACTOR_EN_M_THUNDER,
@@ -37,6 +41,7 @@ ActorInit En_M_Thunder_InitVars = {
     (ActorFunc)EnMThunder_Destroy,
     (ActorFunc)EnMThunder_Update,
     (ActorFunc)EnMThunder_Draw,
+    (ActorFunc)EnMThunder_Reset,
 };
 
 static ColliderCylinderInit D_80AA0420 = {
@@ -330,7 +335,6 @@ void EnMThunder_Update(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void EnMThunder_Draw(Actor* thisx, GlobalContext* globalCtx2) {
-    static f32 D_80AA046C[] = { 0.1f, 0.15f, 0.2f, 0.25f, 0.3f, 0.25f, 0.2f, 0.15f };
     GlobalContext* globalCtx = globalCtx2;
     EnMThunder* pthis = (EnMThunder*)thisx;
     Player* player = GET_PLAYER(globalCtx);
@@ -386,12 +390,12 @@ void EnMThunder_Draw(Actor* thisx, GlobalContext* globalCtx2) {
     }
 
     if (pthis->unk_1B8 >= 0.85f) {
-        phi_f14 = (D_80AA046C[(globalCtx->gameplayFrames & 7)] * 6.0f) + 1.0f;
+        phi_f14 = (D_80AA046C_41[(globalCtx->gameplayFrames & 7)] * 6.0f) + 1.0f;
         gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, 255, 255, 170, pthis->unk_1C8);
         gDPSetEnvColor(POLY_XLU_DISP++, 255, 100, 0, 128);
         phi_t1 = 0x28;
     } else {
-        phi_f14 = (D_80AA046C[globalCtx->gameplayFrames & 7] * 2.0f) + 1.0f;
+        phi_f14 = (D_80AA046C_41[globalCtx->gameplayFrames & 7] * 2.0f) + 1.0f;
         gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, 170, 255, 255, pthis->unk_1C8);
         gDPSetEnvColor(POLY_XLU_DISP++, 0, 100, 255, 128);
         phi_t1 = 0x14;
@@ -408,4 +412,40 @@ void EnMThunder_Draw(Actor* thisx, GlobalContext* globalCtx2) {
     gSPDisplayList(POLY_XLU_DISP++, gSpinAttackChargingDL);
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_m_thunder.c", 1031);
+}
+
+void EnMThunder_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_M_Thunder_InitVars = {
+        ACTOR_EN_M_THUNDER,
+        ACTORCAT_ITEMACTION,
+        FLAGS,
+        OBJECT_GAMEPLAY_KEEP,
+        sizeof(EnMThunder),
+        (ActorFunc)EnMThunder_Init,
+        (ActorFunc)EnMThunder_Destroy,
+        (ActorFunc)EnMThunder_Update,
+        (ActorFunc)EnMThunder_Draw,
+        (ActorFunc)EnMThunder_Reset,
+    };
+
+    D_80AA0420 = {
+        {
+            COLTYPE_NONE,
+            AT_ON | AT_TYPE_PLAYER,
+            AC_NONE,
+            OC1_NONE,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK2,
+            { 0x00000001, 0x00, 0x00 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NONE,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 200, 200, 0, { 0, 0, 0 } },
+    };
+
 }

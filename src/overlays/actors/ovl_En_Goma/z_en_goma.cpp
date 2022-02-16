@@ -23,6 +23,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_2 | ACTOR_FLAG_4 | ACTOR_FLAG_5)
 
 void EnGoma_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnGoma_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnGoma_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnGoma_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnGoma_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -58,6 +59,15 @@ void EnGoma_SetupLand(EnGoma* pthis);
 void EnGoma_SetupJump(EnGoma* pthis);
 void EnGoma_SetupStunned(EnGoma* pthis, GlobalContext* globalCtx);
 
+static Vec3f sShieldKnockbackVel_89 = { 0.0f, 0.0f, 20.0f };
+
+static f32 sTargetEyeEnvColors_90[][3] = {
+    { 255.0f, 0.0f, 50.0f },
+    { 17.0f, 255.0f, 50.0f },
+    { 0.0f, 170.0f, 50.0f },
+};
+
+
 ActorInit En_Goma_InitVars = {
     ACTOR_BOSS_GOMA,
     ACTORCAT_ENEMY,
@@ -68,6 +78,7 @@ ActorInit En_Goma_InitVars = {
     (ActorFunc)EnGoma_Destroy,
     (ActorFunc)EnGoma_Update,
     (ActorFunc)EnGoma_Draw,
+    (ActorFunc)EnGoma_Reset,
 };
 
 static ColliderCylinderInit D_80A4B7A0 = {
@@ -619,7 +630,6 @@ void EnGoma_LookAtPlayer(EnGoma* pthis, GlobalContext* globalCtx) {
 }
 
 void EnGoma_UpdateHit(EnGoma* pthis, GlobalContext* globalCtx) {
-    static Vec3f sShieldKnockbackVel = { 0.0f, 0.0f, 20.0f };
     Player* player = GET_PLAYER(globalCtx);
 
     if (pthis->hurtTimer != 0) {
@@ -648,7 +658,7 @@ void EnGoma_UpdateHit(EnGoma* pthis, GlobalContext* globalCtx) {
                         pthis->actor.speedXZ = -5.0f;
                     } else {
                         Matrix_RotateY(player->actor.shape.rot.y / (f32)0x8000 * M_PI, MTXMODE_NEW);
-                        Matrix_MultVec3f(&sShieldKnockbackVel, &pthis->shieldKnockbackVel);
+                        Matrix_MultVec3f(&sShieldKnockbackVel_89, &pthis->shieldKnockbackVel);
                         pthis->invincibilityTimer = 5;
                     }
                 } else if (dmgFlags & 1) { // stun
@@ -686,15 +696,10 @@ void EnGoma_UpdateHit(EnGoma* pthis, GlobalContext* globalCtx) {
 }
 
 void EnGoma_UpdateEyeEnvColor(EnGoma* pthis) {
-    static f32 sTargetEyeEnvColors[][3] = {
-        { 255.0f, 0.0f, 50.0f },
-        { 17.0f, 255.0f, 50.0f },
-        { 0.0f, 170.0f, 50.0f },
-    };
 
-    Math_ApproachF(&pthis->eyeEnvColor[0], sTargetEyeEnvColors[0][pthis->visualState], 0.5f, 20.0f);
-    Math_ApproachF(&pthis->eyeEnvColor[1], sTargetEyeEnvColors[1][pthis->visualState], 0.5f, 20.0f);
-    Math_ApproachF(&pthis->eyeEnvColor[2], sTargetEyeEnvColors[2][pthis->visualState], 0.5f, 20.0f);
+    Math_ApproachF(&pthis->eyeEnvColor[0], sTargetEyeEnvColors_90[0][pthis->visualState], 0.5f, 20.0f);
+    Math_ApproachF(&pthis->eyeEnvColor[1], sTargetEyeEnvColors_90[1][pthis->visualState], 0.5f, 20.0f);
+    Math_ApproachF(&pthis->eyeEnvColor[2], sTargetEyeEnvColors_90[2][pthis->visualState], 0.5f, 20.0f);
 }
 
 #include "hack.h"
@@ -919,4 +924,66 @@ void EnGoma_BossLimb(EnGoma* pthis, GlobalContext* globalCtx) {
         pos.z = Rand_CenteredFloat(20.0f) + pthis->actor.world.pos.z;
         func_8002836C(globalCtx, &pos, &vel, &accel, &primColor, &envColor, 500, 10, 10);
     }
+}
+
+void EnGoma_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    sShieldKnockbackVel_89 = { 0.0f, 0.0f, 20.0f };
+
+    En_Goma_InitVars = {
+        ACTOR_BOSS_GOMA,
+        ACTORCAT_ENEMY,
+        FLAGS,
+        OBJECT_GOL,
+        sizeof(EnGoma),
+        (ActorFunc)EnGoma_Init,
+        (ActorFunc)EnGoma_Destroy,
+        (ActorFunc)EnGoma_Update,
+        (ActorFunc)EnGoma_Draw,
+        (ActorFunc)EnGoma_Reset,
+    };
+
+    D_80A4B7A0 = {
+        {
+            COLTYPE_HIT3,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x00, 0x08 },
+            { 0xFFDFFFFF, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NORMAL,
+            BUMP_NONE,
+            OCELEM_ON,
+        },
+        { 15, 30, 10, { 0, 0, 0 } },
+    };
+
+    D_80A4B7CC = {
+        {
+            COLTYPE_HIT3,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_NONE,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x00, 0x08 },
+            { 0xFFDFFFFF, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_NONE,
+        },
+        { 15, 30, 10, { 0, 0, 0 } },
+    };
+
+    sSpawnNum = 0;
+
+    sDeadEffectVel = { 0.0f, 0.0f, 0.0f };
+
 }

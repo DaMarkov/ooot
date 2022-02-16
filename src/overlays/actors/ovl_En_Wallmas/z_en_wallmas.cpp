@@ -34,6 +34,7 @@
 #define DAMAGE_EFFECT_STUN_BLUE 1
 
 void EnWallmas_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnWallmas_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnWallmas_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnWallmas_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnWallmas_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -55,6 +56,9 @@ void EnWallmas_WaitForSwitchFlag(EnWallmas* pthis, GlobalContext* globalCtx);
 void EnWallmas_Stun(EnWallmas* pthis, GlobalContext* globalCtx);
 void EnWallmas_Walk(EnWallmas* pthis, GlobalContext* globalCtx);
 
+static Vec3f zeroVec_66 = { 0.0f, 0.0f, 0.0f };
+
+
 ActorInit En_Wallmas_InitVars = {
     ACTOR_EN_WALLMAS,
     ACTORCAT_ENEMY,
@@ -65,6 +69,7 @@ ActorInit En_Wallmas_InitVars = {
     (ActorFunc)EnWallmas_Destroy,
     (ActorFunc)EnWallmas_Update,
     (ActorFunc)EnWallmas_Draw,
+    (ActorFunc)EnWallmas_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -257,11 +262,10 @@ void EnWallmas_SetupCooldown(EnWallmas* pthis) {
 }
 
 void EnWallmas_SetupDie(EnWallmas* pthis, GlobalContext* globalCtx) {
-    static Vec3f zeroVec = { 0.0f, 0.0f, 0.0f };
     pthis->actor.speedXZ = 0.0f;
     pthis->actor.velocity.y = 0.0f;
 
-    EffectSsDeadDb_Spawn(globalCtx, &pthis->actor.world.pos, &zeroVec, &zeroVec, 250, -10, 255, 255, 255, 255, 0, 0, 255,
+    EffectSsDeadDb_Spawn(globalCtx, &pthis->actor.world.pos, &zeroVec_66, &zeroVec_66, 250, -10, 255, 255, 255, 255, 0, 0, 255,
                          1, 9, true);
 
     Item_DropCollectibleRandom(globalCtx, &pthis->actor, &pthis->actor.world.pos, 0xC0);
@@ -665,4 +669,79 @@ void EnWallmas_Draw(Actor* thisx, GlobalContext* globalCtx) {
     }
 
     EnWallmas_DrawXlu(pthis, globalCtx);
+}
+
+void EnWallmas_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    zeroVec_66 = { 0.0f, 0.0f, 0.0f };
+
+    En_Wallmas_InitVars = {
+        ACTOR_EN_WALLMAS,
+        ACTORCAT_ENEMY,
+        FLAGS,
+        OBJECT_WALLMASTER,
+        sizeof(EnWallmas),
+        (ActorFunc)EnWallmas_Init,
+        (ActorFunc)EnWallmas_Destroy,
+        (ActorFunc)EnWallmas_Update,
+        (ActorFunc)EnWallmas_Draw,
+        (ActorFunc)EnWallmas_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_HIT0,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 30, 40, 0, { 0 } },
+    };
+
+    sColChkInfoInit = { 4, 30, 40, 150 };
+
+    sDamageTable = {
+        /* Deku nut      */ DMG_ENTRY(0, 0x1),
+        /* Deku stick    */ DMG_ENTRY(2, 0x0),
+        /* Slingshot     */ DMG_ENTRY(1, 0x0),
+        /* Explosive     */ DMG_ENTRY(2, 0x0),
+        /* Boomerang     */ DMG_ENTRY(0, 0x1),
+        /* Normal arrow  */ DMG_ENTRY(2, 0x0),
+        /* Hammer swing  */ DMG_ENTRY(2, 0x0),
+        /* Hookshot      */ DMG_ENTRY(0, 0x1),
+        /* Kokiri sword  */ DMG_ENTRY(1, 0x0),
+        /* Master sword  */ DMG_ENTRY(2, 0x0),
+        /* Giant's Knife */ DMG_ENTRY(4, 0x0),
+        /* Fire arrow    */ DMG_ENTRY(4, 0x2),
+        /* Ice arrow     */ DMG_ENTRY(2, 0x0),
+        /* Light arrow   */ DMG_ENTRY(4, 0x4),
+        /* Unk arrow 1   */ DMG_ENTRY(4, 0x0),
+        /* Unk arrow 2   */ DMG_ENTRY(2, 0x0),
+        /* Unk arrow 3   */ DMG_ENTRY(2, 0x0),
+        /* Fire magic    */ DMG_ENTRY(4, 0x2),
+        /* Ice magic     */ DMG_ENTRY(0, 0x0),
+        /* Light magic   */ DMG_ENTRY(4, 0x4),
+        /* Shield        */ DMG_ENTRY(0, 0x0),
+        /* Mirror Ray    */ DMG_ENTRY(0, 0x0),
+        /* Kokiri spin   */ DMG_ENTRY(1, 0x0),
+        /* Giant spin    */ DMG_ENTRY(4, 0x0),
+        /* Master spin   */ DMG_ENTRY(2, 0x0),
+        /* Kokiri jump   */ DMG_ENTRY(2, 0x0),
+        /* Giant jump    */ DMG_ENTRY(8, 0x0),
+        /* Master jump   */ DMG_ENTRY(4, 0x0),
+        /* Unknown 1     */ DMG_ENTRY(0, 0x0),
+        /* Unblockable   */ DMG_ENTRY(0, 0x0),
+        /* Hammer jump   */ DMG_ENTRY(4, 0x0),
+        /* Unknown 2     */ DMG_ENTRY(0, 0x0),
+    };
+
 }

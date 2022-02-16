@@ -22,6 +22,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3 | ACTOR_FLAG_4 | ACTOR_FLAG_5)
 
 void EnMa3_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnMa3_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnMa3_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnMa3_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnMa3_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -36,6 +37,11 @@ void EnMa3_UpdateEyes(EnMa3* pthis);
 void EnMa3_ChangeAnim(EnMa3* pthis, s32 arg1);
 void func_80AA3200(EnMa3* pthis, GlobalContext* globalCtx);
 
+static void* sMouthTextures_47[] = { gMalonAdultMouthNeutralTex, gMalonAdultMouthSadTex, gMalonAdultMouthHappyTex };
+
+static void* sEyeTextures_47[] = { gMalonAdultEyeOpenTex, gMalonAdultEyeHalfTex, gMalonAdultEyeClosedTex };
+
+
 ActorInit En_Ma3_InitVars = {
     ACTOR_EN_MA3,
     ACTORCAT_NPC,
@@ -46,6 +52,7 @@ ActorInit En_Ma3_InitVars = {
     (ActorFunc)EnMa3_Destroy,
     (ActorFunc)EnMa3_Update,
     (ActorFunc)EnMa3_Draw,
+    (ActorFunc)EnMa3_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -354,8 +361,6 @@ void EnMa3_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Ve
 }
 
 void EnMa3_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static void* sMouthTextures[] = { gMalonAdultMouthNeutralTex, gMalonAdultMouthSadTex, gMalonAdultMouthHappyTex };
-    static void* sEyeTextures[] = { gMalonAdultEyeOpenTex, gMalonAdultEyeHalfTex, gMalonAdultEyeClosedTex };
     EnMa3* pthis = (EnMa3*)thisx;
     Camera* camera;
     f32 someFloat;
@@ -368,11 +373,49 @@ void EnMa3_Draw(Actor* thisx, GlobalContext* globalCtx) {
     func_800F6268(someFloat, NA_BGM_LONLON);
     func_80093D18(globalCtx->state.gfxCtx);
 
-    gSPSegment(POLY_OPA_DISP++, 0x09, SEGMENTED_TO_VIRTUAL(sMouthTextures[pthis->mouthIndex]));
-    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sEyeTextures[pthis->eyeIndex]));
+    gSPSegment(POLY_OPA_DISP++, 0x09, SEGMENTED_TO_VIRTUAL(sMouthTextures_47[pthis->mouthIndex]));
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sEyeTextures_47[pthis->eyeIndex]));
 
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           EnMa3_OverrideLimbDraw, EnMa3_PostLimbDraw, pthis);
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_ma3.c", 1013);
+}
+
+void EnMa3_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_Ma3_InitVars = {
+        ACTOR_EN_MA3,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_MA2,
+        sizeof(EnMa3),
+        (ActorFunc)EnMa3_Init,
+        (ActorFunc)EnMa3_Destroy,
+        (ActorFunc)EnMa3_Update,
+        (ActorFunc)EnMa3_Draw,
+        (ActorFunc)EnMa3_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_NONE,
+            OCELEM_ON,
+        },
+        { 18, 46, 0, { 0, 0, 0 } },
+    };
+
+    sColChkInfoInit = { 0, 0, 0, 0, MASS_IMMOVABLE };
+
 }

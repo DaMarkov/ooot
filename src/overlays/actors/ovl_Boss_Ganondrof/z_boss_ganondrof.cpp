@@ -31,40 +31,9 @@
 
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_2 | ACTOR_FLAG_4 | ACTOR_FLAG_5)
 
-typedef enum {
-    /* 0 */ NOT_DEAD,
-    /* 1 */ DEATH_START,
-    /* 2 */ DEATH_THROES,
-    /* 3 */ DEATH_WARP,
-    /* 4 */ DEATH_SCREAM,
-    /* 5 */ DEATH_DISINTEGRATE,
-    /* 6 */ DEATH_FINISH
-} BossGanondrofDeathState;
-
-typedef enum {
-    /* 0 */ THROW_NORMAL,
-    /* 1 */ THROW_SLOW
-} BossGanondrofThrowAction;
-
-typedef enum {
-    /* 0 */ STUNNED_FALL,
-    /* 1 */ STUNNED_GROUND
-} BossGanondrofStunnedAction;
-
-typedef enum {
-    /* 0 */ CHARGE_WINDUP,
-    /* 1 */ CHARGE_START,
-    /* 2 */ CHARGE_ATTACK,
-    /* 3 */ CHARGE_FINISH
-} BossGanondrofChargeAction;
-
-typedef enum {
-    /* 0 */ DEATH_SPASM,
-    /* 1 */ DEATH_LIMP,
-    /* 2 */ DEATH_HUNCHED
-} BossGanondrofDeathAction;
 
 void BossGanondrof_Init(Actor* thisx, GlobalContext* globalCtx);
+void BossGanondrof_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BossGanondrof_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BossGanondrof_Update(Actor* thisx, GlobalContext* globalCtx);
 void BossGanondrof_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -86,6 +55,13 @@ void BossGanondrof_Charge(BossGanondrof* pthis, GlobalContext* globalCtx);
 void BossGanondrof_Stunned(BossGanondrof* pthis, GlobalContext* globalCtx);
 void BossGanondrof_Death(BossGanondrof* pthis, GlobalContext* globalCtx);
 
+static AnimationHeader* returnAnim_86[] = { &gPhantomGanonReturn1Anim, &gPhantomGanonReturn2Anim };
+
+static Vec3f zeroVec_99 = { 0.0f, 0.0f, 0.0f };
+
+static Vec3f spearVec_99 = { 0.0f, 0.0f, 6000.0f };
+
+
 ActorInit Boss_Ganondrof_InitVars = {
     ACTOR_BOSS_GANONDROF,
     ACTORCAT_BOSS,
@@ -96,6 +72,7 @@ ActorInit Boss_Ganondrof_InitVars = {
     (ActorFunc)BossGanondrof_Destroy,
     (ActorFunc)BossGanondrof_Update,
     (ActorFunc)BossGanondrof_Draw,
+    (ActorFunc)BossGanondrof_Reset,
 };
 
 static ColliderCylinderInit sCylinderInitBody = {
@@ -699,11 +676,10 @@ void BossGanondrof_Throw(BossGanondrof* pthis, GlobalContext* globalCtx) {
 }
 
 void BossGanondrof_SetupReturn(BossGanondrof* pthis, GlobalContext* globalCtx) {
-    static AnimationHeader* returnAnim[] = { &gPhantomGanonReturn1Anim, &gPhantomGanonReturn2Anim };
     s16 rand = Rand_ZeroOne() * 1.99f;
 
-    pthis->fwork[GND_END_FRAME] = Animation_GetLastFrame(returnAnim[rand]);
-    Animation_MorphToPlayOnce(&pthis->skelAnime, returnAnim[rand], 0.0f);
+    pthis->fwork[GND_END_FRAME] = Animation_GetLastFrame(returnAnim_86[rand]);
+    Animation_MorphToPlayOnce(&pthis->skelAnime, returnAnim_86[rand], 0.0f);
     pthis->actionFunc = BossGanondrof_Return;
 }
 
@@ -1462,19 +1438,17 @@ s32 BossGanondrof_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx*
 }
 
 void BossGanondrof_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx) {
-    static Vec3f zeroVec = { 0.0f, 0.0f, 0.0f };
-    static Vec3f spearVec = { 0.0f, 0.0f, 6000.0f };
 
     BossGanondrof* pthis = (BossGanondrof*)thisx;
 
     if (limbIndex == 14) {
-        Matrix_MultVec3f(&zeroVec, &pthis->targetPos);
+        Matrix_MultVec3f(&zeroVec_99, &pthis->targetPos);
     } else if (limbIndex == 13) {
-        Matrix_MultVec3f(&spearVec, &pthis->spearTip);
+        Matrix_MultVec3f(&spearVec_99, &pthis->spearTip);
     }
 
     if (((pthis->flyMode != GND_FLY_PAINTING) || (pthis->actionFunc == BossGanondrof_Intro)) && (limbIndex <= 25)) {
-        Matrix_MultVec3f(&zeroVec, &pthis->bodyPartsPos[limbIndex - 1]);
+        Matrix_MultVec3f(&zeroVec_99, &pthis->bodyPartsPos[limbIndex - 1]);
     }
 }
 
@@ -1537,4 +1511,66 @@ void BossGanondrof_Draw(Actor* thisx, GlobalContext* globalCtx) {
     POLY_OPA_DISP = Gameplay_SetFog(globalCtx, POLY_OPA_DISP);
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_boss_ganondrof.c", 3814);
     osSyncPrintf("DRAW END %d\n", pthis->actor.params);
+}
+
+void BossGanondrof_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    zeroVec_99 = { 0.0f, 0.0f, 0.0f };
+
+    spearVec_99 = { 0.0f, 0.0f, 6000.0f };
+
+    Boss_Ganondrof_InitVars = {
+        ACTOR_BOSS_GANONDROF,
+        ACTORCAT_BOSS,
+        FLAGS,
+        OBJECT_GND,
+        sizeof(BossGanondrof),
+        (ActorFunc)BossGanondrof_Init,
+        (ActorFunc)BossGanondrof_Destroy,
+        (ActorFunc)BossGanondrof_Update,
+        (ActorFunc)BossGanondrof_Draw,
+        (ActorFunc)BossGanondrof_Reset,
+    };
+
+    sCylinderInitBody = {
+        {
+            COLTYPE_HIT3,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x00, 0x10 },
+            { 0xFFCFFFFE, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NORMAL,
+            BUMP_ON | BUMP_HOOKABLE,
+            OCELEM_ON,
+        },
+        { 30, 90, -50, { 0, 0, 0 } },
+    };
+
+    sCylinderInitSpear = {
+        {
+            COLTYPE_HIT3,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x00, 0x30 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NORMAL,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 20, 30, -20, { 0, 0, 0 } },
+    };
+
+    sAudioVec = { 0.0f, 0.0f, 50.0f };
+
 }

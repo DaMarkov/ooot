@@ -21,6 +21,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_2)
 
 void EnBrob_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnBrob_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnBrob_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnBrob_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnBrob_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -33,6 +34,11 @@ void func_809CB2B8(EnBrob* pthis, GlobalContext* globalCtx);
 void func_809CB354(EnBrob* pthis, GlobalContext* globalCtx);
 void func_809CB458(EnBrob* pthis, GlobalContext* globalCtx);
 
+static Color_RGBA8 primColor_44 = { 255, 255, 255, 255 };
+
+static Color_RGBA8 envColor_44 = { 200, 255, 255, 255 };
+
+
 ActorInit En_Brob_InitVars = {
     ACTOR_EN_BROB,
     ACTORCAT_ENEMY,
@@ -43,6 +49,7 @@ ActorInit En_Brob_InitVars = {
     (ActorFunc)EnBrob_Destroy,
     (ActorFunc)EnBrob_Update,
     (ActorFunc)EnBrob_Draw,
+    (ActorFunc)EnBrob_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -243,8 +250,6 @@ void func_809CB458(EnBrob* pthis, GlobalContext* globalCtx) {
     dist2 = pthis->dyna.actor.scale.x * 5500.0f;
 
     for (i = 0; i < 4; i++) {
-        static Color_RGBA8 primColor = { 255, 255, 255, 255 };
-        static Color_RGBA8 envColor = { 200, 255, 255, 255 };
 
         if (i % 2) {
             pos.x = pthis->dyna.actor.world.pos.x + dist1;
@@ -256,7 +261,7 @@ void func_809CB458(EnBrob* pthis, GlobalContext* globalCtx) {
             dist2 = -dist2;
         }
         pos.y = (((Rand_ZeroOne() * 15000.0f) + 1000.0f) * pthis->dyna.actor.scale.y) + pthis->dyna.actor.world.pos.y;
-        EffectSsLightning_Spawn(globalCtx, &pos, &primColor, &envColor, pthis->dyna.actor.scale.y * 8000.0f,
+        EffectSsLightning_Spawn(globalCtx, &pos, &primColor_44, &envColor_44, pthis->dyna.actor.scale.y * 8000.0f,
                                 Rand_ZeroOne() * 65536.0f, 4, 1);
     }
 
@@ -336,4 +341,46 @@ void EnBrob_Draw(Actor* thisx, GlobalContext* globalCtx) {
     Matrix_Translate(0.0f, pthis->unk_1AE, 0.0f, MTXMODE_APPLY);
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           NULL, EnBrob_PostLimbDraw, pthis);
+}
+
+void EnBrob_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    primColor_44 = { 255, 255, 255, 255 };
+
+    envColor_44 = { 200, 255, 255, 255 };
+
+    En_Brob_InitVars = {
+        ACTOR_EN_BROB,
+        ACTORCAT_ENEMY,
+        FLAGS,
+        OBJECT_BROB,
+        sizeof(EnBrob),
+        (ActorFunc)EnBrob_Init,
+        (ActorFunc)EnBrob_Destroy,
+        (ActorFunc)EnBrob_Update,
+        (ActorFunc)EnBrob_Draw,
+        (ActorFunc)EnBrob_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_HIT0,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK1,
+            { 0xFFCFFFFF, 0x03, 0x08 },
+            { 0xFFCFFFFF, 0x01, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NONE,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 8000, 11000, -5000, { 0, 0, 0 } },
+    };
+
+    sColChkInfoInit = { 0, 60, 120, MASS_IMMOVABLE };
+
 }

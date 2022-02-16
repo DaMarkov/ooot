@@ -25,26 +25,9 @@
 
 #define FLAGS ACTOR_FLAG_4
 
-typedef struct {
-    /* 0x00 */ Vec3f pos;
-    /* 0x0C */ s16 yRot;
-} EnfHGPainting; // size = 0x10;
-
-typedef enum {
-    /*  0 */ INTRO_WAIT,
-    /*  1 */ INTRO_START,
-    /*  2 */ INTRO_FENCE,
-    /*  3 */ INTRO_BACK,
-    /*  4 */ INTRO_REVEAL,
-    /*  5 */ INTRO_CUT,
-    /*  6 */ INTRO_LAUGH,
-    /*  7 */ INTRO_TITLE,
-    /*  8 */ INTRO_RETREAT,
-    /*  9 */ INTRO_FINISH,
-    /* 15 */ INTRO_READY = 15
-} EnfHGIntroState;
 
 void EnfHG_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnfHG_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnfHG_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnfHG_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnfHG_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -60,6 +43,9 @@ void EnfHG_Done(EnfHG* pthis, GlobalContext* globalCtx);
 
 void EnfHG_Noop(Actor* thisx, GlobalContext* globalCtx, PSkinAwb* skin);
 
+static Vec3f audioVec_43 = { 0.0f, 0.0f, 50.0f };
+
+
 ActorInit En_fHG_InitVars = {
     ACTOR_EN_FHG,
     ACTORCAT_BG,
@@ -70,6 +56,7 @@ ActorInit En_fHG_InitVars = {
     (ActorFunc)EnfHG_Destroy,
     (ActorFunc)EnfHG_Update,
     (ActorFunc)EnfHG_Draw,
+    (ActorFunc)EnfHG_Reset,
 };
 
 static EnfHGPainting sPaintings[] = {
@@ -122,7 +109,6 @@ void EnfHG_SetupIntro(EnfHG* pthis, GlobalContext* globalCtx) {
 }
 
 void EnfHG_Intro(EnfHG* pthis, GlobalContext* globalCtx) {
-    static Vec3f audioVec = { 0.0f, 0.0f, 50.0f };
     s32 pad64;
     Player* player = GET_PLAYER(globalCtx);
     BossGanondrof* bossGnd = (BossGanondrof*)pthis->actor.parent;
@@ -303,11 +289,11 @@ void EnfHG_Intro(EnfHG* pthis, GlobalContext* globalCtx) {
                 bossGnd->work[GND_EYE_STATE] = GND_EYESTATE_BRIGHTEN;
             }
             if (pthis->timers[0] == 35) {
-                func_80078914(&audioVec, NA_SE_EN_FANTOM_EYE);
+                func_80078914(&audioVec_43, NA_SE_EN_FANTOM_EYE);
             }
             if (pthis->timers[0] == 130) {
                 bossGnd->work[GND_EYE_STATE] = GND_EYESTATE_FADE;
-                func_80078914(&audioVec, NA_SE_EN_FANTOM_ST_LAUGH);
+                func_80078914(&audioVec_43, NA_SE_EN_FANTOM_ST_LAUGH);
             }
             if (pthis->timers[0] == 20) {
                 Audio_QueueSeqCmd(SEQ_PLAYER_BGM_MAIN << 24 | NA_BGM_BOSS);
@@ -740,4 +726,22 @@ void EnfHG_Draw(Actor* thisx, GlobalContext* globalCtx) {
     func_800A6330(&pthis->actor, globalCtx, &pthis->skin, EnfHG_Noop, 0x23);
     POLY_OPA_DISP = Gameplay_SetFog(globalCtx, POLY_OPA_DISP);
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_fhg.c", 2480);
+}
+
+void EnfHG_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    audioVec_43 = { 0.0f, 0.0f, 50.0f };
+
+    En_fHG_InitVars = {
+        ACTOR_EN_FHG,
+        ACTORCAT_BG,
+        FLAGS,
+        OBJECT_FHG,
+        sizeof(EnfHG),
+        (ActorFunc)EnfHG_Init,
+        (ActorFunc)EnfHG_Destroy,
+        (ActorFunc)EnfHG_Update,
+        (ActorFunc)EnfHG_Draw,
+        (ActorFunc)EnfHG_Reset,
+    };
+
 }

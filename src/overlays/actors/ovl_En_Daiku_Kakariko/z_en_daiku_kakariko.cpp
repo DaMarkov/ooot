@@ -22,20 +22,25 @@
 
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3 | ACTOR_FLAG_4)
 
-typedef enum {
-    /* 0x0 */ CARPENTER_ICHIRO,  // Red and purple pants, normal hair
-    /* 0x1 */ CARPENTER_SABOORO, // Light blue pants
-    /* 0x2 */ CARPENTER_JIRO,    // Green pants
-    /* 0x3 */ CARPENTER_SHIRO    // Pink and purple pants, two-spiked hair
-} KakarikoCarpenterType;
 
 void EnDaikuKakariko_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnDaikuKakariko_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnDaikuKakariko_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnDaikuKakariko_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnDaikuKakariko_Draw(Actor* thisx, GlobalContext* globalCtx);
 
 void EnDaikuKakariko_Wait(EnDaikuKakariko* pthis, GlobalContext* globalCtx);
 void EnDaikuKakariko_Run(EnDaikuKakariko* pthis, GlobalContext* globalCtx);
+
+static u16 initFlags_32[] = { 0x0080, 0x00B0, 0x0070, 0x0470 };
+
+static s32 maskReactionSets_35[] = { 1, 2, 3, 4 };
+
+static Gfx* carpenterHeadDLists_42[] = { object_daiku_DL_005BD0, object_daiku_DL_005AC0, object_daiku_DL_005990,
+                                      object_daiku_DL_005880 };
+
+static Vec3f unkVec_42 = { 700.0f, 1100.0f, 0.0f };
+
 
 ActorInit En_Daiku_Kakariko_InitVars = {
     ACTOR_EN_DAIKU_KAKARIKO,
@@ -47,6 +52,7 @@ ActorInit En_Daiku_Kakariko_InitVars = {
     (ActorFunc)EnDaikuKakariko_Destroy,
     (ActorFunc)EnDaikuKakariko_Update,
     (ActorFunc)EnDaikuKakariko_Draw,
+    (ActorFunc)EnDaikuKakariko_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -129,7 +135,7 @@ void EnDaikuKakariko_SetAnimFromIndex(EnDaikuKakariko* pthis, s32 animIndex, s32
 }
 
 void EnDaikuKakariko_Init(Actor* thisx, GlobalContext* globalCtx) {
-    static u16 initFlags[] = { 0x0080, 0x00B0, 0x0070, 0x0470 }; // List of inital values for pthis->flags
+    static u16 initFlags_32[] = { 0x0080, 0x00B0, 0x0070, 0x0470 }; // List of inital values for pthis->flags
     EnDaikuKakariko* pthis = (EnDaikuKakariko*)thisx;
     s32 pad;
 
@@ -138,7 +144,7 @@ void EnDaikuKakariko_Init(Actor* thisx, GlobalContext* globalCtx) {
             case SCENE_SPOT01:
                 if (IS_DAY) {
                     pthis->flags |= 1;
-                    pthis->flags |= initFlags[pthis->actor.params & 3];
+                    pthis->flags |= initFlags_32[pthis->actor.params & 3];
                 }
                 break;
             case SCENE_KAKARIKO:
@@ -231,7 +237,6 @@ s32 EnDaikuKakariko_GetTalkState(EnDaikuKakariko* pthis, GlobalContext* globalCt
 }
 
 void EnDaikuKakariko_HandleTalking(EnDaikuKakariko* pthis, GlobalContext* globalCtx) {
-    static s32 maskReactionSets[] = { 1, 2, 3, 4 };
     s16 sp26;
     s16 sp24;
 
@@ -244,7 +249,7 @@ void EnDaikuKakariko_HandleTalking(EnDaikuKakariko* pthis, GlobalContext* global
 
         if ((sp26 >= 0) && (sp26 <= 320) && (sp24 >= 0) && (sp24 <= 240) && (pthis->talkState == 0) &&
             (func_8002F2CC(&pthis->actor, globalCtx, 100.0f) == 1)) {
-            pthis->actor.textId = Text_GetFaceReaction(globalCtx, maskReactionSets[pthis->actor.params & 3]);
+            pthis->actor.textId = Text_GetFaceReaction(globalCtx, maskReactionSets_35[pthis->actor.params & 3]);
 
             if (pthis->actor.textId == 0) {
                 switch (pthis->actor.params & 3) {
@@ -528,16 +533,13 @@ s32 EnDaikuKakariko_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gf
 }
 
 void EnDaikuKakariko_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx) {
-    static Gfx* carpenterHeadDLists[] = { object_daiku_DL_005BD0, object_daiku_DL_005AC0, object_daiku_DL_005990,
-                                          object_daiku_DL_005880 };
-    static Vec3f unkVec = { 700.0f, 1100.0f, 0.0f };
     EnDaikuKakariko* pthis = (EnDaikuKakariko*)thisx;
 
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_en_daiku_kakariko.c", 1104);
 
     if (limbIndex == 15) {
-        Matrix_MultVec3f(&unkVec, &pthis->actor.focus.pos);
-        gSPDisplayList(POLY_OPA_DISP++, carpenterHeadDLists[pthis->actor.params & 3]);
+        Matrix_MultVec3f(&unkVec_42, &pthis->actor.focus.pos);
+        gSPDisplayList(POLY_OPA_DISP++, carpenterHeadDLists_42[pthis->actor.params & 3]);
     }
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_daiku_kakariko.c", 1113);
@@ -564,4 +566,79 @@ void EnDaikuKakariko_Draw(Actor* thisx, GlobalContext* globalCtx) {
                           EnDaikuKakariko_OverrideLimbDraw, EnDaikuKakariko_PostLimbDraw, thisx);
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_daiku_kakariko.c", 1151);
+}
+
+void EnDaikuKakariko_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    unkVec_42 = { 700.0f, 1100.0f, 0.0f };
+
+    En_Daiku_Kakariko_InitVars = {
+        ACTOR_EN_DAIKU_KAKARIKO,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_DAIKU,
+        sizeof(EnDaikuKakariko),
+        (ActorFunc)EnDaikuKakariko_Init,
+        (ActorFunc)EnDaikuKakariko_Destroy,
+        (ActorFunc)EnDaikuKakariko_Update,
+        (ActorFunc)EnDaikuKakariko_Draw,
+        (ActorFunc)EnDaikuKakariko_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_NONE,
+            OCELEM_ON,
+        },
+        { 18, 66, 0, { 0, 0, 0 } },
+    };
+
+    sColChkInit = { 0, 0, 0, 0, MASS_IMMOVABLE };
+
+    sDamageTable = {
+        /* Deku nut      */ DMG_ENTRY(0, 0x0),
+        /* Deku stick    */ DMG_ENTRY(0, 0x0),
+        /* Slingshot     */ DMG_ENTRY(0, 0x0),
+        /* Explosive     */ DMG_ENTRY(0, 0x0),
+        /* Boomerang     */ DMG_ENTRY(0, 0x0),
+        /* Normal arrow  */ DMG_ENTRY(0, 0x0),
+        /* Hammer swing  */ DMG_ENTRY(0, 0x0),
+        /* Hookshot      */ DMG_ENTRY(0, 0x0),
+        /* Kokiri sword  */ DMG_ENTRY(0, 0x0),
+        /* Master sword  */ DMG_ENTRY(0, 0x0),
+        /* Giant's Knife */ DMG_ENTRY(0, 0x0),
+        /* Fire arrow    */ DMG_ENTRY(0, 0x0),
+        /* Ice arrow     */ DMG_ENTRY(0, 0x0),
+        /* Light arrow   */ DMG_ENTRY(0, 0x0),
+        /* Unk arrow 1   */ DMG_ENTRY(0, 0x0),
+        /* Unk arrow 2   */ DMG_ENTRY(0, 0x0),
+        /* Unk arrow 3   */ DMG_ENTRY(0, 0x0),
+        /* Fire magic    */ DMG_ENTRY(0, 0x0),
+        /* Ice magic     */ DMG_ENTRY(0, 0x0),
+        /* Light magic   */ DMG_ENTRY(0, 0x0),
+        /* Shield        */ DMG_ENTRY(0, 0x0),
+        /* Mirror Ray    */ DMG_ENTRY(0, 0x0),
+        /* Kokiri spin   */ DMG_ENTRY(0, 0x0),
+        /* Giant spin    */ DMG_ENTRY(0, 0x0),
+        /* Master spin   */ DMG_ENTRY(0, 0x0),
+        /* Kokiri jump   */ DMG_ENTRY(0, 0x0),
+        /* Giant jump    */ DMG_ENTRY(0, 0x0),
+        /* Master jump   */ DMG_ENTRY(0, 0x0),
+        /* Unknown 1     */ DMG_ENTRY(0, 0x0),
+        /* Unblockable   */ DMG_ENTRY(0, 0x0),
+        /* Hammer jump   */ DMG_ENTRY(0, 0x0),
+        /* Unknown 2     */ DMG_ENTRY(0, 0x0),
+    };
+
 }

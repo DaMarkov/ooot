@@ -25,6 +25,7 @@
 #define FLAGS 0
 
 void EnButte_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnButte_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnButte_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnButte_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnButte_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -37,6 +38,19 @@ void EnButte_SetupTransformIntoFairy(EnButte* pthis);
 void EnButte_TransformIntoFairy(EnButte* pthis, GlobalContext* globalCtx);
 void EnButte_SetupWaitToDie(EnButte* pthis);
 void EnButte_WaitToDie(EnButte* pthis, GlobalContext* globalCtx);
+
+static Vec3f D_809CE3C4_44 = { 0.0f, 0.0f, -3.0f };
+
+static f32 D_809CE3E0_48[] = { 50.0f, 80.0f, 100.0f };
+
+static f32 D_809CE3EC_48[] = { 30.0f, 40.0f, 50.0f };
+
+static f32 D_809CE3F8_49[] = { 15.0f, 20.0f, 25.0f };
+
+static f32 D_809CE404_49[] = { 7.5f, 10.0f, 12.5f };
+
+static s32 D_809CE410_54 = 1500;
+
 
 static ColliderJntSphElementInit sJntSphElementsInit[] = {
     { {
@@ -72,16 +86,8 @@ ActorInit En_Butte_InitVars = {
     (ActorFunc)EnButte_Destroy,
     (ActorFunc)EnButte_Update,
     (ActorFunc)EnButte_Draw,
-};
-
-typedef struct {
-    /* 0x00 */ s16 minTime;
-    /* 0x02 */ s16 maxTime;
-    /* 0x04 */ f32 speedXZTarget;
-    /* 0x08 */ f32 speedXZScale;
-    /* 0x0C */ f32 speedXZStep;
-    /* 0x10 */ s16 rotYStep;
-} EnButteFlightParams; // size = 0x14
+    (ActorFunc)EnButte_Reset,
+}; 
 
 static EnButteFlightParams sFlyAroundParams[] = {
     { 5, 35, 0.0f, 0.1f, 0.5f, 0 },
@@ -122,7 +128,6 @@ void EnButte_UpdateTransformationEffect(void) {
 }
 
 void EnButte_DrawTransformationEffect(EnButte* pthis, GlobalContext* globalCtx) {
-    static Vec3f D_809CE3C4 = { 0.0f, 0.0f, -3.0f };
     Vec3f sp5C;
     s32 alpha;
     Vec3s camDir;
@@ -138,7 +143,7 @@ void EnButte_DrawTransformationEffect(EnButte* pthis, GlobalContext* globalCtx) 
     Matrix_RotateY(camDir.y * (M_PI / 0x8000), MTXMODE_NEW);
     Matrix_RotateX(camDir.x * (M_PI / 0x8000), MTXMODE_APPLY);
     Matrix_RotateZ(camDir.z * (M_PI / 0x8000), MTXMODE_APPLY);
-    Matrix_MultVec3f(&D_809CE3C4, &sp5C);
+    Matrix_MultVec3f(&D_809CE3C4_44, &sp5C);
     func_800D1694(pthis->actor.focus.pos.x + sp5C.x, pthis->actor.focus.pos.y + sp5C.y, pthis->actor.focus.pos.z + sp5C.z,
                   &camDir);
     Matrix_Scale(sTransformationEffectScale, sTransformationEffectScale, sTransformationEffectScale, MTXMODE_APPLY);
@@ -195,20 +200,16 @@ void EnButte_Destroy(Actor* thisx, GlobalContext* globalCtx2) {
 }
 
 void func_809CD56C(EnButte* pthis) {
-    static f32 D_809CE3E0[] = { 50.0f, 80.0f, 100.0f };
-    static f32 D_809CE3EC[] = { 30.0f, 40.0f, 50.0f };
 
-    pthis->actor.shape.yOffset += Math_SinS(pthis->unk_25C) * D_809CE3E0[pthis->flightParamsIdx] +
-                                 Math_SinS(pthis->unk_25E) * D_809CE3EC[pthis->flightParamsIdx];
+    pthis->actor.shape.yOffset += Math_SinS(pthis->unk_25C) * D_809CE3E0_48[pthis->flightParamsIdx] +
+                                 Math_SinS(pthis->unk_25E) * D_809CE3EC_48[pthis->flightParamsIdx];
     pthis->actor.shape.yOffset = CLAMP(pthis->actor.shape.yOffset, -2000.0f, 2000.0f);
 }
 
 void func_809CD634(EnButte* pthis) {
-    static f32 D_809CE3F8[] = { 15.0f, 20.0f, 25.0f };
-    static f32 D_809CE404[] = { 7.5f, 10.0f, 12.5f };
 
-    pthis->actor.shape.yOffset += Math_SinS(pthis->unk_25C) * D_809CE3F8[pthis->flightParamsIdx] +
-                                 Math_SinS(pthis->unk_25E) * D_809CE404[pthis->flightParamsIdx];
+    pthis->actor.shape.yOffset += Math_SinS(pthis->unk_25C) * D_809CE3F8_49[pthis->flightParamsIdx] +
+                                 Math_SinS(pthis->unk_25E) * D_809CE404_49[pthis->flightParamsIdx];
     pthis->actor.shape.yOffset = CLAMP(pthis->actor.shape.yOffset, -500.0f, 500.0f);
 }
 
@@ -302,7 +303,6 @@ void EnButte_SetupFollowLink(EnButte* pthis) {
 }
 
 void EnButte_FollowLink(EnButte* pthis, GlobalContext* globalCtx) {
-    static s32 D_809CE410 = 1500;
     EnButteFlightParams* flightParams = &sFollowLinkParams[pthis->flightParamsIdx];
     Player* player = GET_PLAYER(globalCtx);
     f32 distSqFromHome;
@@ -322,7 +322,7 @@ void EnButte_FollowLink(EnButte* pthis, GlobalContext* globalCtx) {
         swordTip.y = player->swordInfo[0].tip.y;
         swordTip.z = player->swordInfo[0].tip.z + Math_CosS(player->actor.shape.rot.y) * 10.0f;
 
-        yaw = Math_Vec3f_Yaw(&pthis->actor.world.pos, &swordTip) + (s16)(Rand_ZeroOne() * D_809CE410);
+        yaw = Math_Vec3f_Yaw(&pthis->actor.world.pos, &swordTip) + (s16)(Rand_ZeroOne() * D_809CE410_54);
         if (Math_ScaledStepToS(&pthis->actor.world.rot.y, yaw, 2000) != 0) {
             if (globalCtx->gameplayFrames % 2) {
                 pthis->actor.world.rot.y += (s16)(sinf(pthis->unk_25C) * 60.0f);
@@ -343,7 +343,7 @@ void EnButte_FollowLink(EnButte* pthis, GlobalContext* globalCtx) {
 
     if (pthis->timer <= 0) {
         EnButte_SelectFlightParams(pthis, &sFollowLinkParams[pthis->flightParamsIdx]);
-        D_809CE410 = -D_809CE410;
+        D_809CE410_54 = -D_809CE410_54;
     }
 
     distSqFromHome = Math3D_Dist2DSq(pthis->actor.world.pos.x, pthis->actor.world.pos.z, pthis->actor.home.pos.x,
@@ -444,4 +444,41 @@ void EnButte_Draw(Actor* thisx, GlobalContext* globalCtx) {
     if (((pthis->actor.params & 1) == 1) && (pthis->actionFunc == EnButte_TransformIntoFairy)) {
         EnButte_DrawTransformationEffect(pthis, globalCtx);
     }
+}
+
+void EnButte_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    D_809CE3C4_44 = { 0.0f, 0.0f, -3.0f };
+
+    D_809CE410_54 = 1500;
+
+    sColliderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_PLAYER | OC1_TYPE_1,
+            OC2_TYPE_1,
+            COLSHAPE_JNTSPH,
+        },
+        1,
+        sJntSphElementsInit,
+    };
+
+    En_Butte_InitVars = {
+        ACTOR_EN_BUTTE,
+        ACTORCAT_ITEMACTION,
+        FLAGS,
+        OBJECT_GAMEPLAY_FIELD_KEEP,
+        sizeof(EnButte),
+        (ActorFunc)EnButte_Init,
+        (ActorFunc)EnButte_Destroy,
+        (ActorFunc)EnButte_Update,
+        (ActorFunc)EnButte_Draw,
+        (ActorFunc)EnButte_Reset,
+    };
+
+    sTransformationEffectScale = 0.0f;
+
+    sTransformationEffectAlpha = 0;
+
 }

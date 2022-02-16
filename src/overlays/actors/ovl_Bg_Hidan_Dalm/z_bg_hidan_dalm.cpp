@@ -22,12 +22,16 @@
 #define FLAGS 0
 
 void BgHidanDalm_Init(Actor* thisx, GlobalContext* globalCtx);
+void BgHidanDalm_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BgHidanDalm_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BgHidanDalm_Update(Actor* thisx, GlobalContext* globalCtx);
 void BgHidanDalm_Draw(Actor* thisx, GlobalContext* globalCtx);
 
 void BgHidanDalm_Wait(BgHidanDalm* pthis, GlobalContext* globalCtx);
 void BgHidanDalm_Shrink(BgHidanDalm* pthis, GlobalContext* globalCtx);
+
+static Vec3f accel_31 = { 0, 0, 0 };
+
 
 ActorInit Bg_Hidan_Dalm_InitVars = {
     ACTOR_BG_HIDAN_DALM,
@@ -39,6 +43,7 @@ ActorInit Bg_Hidan_Dalm_InitVars = {
     (ActorFunc)BgHidanDalm_Destroy,
     (ActorFunc)BgHidanDalm_Update,
     (ActorFunc)BgHidanDalm_Draw,
+    (ActorFunc)BgHidanDalm_Reset,
 };
 
 static ColliderTrisElementInit sTrisElementInit[4] = {
@@ -164,7 +169,6 @@ void BgHidanDalm_Wait(BgHidanDalm* pthis, GlobalContext* globalCtx) {
 }
 
 void BgHidanDalm_Shrink(BgHidanDalm* pthis, GlobalContext* globalCtx) {
-    static Vec3f accel = { 0, 0, 0 };
     s32 i;
     Vec3f velocity;
     Vec3f pos;
@@ -184,7 +188,7 @@ void BgHidanDalm_Shrink(BgHidanDalm* pthis, GlobalContext* globalCtx) {
         velocity.x = 5.0f * Math_SinS(pthis->dyna.actor.world.rot.y + 0x8000) + (Rand_ZeroOne() - 0.5f) * 5.0f;
         velocity.z = 5.0f * Math_CosS(pthis->dyna.actor.world.rot.y + 0x8000) + (Rand_ZeroOne() - 0.5f) * 5.0f;
         velocity.y = (Rand_ZeroOne() - 0.5f) * 1.5f;
-        EffectSsKiraKira_SpawnSmallYellow(globalCtx, &pos, &velocity, &accel);
+        EffectSsKiraKira_SpawnSmallYellow(globalCtx, &pos, &velocity, &accel_31);
     }
 }
 
@@ -231,4 +235,35 @@ void BgHidanDalm_Draw(Actor* thisx, GlobalContext* globalCtx) {
     if (pthis->actionFunc == BgHidanDalm_Wait) {
         BgHidanDalm_UpdateCollider(pthis);
     }
+}
+
+void BgHidanDalm_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    accel_31 = { 0, 0, 0 };
+
+    Bg_Hidan_Dalm_InitVars = {
+        ACTOR_BG_HIDAN_DALM,
+        ACTORCAT_BG,
+        FLAGS,
+        OBJECT_HIDAN_OBJECTS,
+        sizeof(BgHidanDalm),
+        (ActorFunc)BgHidanDalm_Init,
+        (ActorFunc)BgHidanDalm_Destroy,
+        (ActorFunc)BgHidanDalm_Update,
+        (ActorFunc)BgHidanDalm_Draw,
+        (ActorFunc)BgHidanDalm_Reset,
+    };
+
+    sTrisInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_NONE,
+            OC2_TYPE_2,
+            COLSHAPE_TRIS,
+        },
+        4,
+        sTrisElementInit,
+    };
+
 }

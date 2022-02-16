@@ -21,11 +21,17 @@
 #define FLAGS (ACTOR_FLAG_4 | ACTOR_FLAG_5)
 
 void EnBoom_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnBoom_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnBoom_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnBoom_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnBoom_Draw(Actor* thisx, GlobalContext* globalCtx);
 
 void EnBoom_Fly(EnBoom* pthis, GlobalContext* globalCtx);
+
+static Vec3f sMultVec1_30 = { -960.0f, 0.0f, 0.0f };
+
+static Vec3f sMultVec2_30 = { 960.0f, 0.0f, 0.0f };
+
 
 ActorInit En_Boom_InitVars = {
     ACTOR_EN_BOOM,
@@ -37,6 +43,7 @@ ActorInit En_Boom_InitVars = {
     (ActorFunc)EnBoom_Destroy,
     (ActorFunc)EnBoom_Update,
     (ActorFunc)EnBoom_Draw,
+    (ActorFunc)EnBoom_Reset,
 };
 
 static ColliderQuadInit sQuadInit = {
@@ -259,8 +266,6 @@ void EnBoom_Update(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void EnBoom_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static Vec3f sMultVec1 = { -960.0f, 0.0f, 0.0f };
-    static Vec3f sMultVec2 = { 960.0f, 0.0f, 0.0f };
     EnBoom* pthis = (EnBoom*)thisx;
     Vec3f vec1;
     Vec3f vec2;
@@ -270,8 +275,8 @@ void EnBoom_Draw(Actor* thisx, GlobalContext* globalCtx) {
     Matrix_RotateY(pthis->actor.world.rot.y * (M_PI / 0x8000), MTXMODE_APPLY);
     Matrix_RotateZ(0x1F40 * (M_PI / 0x8000), MTXMODE_APPLY);
     Matrix_RotateX(pthis->actor.world.rot.x * (M_PI / 0x8000), MTXMODE_APPLY);
-    Matrix_MultVec3f(&sMultVec1, &vec1);
-    Matrix_MultVec3f(&sMultVec2, &vec2);
+    Matrix_MultVec3f(&sMultVec1_30, &vec1);
+    Matrix_MultVec3f(&sMultVec2_30, &vec2);
 
     if (func_80090480(globalCtx, &pthis->collider, &pthis->boomerangInfo, &vec1, &vec2) != 0) {
 	    EffectBlure_AddVertex((EffectBlure*)Effect_GetByIndex(pthis->effectIndex), &vec1, &vec2);
@@ -285,4 +290,44 @@ void EnBoom_Draw(Actor* thisx, GlobalContext* globalCtx) {
     gSPDisplayList(POLY_OPA_DISP++, gBoomerangRefDL);
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_boom.c", 604);
+}
+
+void EnBoom_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    sMultVec1_30 = { -960.0f, 0.0f, 0.0f };
+
+    sMultVec2_30 = { 960.0f, 0.0f, 0.0f };
+
+    En_Boom_InitVars = {
+        ACTOR_EN_BOOM,
+        ACTORCAT_MISC,
+        FLAGS,
+        OBJECT_GAMEPLAY_KEEP,
+        sizeof(EnBoom),
+        (ActorFunc)EnBoom_Init,
+        (ActorFunc)EnBoom_Destroy,
+        (ActorFunc)EnBoom_Update,
+        (ActorFunc)EnBoom_Draw,
+        (ActorFunc)EnBoom_Reset,
+    };
+
+    sQuadInit = {
+        {
+            COLTYPE_NONE,
+            AT_ON | AT_TYPE_PLAYER,
+            AC_NONE,
+            OC1_NONE,
+            OC2_TYPE_PLAYER,
+            COLSHAPE_QUAD,
+        },
+        {
+            ELEMTYPE_UNK2,
+            { 0x00000010, 0x00, 0x01 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_NEAREST | TOUCH_SFX_NORMAL,
+            BUMP_NONE,
+            OCELEM_NONE,
+        },
+        { { { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } } },
+    };
+
 }

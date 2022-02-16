@@ -22,6 +22,7 @@
 #define FLAGS 0
 
 void EnInsect_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnInsect_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnInsect_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnInsect_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnInsect_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -42,6 +43,11 @@ void func_80A7D26C(EnInsect* pthis, GlobalContext* globalCtx);
 void func_80A7D39C(EnInsect* pthis);
 void func_80A7D460(EnInsect* pthis, GlobalContext* globalCtx);
 
+static Vec3f accel_64 = { 0.0f, 0.0f, 0.0f };
+
+static Vec3f unused_64 = { 0.0f, 0.0f, 0.0f };
+
+
 static f32 D_80A7DEB0 = 0.0f;
 static s16 D_80A7DEB4 = 0;
 static s16 D_80A7DEB8 = 0;
@@ -56,6 +62,7 @@ ActorInit En_Insect_InitVars = {
     (ActorFunc)EnInsect_Destroy,
     (ActorFunc)EnInsect_Update,
     (ActorFunc)EnInsect_Draw,
+    (ActorFunc)EnInsect_Reset,
 };
 
 static ColliderJntSphElementInit sColliderItemInit[1] = {
@@ -411,8 +418,6 @@ void func_80A7CBC8(EnInsect* pthis) {
 }
 
 void func_80A7CC3C(EnInsect* pthis, GlobalContext* globalCtx) {
-    static Vec3f accel = { 0.0f, 0.0f, 0.0f };
-    static Vec3f unused = { 0.0f, 0.0f, 0.0f };
     s32 pad[2];
     Vec3f velocity;
 
@@ -431,7 +436,7 @@ void func_80A7CC3C(EnInsect* pthis, GlobalContext* globalCtx) {
         velocity.x = Math_SinS(pthis->actor.shape.rot.y) * -0.6f;
         velocity.y = Math_SinS(pthis->actor.shape.rot.x) * 0.6f;
         velocity.z = Math_CosS(pthis->actor.shape.rot.y) * -0.6f;
-        func_800286CC(globalCtx, &pthis->actor.world.pos, &velocity, &accel, Rand_ZeroOne() * 5.0f + 8.0f,
+        func_800286CC(globalCtx, &pthis->actor.world.pos, &velocity, &accel_64, Rand_ZeroOne() * 5.0f + 8.0f,
                       Rand_ZeroOne() * 5.0f + 8.0f);
     }
 
@@ -801,4 +806,43 @@ void EnInsect_Draw(Actor* thisx, GlobalContext* globalCtx) {
     SkelAnime_DrawOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, NULL, NULL, NULL);
     Collider_UpdateSpheres(0, &pthis->collider);
     D_80A7DEB4 = 0;
+}
+
+void EnInsect_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    accel_64 = { 0.0f, 0.0f, 0.0f };
+
+    unused_64 = { 0.0f, 0.0f, 0.0f };
+
+    D_80A7DEB0 = 0.0f;
+
+    D_80A7DEB4 = 0;
+
+    D_80A7DEB8 = 0;
+
+    En_Insect_InitVars = {
+        ACTOR_EN_INSECT,
+        ACTORCAT_ITEMACTION,
+        FLAGS,
+        OBJECT_GAMEPLAY_KEEP,
+        sizeof(EnInsect),
+        (ActorFunc)EnInsect_Init,
+        (ActorFunc)EnInsect_Destroy,
+        (ActorFunc)EnInsect_Update,
+        (ActorFunc)EnInsect_Draw,
+        (ActorFunc)EnInsect_Reset,
+    };
+
+    sColliderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_PLAYER | OC1_TYPE_1,
+            OC2_TYPE_1,
+            COLSHAPE_JNTSPH,
+        },
+        1,
+        sColliderItemInit,
+    };
+
 }

@@ -19,6 +19,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3 | ACTOR_FLAG_4 | ACTOR_FLAG_5 | ACTOR_FLAG_27)
 
 void EnTakaraMan_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnTakaraMan_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnTakaraMan_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnTakaraMan_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnTakaraMan_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -30,6 +31,12 @@ void func_80B17934(EnTakaraMan* pthis, GlobalContext* globalCtx);
 void func_80B17A6C(EnTakaraMan* pthis, GlobalContext* globalCtx);
 void func_80B17AC4(EnTakaraMan* pthis, GlobalContext* globalCtx);
 
+static void* eyeTextures_37[] = {
+    object_ts_Tex_000970,
+    object_ts_Tex_000D70,
+};
+
+
 ActorInit En_Takara_Man_InitVars = {
     ACTOR_EN_TAKARA_MAN,
     ACTORCAT_NPC,
@@ -40,6 +47,7 @@ ActorInit En_Takara_Man_InitVars = {
     (ActorFunc)EnTakaraMan_Destroy,
     (ActorFunc)EnTakaraMan_Update,
     (ActorFunc)EnTakaraMan_Draw,
+    (ActorFunc)EnTakaraMan_Reset,
 };
 
 static u8 sTakaraIsInitialized = false;
@@ -220,18 +228,32 @@ s32 EnTakaraMan_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** 
 }
 
 void EnTakaraMan_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static void* eyeTextures[] = {
-        object_ts_Tex_000970,
-        object_ts_Tex_000D70,
-    };
     EnTakaraMan* pthis = (EnTakaraMan*)thisx;
 
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_en_takara_man.c", 528);
 
     func_80093D18(globalCtx->state.gfxCtx);
-    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures[pthis->eyeTextureIdx]));
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures_37[pthis->eyeTextureIdx]));
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           EnTakaraMan_OverrideLimbDraw, NULL, pthis);
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_takara_man.c", 544);
+}
+
+void EnTakaraMan_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_Takara_Man_InitVars = {
+        ACTOR_EN_TAKARA_MAN,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_TS,
+        sizeof(EnTakaraMan),
+        (ActorFunc)EnTakaraMan_Init,
+        (ActorFunc)EnTakaraMan_Destroy,
+        (ActorFunc)EnTakaraMan_Update,
+        (ActorFunc)EnTakaraMan_Draw,
+        (ActorFunc)EnTakaraMan_Reset,
+    };
+
+    sTakaraIsInitialized = false;
+
 }

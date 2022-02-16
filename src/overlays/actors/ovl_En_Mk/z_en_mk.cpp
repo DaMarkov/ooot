@@ -22,11 +22,15 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3 | ACTOR_FLAG_4)
 
 void EnMk_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnMk_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnMk_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnMk_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnMk_Draw(Actor* thisx, GlobalContext* globalCtx);
 
 void EnMk_Wait(EnMk* pthis, GlobalContext* globalCtx);
+
+static Vec3f D_80AAD64C_42 = { 1000.0f, -100.0f, 0.0f };
+
 
 ActorInit En_Mk_InitVars = {
     ACTOR_EN_MK,
@@ -38,6 +42,7 @@ ActorInit En_Mk_InitVars = {
     (ActorFunc)EnMk_Destroy,
     (ActorFunc)EnMk_Update,
     (ActorFunc)EnMk_Draw,
+    (ActorFunc)EnMk_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -366,11 +371,10 @@ s32 EnMk_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, 
 }
 
 void EnMk_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx) {
-    static Vec3f D_80AAD64C = { 1000.0f, -100.0f, 0.0f };
     EnMk* pthis = (EnMk*)thisx;
 
     if (limbIndex == 11) {
-        Matrix_MultVec3f(&D_80AAD64C, &pthis->actor.focus.pos);
+        Matrix_MultVec3f(&D_80AAD64C_42, &pthis->actor.focus.pos);
     }
 }
 
@@ -380,4 +384,42 @@ void EnMk_Draw(Actor* thisx, GlobalContext* globalCtx) {
     func_800943C8(globalCtx->state.gfxCtx);
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           EnMk_OverrideLimbDraw, EnMk_PostLimbDraw, &pthis->actor);
+}
+
+void EnMk_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    D_80AAD64C_42 = { 1000.0f, -100.0f, 0.0f };
+
+    En_Mk_InitVars = {
+        ACTOR_EN_MK,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_MK,
+        sizeof(EnMk),
+        (ActorFunc)EnMk_Init,
+        (ActorFunc)EnMk_Destroy,
+        (ActorFunc)EnMk_Update,
+        (ActorFunc)EnMk_Draw,
+        (ActorFunc)EnMk_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_ENEMY,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 30, 40, 0, { 0, 0, 0 } },
+    };
+
 }

@@ -28,25 +28,9 @@
 #define GE2_STATE_CAPTURING (1 << 3)
 #define GE2_STATE_TALKED (1 << 4)
 
-typedef enum {
-    /* 0 */ GE2_TYPE_PATROLLING,
-    /* 1 */ GE2_TYPE_STATIONARY,
-    /* 2 */ GE2_TYPE_GERUDO_CARD_GIVER
-} EnGe2Type;
-
-typedef enum {
-    /* 0 */ GE2_ACTION_WALK,
-    /* 1 */ GE2_ACTION_ABOUTTURN,
-    /* 2 */ GE2_ACTION_TURNPLAYERSPOTTED,
-    /* 3 */ GE2_ACTION_KNOCKEDOUT,
-    /* 4 */ GE2_ACTION_CAPTURETURN,
-    /* 5 */ GE2_ACTION_CAPTURECHARGE,
-    /* 6 */ GE2_ACTION_CAPTURECLOSE,
-    /* 7 */ GE2_ACTION_STAND,
-    /* 8 */ GE2_ACTION_WAITLOOKATPLAYER
-} EnGe2Action;
 
 void EnGe2_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnGe2_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnGe2_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnGe2_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnGe2_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -68,6 +52,19 @@ void EnGe2_UpdateFriendly(Actor* thisx, GlobalContext* globalCtx);
 void EnGe2_UpdateAfterTalk(Actor* thisx, GlobalContext* globalCtx);
 void EnGe2_UpdateStunned(Actor* thisx, GlobalContext* globalCtx);
 
+static Vec3f effectVelocity_62 = { 0.0f, -0.05f, 0.0f };
+
+static Vec3f effectAccel_62 = { 0.0f, -0.025f, 0.0f };
+
+static Color_RGBA8 effectPrimColor_62 = { 255, 255, 255, 0 };
+
+static Color_RGBA8 effectEnvColor_62 = { 255, 150, 0, 0 };
+
+static Vec3f D_80A343B0_83 = { 600.0f, 700.0f, 0.0f };
+
+static void* eyeTextures_84[] = { gGerudoPurpleEyeOpenTex, gGerudoPurpleEyeHalfTex, gGerudoPurpleEyeClosedTex };
+
+
 ActorInit En_Ge2_InitVars = {
     ACTOR_EN_GE2,
     ACTORCAT_NPC,
@@ -78,6 +75,7 @@ ActorInit En_Ge2_InitVars = {
     (ActorFunc)EnGe2_Destroy,
     (ActorFunc)EnGe2_Update,
     (ActorFunc)EnGe2_Draw,
+    (ActorFunc)EnGe2_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -300,10 +298,6 @@ void EnGe2_CaptureTurn(EnGe2* pthis, GlobalContext* globalCtx) {
 }
 
 void EnGe2_KnockedOut(EnGe2* pthis, GlobalContext* globalCtx) {
-    static Vec3f effectVelocity = { 0.0f, -0.05f, 0.0f };
-    static Vec3f effectAccel = { 0.0f, -0.025f, 0.0f };
-    static Color_RGBA8 effectPrimColor = { 255, 255, 255, 0 };
-    static Color_RGBA8 effectEnvColor = { 255, 150, 0, 0 };
     s32 effectAngle;
     Vec3f effectPos;
 
@@ -313,8 +307,8 @@ void EnGe2_KnockedOut(EnGe2* pthis, GlobalContext* globalCtx) {
         effectPos.x = pthis->actor.focus.pos.x + (Math_CosS(effectAngle) * 5.0f);
         effectPos.y = pthis->actor.focus.pos.y + 10.0f;
         effectPos.z = pthis->actor.focus.pos.z + (Math_SinS(effectAngle) * 5.0f);
-        EffectSsKiraKira_SpawnDispersed(globalCtx, &effectPos, &effectVelocity, &effectAccel, &effectPrimColor,
-                                        &effectEnvColor, 1000, 16);
+        EffectSsKiraKira_SpawnDispersed(globalCtx, &effectPos, &effectVelocity_62, &effectAccel_62, &effectPrimColor_62,
+                                        &effectEnvColor_62, 1000, 16);
     }
 }
 
@@ -645,26 +639,70 @@ s32 EnGe2_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList,
 }
 
 void EnGe2_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx) {
-    static Vec3f D_80A343B0 = { 600.0f, 700.0f, 0.0f };
     EnGe2* pthis = (EnGe2*)thisx;
 
     if (limbIndex == 6) {
-        Matrix_MultVec3f(&D_80A343B0, &pthis->actor.focus.pos);
+        Matrix_MultVec3f(&D_80A343B0_83, &pthis->actor.focus.pos);
     }
 }
 
 void EnGe2_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static void* eyeTextures[] = { gGerudoPurpleEyeOpenTex, gGerudoPurpleEyeHalfTex, gGerudoPurpleEyeClosedTex };
     s32 pad;
     EnGe2* pthis = (EnGe2*)thisx;
 
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_en_ge2.c", 1274);
 
     func_800943C8(globalCtx->state.gfxCtx);
-    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures[pthis->eyeIndex]));
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures_84[pthis->eyeIndex]));
     func_8002EBCC(&pthis->actor, globalCtx, 0);
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           EnGe2_OverrideLimbDraw, EnGe2_PostLimbDraw, pthis);
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_ge2.c", 1291);
+}
+
+void EnGe2_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    effectVelocity_62 = { 0.0f, -0.05f, 0.0f };
+
+    effectAccel_62 = { 0.0f, -0.025f, 0.0f };
+
+    effectPrimColor_62 = { 255, 255, 255, 0 };
+
+    effectEnvColor_62 = { 255, 150, 0, 0 };
+
+    D_80A343B0_83 = { 600.0f, 700.0f, 0.0f };
+
+    En_Ge2_InitVars = {
+        ACTOR_EN_GE2,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_GLA,
+        sizeof(EnGe2),
+        (ActorFunc)EnGe2_Init,
+        (ActorFunc)EnGe2_Destroy,
+        (ActorFunc)EnGe2_Update,
+        (ActorFunc)EnGe2_Draw,
+        (ActorFunc)EnGe2_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x000007A2, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 20, 60, 0, { 0, 0, 0 } },
+    };
+
 }

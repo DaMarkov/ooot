@@ -15,6 +15,7 @@
 #define FLAGS 0
 
 void BgIceShelter_Init(Actor* thisx, GlobalContext* globalCtx);
+void BgIceShelter_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BgIceShelter_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BgIceShelter_Update(Actor* thisx, GlobalContext* globalCtx);
 void BgIceShelter_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -24,6 +25,15 @@ void func_808911BC(BgIceShelter* pthis);
 
 void func_8089107C(BgIceShelter* pthis, GlobalContext* globalCtx);
 void func_808911D4(BgIceShelter* pthis, GlobalContext* globalCtx);
+
+static s16 cylinderRadii_29[] = { 47, 33, 44, 41, 100 };
+
+static s16 cylinderHeights_29[] = { 80, 54, 90, 60, 200 };
+
+static Vec3f kzIceScale_33 = { 0.18f, 0.27f, 0.24f };
+
+static f32 D_808917B4_38[] = { -1.0f, 1.0f };
+
 
 ActorInit Bg_Ice_Shelter_InitVars = {
     ACTOR_BG_ICE_SHELTER,
@@ -35,6 +45,7 @@ ActorInit Bg_Ice_Shelter_InitVars = {
     (ActorFunc)BgIceShelter_Destroy,
     (ActorFunc)BgIceShelter_Update,
     (ActorFunc)BgIceShelter_Draw,
+    (ActorFunc)BgIceShelter_Reset,
 };
 
 static f32 sScales[] = { 0.1f, 0.06f, 0.1f, 0.1f, 0.25f };
@@ -83,8 +94,6 @@ static ColliderCylinderInit D_80891738 = {
 };
 
 void func_80890740(BgIceShelter* pthis, GlobalContext* globalCtx) {
-    static s16 cylinderRadii[] = { 47, 33, 44, 41, 100 };
-    static s16 cylinderHeights[] = { 80, 54, 90, 60, 200 };
     s32 pad;
     s32 type = (pthis->dyna.actor.params >> 8) & 7;
 
@@ -92,15 +101,15 @@ void func_80890740(BgIceShelter* pthis, GlobalContext* globalCtx) {
     Collider_SetCylinder(globalCtx, &pthis->cylinder1, &pthis->dyna.actor, &D_8089170C);
     Collider_UpdateCylinder(&pthis->dyna.actor, &pthis->cylinder1);
 
-    pthis->cylinder1.dim.radius = cylinderRadii[type];
-    pthis->cylinder1.dim.height = cylinderHeights[type];
+    pthis->cylinder1.dim.radius = cylinderRadii_29[type];
+    pthis->cylinder1.dim.height = cylinderHeights_29[type];
 
     if (type == 0 || type == 1 || type == 4) {
         Collider_InitCylinder(globalCtx, &pthis->cylinder2);
         Collider_SetCylinder(globalCtx, &pthis->cylinder2, &pthis->dyna.actor, &D_80891738);
         Collider_UpdateCylinder(&pthis->dyna.actor, &pthis->cylinder2);
-        pthis->cylinder2.dim.radius = cylinderRadii[type];
-        pthis->cylinder2.dim.height = cylinderHeights[type];
+        pthis->cylinder2.dim.radius = cylinderRadii_29[type];
+        pthis->cylinder2.dim.height = cylinderHeights_29[type];
     }
 
     if (type == 4) {
@@ -141,7 +150,6 @@ static InitChainEntry sInitChain[] = {
 };
 
 void BgIceShelter_Init(Actor* thisx, GlobalContext* globalCtx) {
-    static Vec3f kzIceScale = { 0.18f, 0.27f, 0.24f };
     BgIceShelter* pthis = (BgIceShelter*)thisx;
     s16 type = (pthis->dyna.actor.params >> 8) & 7;
 
@@ -155,7 +163,7 @@ void BgIceShelter_Init(Actor* thisx, GlobalContext* globalCtx) {
     }
 
     if (type == 4) {
-        Math_Vec3f_Copy(&pthis->dyna.actor.scale, &kzIceScale);
+        Math_Vec3f_Copy(&pthis->dyna.actor.scale, &kzIceScale_33);
     } else {
         Actor_SetScale(&pthis->dyna.actor, sScales[type]);
     }
@@ -249,7 +257,6 @@ void func_80890B8C(BgIceShelter* pthis, GlobalContext* globalCtx, f32 chance, f3
 }
 
 void func_80890E00(BgIceShelter* pthis, GlobalContext* globalCtx, f32 chance, f32 arg3) {
-    static f32 D_808917B4[] = { -1.0f, 1.0f };
     Vec3f* icePos;
     s16 frames;
     s32 pad[2];
@@ -268,7 +275,7 @@ void func_80890E00(BgIceShelter* pthis, GlobalContext* globalCtx, f32 chance, f3
             continue;
         }
 
-        posOffset.x = (D_808917A4[frames] + ((Rand_ZeroOne() * 12.0f) - 6.0f)) * D_808917B4[i];
+        posOffset.x = (D_808917A4[frames] + ((Rand_ZeroOne() * 12.0f) - 6.0f)) * D_808917B4_38[i];
         posOffset.y = 15.0f;
         posOffset.z = ((84.0f - posOffset.x) * 0.2f) + (Rand_ZeroOne() * 20.0f);
 
@@ -446,4 +453,66 @@ void BgIceShelter_Draw(Actor* thisx, GlobalContext* globalCtx2) {
     }
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_bg_ice_shelter.c", 815);
+}
+
+void BgIceShelter_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    kzIceScale_33 = { 0.18f, 0.27f, 0.24f };
+
+    Bg_Ice_Shelter_InitVars = {
+        ACTOR_BG_ICE_SHELTER,
+        ACTORCAT_BG,
+        FLAGS,
+        OBJECT_ICE_OBJECTS,
+        sizeof(BgIceShelter),
+        (ActorFunc)BgIceShelter_Init,
+        (ActorFunc)BgIceShelter_Destroy,
+        (ActorFunc)BgIceShelter_Update,
+        (ActorFunc)BgIceShelter_Draw,
+        (ActorFunc)BgIceShelter_Reset,
+    };
+
+    sDustPrimColor = { 250, 250, 250, 255 };
+
+    sDustEnvColor = { 180, 180, 180, 255 };
+
+    D_8089170C = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_OTHER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 0, 0, 0, { 0, 0, 0 } },
+    };
+
+    D_80891738 = {
+        {
+            COLTYPE_HARD,
+            AT_NONE,
+            AC_ON | AC_HARD | AC_TYPE_PLAYER,
+            OC1_NONE,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x4FC1FFF6, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_NONE,
+        },
+        { 0, 0, 0, { 0, 0, 0 } },
+    };
+
 }

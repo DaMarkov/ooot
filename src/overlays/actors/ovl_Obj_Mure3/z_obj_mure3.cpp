@@ -15,6 +15,7 @@
 #define FLAGS 0
 
 void ObjMure3_Init(Actor* thisx, GlobalContext* globalCtx);
+void ObjMure3_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void ObjMure3_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void ObjMure3_Update(Actor* thisx, GlobalContext* globalCtx);
 
@@ -24,6 +25,9 @@ void func_80B9AF54(ObjMure3* pthis);
 void func_80B9AF64(ObjMure3* pthis, GlobalContext* globalCtx);
 void func_80B9AFEC(ObjMure3* pthis);
 void func_80B9AFFC(ObjMure3* pthis, GlobalContext* globalCtx);
+
+
+
 
 ActorInit Obj_Mure3_InitVars = {
     ACTOR_OBJ_MURE3,
@@ -35,6 +39,7 @@ ActorInit Obj_Mure3_InitVars = {
     (ActorFunc)ObjMure3_Destroy,
     (ActorFunc)ObjMure3_Update,
     NULL,
+    (ActorFunc)ObjMure3_Reset,
 };
 
 static s16 sRupeeCounts[] = { 5, 5, 7, 0 };
@@ -173,12 +178,13 @@ void func_80B9AF54(ObjMure3* pthis) {
     pthis->actionFunc = func_80B9AF64;
 }
 
+static ObjMure3SpawnFunc spawnFuncs_33[] = {func_80B9A9D0, func_80B9AA90, func_80B9ABA0};
+
 void func_80B9AF64(ObjMure3* pthis, GlobalContext* globalCtx) {
-    static ObjMure3SpawnFunc spawnFuncs[] = { func_80B9A9D0, func_80B9AA90, func_80B9ABA0 };
 
     if (Math3D_Dist1DSq(pthis->actor.projectedPos.x, pthis->actor.projectedPos.z) < SQ(1150.0f)) {
         pthis->actor.flags |= ACTOR_FLAG_4;
-        spawnFuncs[(pthis->actor.params >> 13) & 7](pthis, globalCtx);
+        spawnFuncs_33[(pthis->actor.params >> 13) & 7](pthis, globalCtx);
         func_80B9AFEC(pthis);
     }
 }
@@ -200,4 +206,20 @@ void ObjMure3_Update(Actor* thisx, GlobalContext* globalCtx) {
     ObjMure3* pthis = (ObjMure3*)thisx;
 
     pthis->actionFunc(pthis, globalCtx);
+}
+
+void ObjMure3_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    Obj_Mure3_InitVars = {
+        ACTOR_OBJ_MURE3,
+        ACTORCAT_BG,
+        FLAGS,
+        OBJECT_GAMEPLAY_KEEP,
+        sizeof(ObjMure3),
+        (ActorFunc)ObjMure3_Init,
+        (ActorFunc)ObjMure3_Destroy,
+        (ActorFunc)ObjMure3_Update,
+        NULL,
+        (ActorFunc)ObjMure3_Reset,
+    };
+
 }

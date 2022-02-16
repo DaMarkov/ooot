@@ -24,6 +24,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3 | ACTOR_FLAG_4)
 
 void EnIn_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnIn_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnIn_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnIn_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnIn_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -43,6 +44,9 @@ void func_80A7A940(EnIn* pthis, GlobalContext* globalCtx);
 void func_80A7AA40(EnIn* pthis, GlobalContext* globalCtx);
 void func_80A7A4BC(EnIn* pthis, GlobalContext* globalCtx);
 
+static void* eyeTextures_84[] = { gIngoEyeOpenTex, gIngoEyeHalfTex, gIngoEyeClosedTex, gIngoEyeClosed2Tex };
+
+
 ActorInit En_In_InitVars = {
     ACTOR_EN_IN,
     ACTORCAT_NPC,
@@ -53,6 +57,7 @@ ActorInit En_In_InitVars = {
     (ActorFunc)EnIn_Destroy,
     (ActorFunc)EnIn_Update,
     (ActorFunc)EnIn_Draw,
+    (ActorFunc)EnIn_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -994,17 +999,58 @@ void EnIn_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec
 }
 
 void EnIn_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static void* eyeTextures[] = { gIngoEyeOpenTex, gIngoEyeHalfTex, gIngoEyeClosedTex, gIngoEyeClosed2Tex };
 
     EnIn* pthis = (EnIn*)thisx;
 
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_en_in.c", 2384);
     if (pthis->actionFunc != func_80A79FB0) {
         func_80093D18(globalCtx->state.gfxCtx);
-        gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures[pthis->eyeIndex]));
+        gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures_84[pthis->eyeIndex]));
         gSPSegment(POLY_OPA_DISP++, 0x09, SEGMENTED_TO_VIRTUAL(gIngoHeadGradient2Tex));
         SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable,
                               pthis->skelAnime.dListCount, EnIn_OverrideLimbDraw, EnIn_PostLimbDraw, &pthis->actor);
     }
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_in.c", 2416);
+}
+
+void EnIn_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_In_InitVars = {
+        ACTOR_EN_IN,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_IN,
+        sizeof(EnIn),
+        (ActorFunc)EnIn_Init,
+        (ActorFunc)EnIn_Destroy,
+        (ActorFunc)EnIn_Update,
+        (ActorFunc)EnIn_Draw,
+        (ActorFunc)EnIn_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_NONE,
+            OCELEM_ON,
+        },
+        { 18, 46, 0, { 0, 0, 0 } },
+    };
+
+    sColChkInfoInit = {
+        0, 0, 0, 0, MASS_IMMOVABLE,
+    };
+
+    D_80A7B998 = 0;
+
 }

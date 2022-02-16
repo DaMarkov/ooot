@@ -19,6 +19,7 @@
 #define FLAGS (ACTOR_FLAG_4 | ACTOR_FLAG_5)
 
 void EnBdfire_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnBdfire_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnBdfire_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnBdfire_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnBdfire_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -26,6 +27,13 @@ void EnBdfire_Draw(Actor* thisx, GlobalContext* globalCtx);
 void EnBdfire_DrawFire(EnBdfire* pthis, GlobalContext* globalCtx);
 void func_809BC2A4(EnBdfire* pthis, GlobalContext* globalCtx);
 void func_809BC598(EnBdfire* pthis, GlobalContext* globalCtx);
+
+static void* D_809BCB10_30[] = {
+    object_kingdodongo_Tex_0264E0, object_kingdodongo_Tex_0274E0, object_kingdodongo_Tex_0284E0,
+    object_kingdodongo_Tex_0294E0, object_kingdodongo_Tex_02A4E0, object_kingdodongo_Tex_02B4E0,
+    object_kingdodongo_Tex_02C4E0, object_kingdodongo_Tex_02D4E0,
+};
+
 
 ActorInit En_Bdfire_InitVars = {
     0,
@@ -37,6 +45,7 @@ ActorInit En_Bdfire_InitVars = {
     (ActorFunc)EnBdfire_Destroy,
     (ActorFunc)EnBdfire_Update,
     (ActorFunc)EnBdfire_Draw,
+    (ActorFunc)EnBdfire_Reset,
 };
 
 void EnBdfire_SetupAction(EnBdfire* pthis, EnBdfireActionFunc actionFunc) {
@@ -204,11 +213,6 @@ void EnBdfire_Update(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void EnBdfire_DrawFire(EnBdfire* pthis, GlobalContext* globalCtx) {
-    static void* D_809BCB10[] = {
-        object_kingdodongo_Tex_0264E0, object_kingdodongo_Tex_0274E0, object_kingdodongo_Tex_0284E0,
-        object_kingdodongo_Tex_0294E0, object_kingdodongo_Tex_02A4E0, object_kingdodongo_Tex_02B4E0,
-        object_kingdodongo_Tex_02C4E0, object_kingdodongo_Tex_02D4E0,
-    };
     s16 temp;
     s32 pad;
 
@@ -223,7 +227,7 @@ void EnBdfire_DrawFire(EnBdfire* pthis, GlobalContext* globalCtx) {
     gDPPipeSync(POLY_XLU_DISP++);
     gDPSetPrimColor(POLY_XLU_DISP++, 0, 0, 255, 255, 100, (s8)pthis->unk_18C);
     gDPSetEnvColor(POLY_XLU_DISP++, 200, 0, 0, 0);
-    gSPSegment(POLY_XLU_DISP++, 8, SEGMENTED_TO_VIRTUAL(D_809BCB10[temp]));
+    gSPSegment(POLY_XLU_DISP++, 8, SEGMENTED_TO_VIRTUAL(D_809BCB10_30[temp]));
     Matrix_Translate(0.0f, 11.0f, 0.0f, MTXMODE_APPLY);
     gSPMatrix(POLY_XLU_DISP++, Matrix_NewMtx(globalCtx->state.gfxCtx, "../z_en_bdfire.c", 647),
               G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
@@ -235,4 +239,20 @@ void EnBdfire_Draw(Actor* thisx, GlobalContext* globalCtx) {
     EnBdfire* pthis = (EnBdfire*)thisx;
 
     pthis->drawFunc(pthis, globalCtx);
+}
+
+void EnBdfire_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_Bdfire_InitVars = {
+        0,
+        ACTORCAT_ENEMY,
+        FLAGS,
+        OBJECT_KINGDODONGO,
+        sizeof(EnBdfire),
+        (ActorFunc)EnBdfire_Init,
+        (ActorFunc)EnBdfire_Destroy,
+        (ActorFunc)EnBdfire_Update,
+        (ActorFunc)EnBdfire_Draw,
+        (ActorFunc)EnBdfire_Reset,
+    };
+
 }

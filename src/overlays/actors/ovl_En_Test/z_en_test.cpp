@@ -26,6 +26,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_2 | ACTOR_FLAG_4)
 
 void EnTest_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnTest_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnTest_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnTest_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnTest_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -76,6 +77,35 @@ void func_808633E8(EnTest* pthis, GlobalContext* globalCtx);
 void func_80862FA8(EnTest* pthis, GlobalContext* globalCtx);
 
 s32 EnTest_ReactToProjectile(GlobalContext* globalCtx, EnTest* pthis);
+
+static Vec3f unused1_143 = { 1100.0f, -700.0f, 0.0f };
+
+static Vec3f D_80864658_143 = { 300.0f, 0.0f, 0.0f };
+
+static Vec3f D_80864664_143 = { 3400.0f, 0.0f, 0.0f };
+
+static Vec3f D_80864670_143 = { 0.0f, 0.0f, 0.0f };
+
+static Vec3f D_8086467C_143 = { 7000.0f, 1000.0f, 0.0f };
+
+static Vec3f D_80864688_143 = { 3000.0f, -2000.0f, -1000.0f };
+
+static Vec3f D_80864694_143 = { 3000.0f, -2000.0f, 1000.0f };
+
+static Vec3f D_808646A0_143 = { -1300.0f, 1100.0f, 0.0f };
+
+static Vec3f unused2_143 = { -3000.0f, 1900.0f, 800.0f };
+
+static Vec3f unused3_143 = { -3000.0f, -1100.0f, 800.0f };
+
+static Vec3f unused4_143 = { 1900.0f, 1900.0f, 800.0f };
+
+static Vec3f unused5_143 = { -3000.0f, -1100.0f, 800.0f };
+
+static Vec3f unused6_143 = { 1900.0f, -1100.0f, 800.0f };
+
+static Vec3f unused7_143 = { 1900.0f, 1900.0f, 800.0f };
+
 
 static u8 sJointCopyFlags[] = {
     false, // STALFOS_LIMB_NONE
@@ -151,6 +181,7 @@ ActorInit En_Test_InitVars = {
     (ActorFunc)EnTest_Destroy,
     (ActorFunc)EnTest_Update,
     (ActorFunc)EnTest_Draw,
+    (ActorFunc)EnTest_Reset,
 };
 
 static ColliderCylinderInit sBodyColliderInit = {
@@ -212,15 +243,6 @@ static ColliderQuadInit sSwordColliderInit = {
     },
     { { { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } } },
 };
-
-typedef enum {
-    /* 0x0 */ STALFOS_DMGEFF_NORMAL,
-    /* 0x1 */ STALFOS_DMGEFF_STUN,
-    /* 0x6 */ STALFOS_DMGEFF_FIREMAGIC = 6,
-    /* 0xD */ STALFOS_DMGEFF_SLING = 0xD,
-    /* 0xE */ STALFOS_DMGEFF_LIGHT,
-    /* 0xF */ STALFOS_DMGEFF_FREEZE
-} StalfosDamageEffect;
 
 static DamageTable sDamageTable = {
     /* Deku nut      */ DMG_ENTRY(0, STALFOS_DMGEFF_STUN),
@@ -1855,20 +1877,6 @@ s32 EnTest_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList
 }
 
 void EnTest_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx) {
-    static Vec3f unused1 = { 1100.0f, -700.0f, 0.0f };
-    static Vec3f D_80864658 = { 300.0f, 0.0f, 0.0f };
-    static Vec3f D_80864664 = { 3400.0f, 0.0f, 0.0f };
-    static Vec3f D_80864670 = { 0.0f, 0.0f, 0.0f };
-    static Vec3f D_8086467C = { 7000.0f, 1000.0f, 0.0f };
-    static Vec3f D_80864688 = { 3000.0f, -2000.0f, -1000.0f };
-    static Vec3f D_80864694 = { 3000.0f, -2000.0f, 1000.0f };
-    static Vec3f D_808646A0 = { -1300.0f, 1100.0f, 0.0f };
-    static Vec3f unused2 = { -3000.0f, 1900.0f, 800.0f };
-    static Vec3f unused3 = { -3000.0f, -1100.0f, 800.0f };
-    static Vec3f unused4 = { 1900.0f, 1900.0f, 800.0f };
-    static Vec3f unused5 = { -3000.0f, -1100.0f, 800.0f };
-    static Vec3f unused6 = { 1900.0f, -1100.0f, 800.0f };
-    static Vec3f unused7 = { 1900.0f, 1900.0f, 800.0f };
     s32 bodyPart = -1;
     Vec3f sp70;
     Vec3f sp64;
@@ -1879,17 +1887,17 @@ void EnTest_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, V
     BodyBreak_SetInfo(&pthis->bodyBreak, limbIndex, 0, 60, 60, dList, BODYBREAK_OBJECT_DEFAULT);
 
     if (limbIndex == STALFOS_LIMB_SWORD) {
-        Matrix_MultVec3f(&D_8086467C, &pthis->swordCollider.dim.quad[1]);
-        Matrix_MultVec3f(&D_80864688, &pthis->swordCollider.dim.quad[0]);
-        Matrix_MultVec3f(&D_80864694, &pthis->swordCollider.dim.quad[3]);
-        Matrix_MultVec3f(&D_808646A0, &pthis->swordCollider.dim.quad[2]);
+        Matrix_MultVec3f(&D_8086467C_143, &pthis->swordCollider.dim.quad[1]);
+        Matrix_MultVec3f(&D_80864688_143, &pthis->swordCollider.dim.quad[0]);
+        Matrix_MultVec3f(&D_80864694_143, &pthis->swordCollider.dim.quad[3]);
+        Matrix_MultVec3f(&D_808646A0_143, &pthis->swordCollider.dim.quad[2]);
 
         Collider_SetQuadVertices(&pthis->swordCollider, &pthis->swordCollider.dim.quad[0],
                                  &pthis->swordCollider.dim.quad[1], &pthis->swordCollider.dim.quad[2],
                                  &pthis->swordCollider.dim.quad[3]);
 
-        Matrix_MultVec3f(&D_80864664, &sp70);
-        Matrix_MultVec3f(&D_80864670, &sp64);
+        Matrix_MultVec3f(&D_80864664_143, &sp70);
+        Matrix_MultVec3f(&D_80864670_143, &sp64);
 
         if ((pthis->swordState >= 1) &&
             ((pthis->actor.params != STALFOS_TYPE_INVISIBLE) || (globalCtx->actorCtx.unk_03 != 0))) {
@@ -1900,18 +1908,18 @@ void EnTest_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, V
         }
 
     } else if ((limbIndex == STALFOS_LIMB_SHIELD) && (pthis->unk_7DE != 0)) {
-        Matrix_MultVec3f(&D_80864670, &sp64);
+        Matrix_MultVec3f(&D_80864670_143, &sp64);
 
         pthis->shieldCollider.dim.pos.x = sp64.x;
         pthis->shieldCollider.dim.pos.y = sp64.y;
         pthis->shieldCollider.dim.pos.z = sp64.z;
     } else {
-        Actor_SetFeetPos(&pthis->actor, limbIndex, STALFOS_LIMB_FOOT_L, &D_80864658, STALFOS_LIMB_ANKLE_R, &D_80864658);
+        Actor_SetFeetPos(&pthis->actor, limbIndex, STALFOS_LIMB_FOOT_L, &D_80864658_143, STALFOS_LIMB_ANKLE_R, &D_80864658_143);
 
         if ((limbIndex == STALFOS_LIMB_FOOT_L) || (limbIndex == STALFOS_LIMB_ANKLE_R)) {
             if ((pthis->unk_7C8 == 0x15) || (pthis->unk_7C8 == 0x16)) {
                 if (pthis->actor.speedXZ != 0.0f) {
-                    Matrix_MultVec3f(&D_80864658, &sp64);
+                    Matrix_MultVec3f(&D_80864658_143, &sp64);
                     Actor_SpawnFloorDustRing(globalCtx, &pthis->actor, &sp64, 10.0f, 1, 8.0f, 0x64, 0xF, 0);
                 }
             }
@@ -1950,7 +1958,7 @@ void EnTest_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, V
         }
 
         if (bodyPart >= 0) {
-            Matrix_MultVec3f(&D_80864670, &sp50);
+            Matrix_MultVec3f(&D_80864670_143, &sp50);
 
             pthis->bodyPartsPos[bodyPart].x = sp50.x;
             pthis->bodyPartsPos[bodyPart].y = sp50.y;
@@ -2069,4 +2077,143 @@ s32 EnTest_ReactToProjectile(GlobalContext* globalCtx, EnTest* pthis) {
     }
 
     return false;
+}
+
+void EnTest_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    unused1_143 = { 1100.0f, -700.0f, 0.0f };
+
+    D_80864658_143 = { 300.0f, 0.0f, 0.0f };
+
+    D_80864664_143 = { 3400.0f, 0.0f, 0.0f };
+
+    D_80864670_143 = { 0.0f, 0.0f, 0.0f };
+
+    D_8086467C_143 = { 7000.0f, 1000.0f, 0.0f };
+
+    D_80864688_143 = { 3000.0f, -2000.0f, -1000.0f };
+
+    D_80864694_143 = { 3000.0f, -2000.0f, 1000.0f };
+
+    D_808646A0_143 = { -1300.0f, 1100.0f, 0.0f };
+
+    unused2_143 = { -3000.0f, 1900.0f, 800.0f };
+
+    unused3_143 = { -3000.0f, -1100.0f, 800.0f };
+
+    unused4_143 = { 1900.0f, 1900.0f, 800.0f };
+
+    unused5_143 = { -3000.0f, -1100.0f, 800.0f };
+
+    unused6_143 = { 1900.0f, -1100.0f, 800.0f };
+
+    unused7_143 = { 1900.0f, 1900.0f, 800.0f };
+
+    En_Test_InitVars = {
+        ACTOR_EN_TEST,
+        ACTORCAT_ENEMY,
+        FLAGS,
+        OBJECT_SK2,
+        sizeof(EnTest),
+        (ActorFunc)EnTest_Init,
+        (ActorFunc)EnTest_Destroy,
+        (ActorFunc)EnTest_Update,
+        (ActorFunc)EnTest_Draw,
+        (ActorFunc)EnTest_Reset,
+    };
+
+    sBodyColliderInit = {
+        {
+            COLTYPE_HIT5,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 25, 65, 0, { 0, 0, 0 } },
+    };
+
+    sShieldColliderInit = {
+        {
+            COLTYPE_METAL,
+            AT_NONE,
+            AC_ON | AC_HARD | AC_TYPE_PLAYER,
+            OC1_NONE,
+            OC2_NONE,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0xFFC1FFFF, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_NONE,
+        },
+        { 20, 70, -50, { 0, 0, 0 } },
+    };
+
+    sSwordColliderInit = {
+        {
+            COLTYPE_NONE,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_NONE,
+            OC1_NONE,
+            OC2_NONE,
+            COLSHAPE_QUAD,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x00, 0x10 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NORMAL | TOUCH_UNK7,
+            BUMP_NONE,
+            OCELEM_NONE,
+        },
+        { { { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } } },
+    };
+
+    sDamageTable = {
+        /* Deku nut      */ DMG_ENTRY(0, STALFOS_DMGEFF_STUN),
+        /* Deku stick    */ DMG_ENTRY(2, STALFOS_DMGEFF_NORMAL),
+        /* Slingshot     */ DMG_ENTRY(1, STALFOS_DMGEFF_SLING),
+        /* Explosive     */ DMG_ENTRY(2, STALFOS_DMGEFF_NORMAL),
+        /* Boomerang     */ DMG_ENTRY(0, STALFOS_DMGEFF_STUN),
+        /* Normal arrow  */ DMG_ENTRY(2, STALFOS_DMGEFF_NORMAL),
+        /* Hammer swing  */ DMG_ENTRY(2, STALFOS_DMGEFF_NORMAL),
+        /* Hookshot      */ DMG_ENTRY(0, STALFOS_DMGEFF_STUN),
+        /* Kokiri sword  */ DMG_ENTRY(1, STALFOS_DMGEFF_NORMAL),
+        /* Master sword  */ DMG_ENTRY(2, STALFOS_DMGEFF_NORMAL),
+        /* Giant's Knife */ DMG_ENTRY(4, STALFOS_DMGEFF_NORMAL),
+        /* Fire arrow    */ DMG_ENTRY(2, STALFOS_DMGEFF_NORMAL),
+        /* Ice arrow     */ DMG_ENTRY(4, STALFOS_DMGEFF_FREEZE),
+        /* Light arrow   */ DMG_ENTRY(2, STALFOS_DMGEFF_LIGHT),
+        /* Unk arrow 1   */ DMG_ENTRY(2, STALFOS_DMGEFF_NORMAL),
+        /* Unk arrow 2   */ DMG_ENTRY(2, STALFOS_DMGEFF_NORMAL),
+        /* Unk arrow 3   */ DMG_ENTRY(2, STALFOS_DMGEFF_NORMAL),
+        /* Fire magic    */ DMG_ENTRY(0, STALFOS_DMGEFF_FIREMAGIC),
+        /* Ice magic     */ DMG_ENTRY(3, STALFOS_DMGEFF_FREEZE),
+        /* Light magic   */ DMG_ENTRY(0, STALFOS_DMGEFF_LIGHT),
+        /* Shield        */ DMG_ENTRY(0, STALFOS_DMGEFF_NORMAL),
+        /* Mirror Ray    */ DMG_ENTRY(0, STALFOS_DMGEFF_NORMAL),
+        /* Kokiri spin   */ DMG_ENTRY(1, STALFOS_DMGEFF_NORMAL),
+        /* Giant spin    */ DMG_ENTRY(4, STALFOS_DMGEFF_NORMAL),
+        /* Master spin   */ DMG_ENTRY(2, STALFOS_DMGEFF_NORMAL),
+        /* Kokiri jump   */ DMG_ENTRY(2, STALFOS_DMGEFF_NORMAL),
+        /* Giant jump    */ DMG_ENTRY(8, STALFOS_DMGEFF_NORMAL),
+        /* Master jump   */ DMG_ENTRY(4, STALFOS_DMGEFF_NORMAL),
+        /* Unknown 1     */ DMG_ENTRY(0, STALFOS_DMGEFF_NORMAL),
+        /* Unblockable   */ DMG_ENTRY(0, STALFOS_DMGEFF_NORMAL),
+        /* Hammer jump   */ DMG_ENTRY(4, STALFOS_DMGEFF_NORMAL),
+        /* Unknown 2     */ DMG_ENTRY(0, STALFOS_DMGEFF_NORMAL),
+    };
+
 }

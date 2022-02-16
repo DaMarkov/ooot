@@ -26,60 +26,9 @@
 
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_2 | ACTOR_FLAG_4 | ACTOR_FLAG_5)
 
-typedef enum {
-    /*  0 */ TWEFF_NONE,
-    /*  1 */ TWEFF_DOT,
-    /*  2 */ TWEFF_2,
-    /*  3 */ TWEFF_3,
-    /*  4 */ TWEFF_RING,
-    /*  5 */ TWEFF_PLYR_FRZ,
-    /*  6 */ TWEFF_FLAME,
-    /*  7 */ TWEFF_MERGEFLAME,
-    /*  8 */ TWEFF_SHLD_BLST,
-    /*  9 */ TWEFF_SHLD_DEFL,
-    /* 10 */ TWEFF_SHLD_HIT
-} TwEffType;
-
-typedef enum {
-    /* 0 */ EFF_ARGS,
-    /* 1 */ EFF_UNKS1,
-    /* 2 */ EFF_WORK_MAX
-} EffectWork;
-
-typedef enum {
-    /* 0 */ EFF_SCALE,
-    /* 1 */ EFF_DIST,
-    /* 2 */ EFF_ROLL,
-    /* 3 */ EFF_YAW,
-    /* 4 */ EFF_FWORK_MAX
-} EffectFWork;
-
-typedef enum {
-    /* 0x00 */ TW_KOTAKE,
-    /* 0x01 */ TW_KOUME,
-    /* 0x02 */ TW_TWINROVA,
-    /* 0x64 */ TW_FIRE_BLAST = 0x64,
-    /* 0x65 */ TW_FIRE_BLAST_GROUND,
-    /* 0x66 */ TW_ICE_BLAST,
-    /* 0x67 */ TW_ICE_BLAST_GROUND,
-    /* 0x68 */ TW_DEATHBALL_KOTAKE,
-    /* 0x69 */ TW_DEATHBALL_KOUME
-} TwinrovaType;
-
-typedef struct {
-    /* 0x0000 */ u8 type;
-    /* 0x0001 */ u8 frame;
-    /* 0x0004 */ Vec3f pos;
-    /* 0x0010 */ Vec3f curSpeed;
-    /* 0x001C */ Vec3f accel;
-    /* 0x0028 */ Color_RGB8 color;
-    /* 0x002C */ s16 alpha;
-    /* 0x002E */ s16 work[EFF_WORK_MAX];
-    /* 0x0034 */ f32 workf[EFF_FWORK_MAX];
-    /* 0x0044 */ Actor* target;
-} BossTwEffect;
 
 void BossTw_Init(Actor* thisx, GlobalContext* globalCtx);
+void BossTw_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BossTw_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BossTw_Update(Actor* thisx, GlobalContext* globalCtx);
 void BossTw_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -135,6 +84,61 @@ void BossTw_TwinrovaChargeBlast(BossTw* pthis, GlobalContext* globalCtx);
 void BossTw_TwinrovaSetupSpin(BossTw* pthis, GlobalContext* globalCtx);
 void BossTw_UpdateEffects(GlobalContext* globalCtx);
 
+static Vec3f sPillarPositions_134[] = {
+    { 600.0f, 400.0f, 0.0f }, { 0.0f, 400.0f, 600.0f }, { -600.0f, 400.0f, 0.0f }, { 0.0f, 400.0f, -600.0f }
+};
+
+
+static s16 D_8094A900_143[] = {
+    0, 1, 2, 2, 1,
+};
+
+
+static s16 D_8094A90C_143[] = {
+    0, 1, 2, 2, 2, 2, 2, 2, 1,
+};
+
+static Vec3f D_8094A944_143 = { 0.0f, 0.0f, 0.0f };
+
+static Vec3f D_8094A950_143 = { 0.0f, 2000.0f, -2000.0f };
+
+static Vec3f D_8094A95C_143[] = {
+    { 0.0f, 0.0f, -10000.0f }, { 0.0f, 0.0f, -8000.0f },  { 0.0f, 0.0f, -9000.0f },
+    { 0.0f, 0.0f, -11000.0f }, { 0.0f, 0.0f, -12000.0f },
+};
+
+
+static void* sEyeTextures_143[] = {
+    object_tw_Tex_00A438,
+    object_tw_Tex_00B238,
+    object_tw_Tex_00B638,
+};
+
+static Vec3f D_8094A9A4_143 = { 0.0f, 200.0f, 2000.0f };
+
+static Vec3f D_8094A9BC_143 = { 0.0f, 0.0f, 0.0f };
+
+static Vec3f D_8094A9C8_143 = { 0.0f, 2000.0f, -2000.0f };
+
+static Vec3f D_8094A9D4_143 = { 13000.0f, 0.0f, 0.0f };
+
+static Vec3f D_8094A9E0_143 = { 13000.0f, 0.0f, 0.0f };
+
+static Vec3f D_8094A9EC_143 = { 0.0f, 200.0f, 2000.0f };
+
+static Color_RGB8 sDotColors_143[] = {
+    { 255, 128, 0 },   { 255, 0, 0 },     { 255, 255, 0 },   { 255, 0, 0 },
+    { 100, 100, 100 }, { 255, 255, 255 }, { 150, 150, 150 }, { 255, 255, 255 },
+};
+
+
+static s32 sRandSeed0_143;
+
+static s32 sRandSeed1_143;
+
+static s32 sRandSeed2_143;
+
+
 ActorInit Boss_Tw_InitVars = {
     ACTOR_BOSS_TW,
     ACTORCAT_BOSS,
@@ -145,6 +149,7 @@ ActorInit Boss_Tw_InitVars = {
     (ActorFunc)BossTw_Destroy,
     (ActorFunc)BossTw_Update,
     (ActorFunc)BossTw_Draw,
+    (ActorFunc)BossTw_Reset,
 };
 
 static Vec3f D_8094A7D0 = { 0.0f, 0.0f, 1000.0f };
@@ -660,9 +665,6 @@ void BossTw_TurnToPlayer(BossTw* pthis, GlobalContext* globalCtx) {
 }
 
 void BossTw_SetupFlyTo(BossTw* pthis, GlobalContext* globalCtx) {
-    static Vec3f sPillarPositions[] = {
-        { 600.0f, 400.0f, 0.0f }, { 0.0f, 400.0f, 600.0f }, { -600.0f, 400.0f, 0.0f }, { 0.0f, 400.0f, -600.0f }
-    };
     BossTw* otherTw = (BossTw*)pthis->actor.parent;
 
     pthis->unk_5F8 = 1;
@@ -684,9 +686,9 @@ void BossTw_SetupFlyTo(BossTw* pthis, GlobalContext* globalCtx) {
         pthis->timers[0] = (s16)Rand_ZeroFloat(50.0f) + 50;
     } else {
         // fly to a random pillar.
-        s16 idx = Rand_ZeroFloat(ARRAY_COUNT(sPillarPositions) - 0.01f);
+        s16 idx = Rand_ZeroFloat(ARRAY_COUNT(sPillarPositions_134) - 0.01f);
 
-        pthis->targetPos = sPillarPositions[idx];
+        pthis->targetPos = sPillarPositions_134[idx];
         pthis->timers[0] = 200;
         pthis->work[CAN_SHOOT] = true;
     }
@@ -2857,14 +2859,6 @@ void BossTw_TwinrovaDeathCS(BossTw* pthis, GlobalContext* globalCtx) {
     }
 }
 
-static s16 D_8094A900[] = {
-    0, 1, 2, 2, 1,
-};
-
-static s16 D_8094A90C[] = {
-    0, 1, 2, 2, 2, 2, 2, 2, 1,
-};
-
 void BossTw_Update(Actor* thisx, GlobalContext* globalCtx) {
     BossTw* pthis = (BossTw*)thisx;
     Player* player = GET_PLAYER(globalCtx);
@@ -2949,7 +2943,7 @@ void BossTw_Update(Actor* thisx, GlobalContext* globalCtx) {
             pthis->work[BLINK_IDX] = 4;
         }
 
-        pthis->eyeTexIdx = D_8094A900[pthis->work[BLINK_IDX]];
+        pthis->eyeTexIdx = D_8094A900_143[pthis->work[BLINK_IDX]];
 
         if (pthis->work[BLINK_IDX] != 0) {
             pthis->work[BLINK_IDX]--;
@@ -3031,7 +3025,7 @@ void BossTw_TwinrovaUpdate(Actor* thisx, GlobalContext* globalCtx2) {
         BossTw_TwinrovaSetupSpin(pthis, globalCtx);
     }
 
-    pthis->eyeTexIdx = D_8094A900[pthis->work[BLINK_IDX]];
+    pthis->eyeTexIdx = D_8094A900_143[pthis->work[BLINK_IDX]];
     if (pthis->work[BLINK_IDX] != 0) {
         pthis->work[BLINK_IDX]--;
     }
@@ -3045,7 +3039,7 @@ void BossTw_TwinrovaUpdate(Actor* thisx, GlobalContext* globalCtx2) {
     }
 
     if (pthis->actionFunc == BossTw_TwinrovaMergeCS) {
-        pthis->leftEyeTexIdx = D_8094A90C[pthis->work[TW_BLINK_IDX]];
+        pthis->leftEyeTexIdx = D_8094A90C_143[pthis->work[TW_BLINK_IDX]];
         if (pthis->work[TW_BLINK_IDX] != 0) {
             pthis->work[TW_BLINK_IDX]--;
         }
@@ -3228,20 +3222,14 @@ s32 BossTw_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList
 }
 
 void BossTw_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx) {
-    static Vec3f D_8094A944 = { 0.0f, 0.0f, 0.0f };
-    static Vec3f D_8094A950 = { 0.0f, 2000.0f, -2000.0f };
-    static Vec3f D_8094A95C[] = {
-        { 0.0f, 0.0f, -10000.0f }, { 0.0f, 0.0f, -8000.0f },  { 0.0f, 0.0f, -9000.0f },
-        { 0.0f, 0.0f, -11000.0f }, { 0.0f, 0.0f, -12000.0f },
-    };
     BossTw* pthis = (BossTw*)thisx;
 
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_boss_tw.c", 6168);
 
     switch (limbIndex) {
         case 21:
-            Matrix_MultVec3f(&D_8094A944, &pthis->actor.focus.pos);
-            Matrix_MultVec3f(&D_8094A950, &pthis->crownPos);
+            Matrix_MultVec3f(&D_8094A944_143, &pthis->actor.focus.pos);
+            Matrix_MultVec3f(&D_8094A950_143, &pthis->crownPos);
 
             if (pthis->unk_5F8 != 0) {
                 gSPMatrix(POLY_XLU_DISP++, Matrix_NewMtx(globalCtx->state.gfxCtx, "../z_boss_tw.c", 6190),
@@ -3254,11 +3242,11 @@ void BossTw_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, V
             }
             break;
         case 14:
-            Matrix_MultVec3f(&D_8094A95C[0], &pthis->scepterFlamePos[0]);
-            Matrix_MultVec3f(&D_8094A95C[1], &pthis->scepterFlamePos[1]);
-            Matrix_MultVec3f(&D_8094A95C[2], &pthis->scepterFlamePos[2]);
-            Matrix_MultVec3f(&D_8094A95C[3], &pthis->scepterFlamePos[3]);
-            Matrix_MultVec3f(&D_8094A95C[4], &pthis->scepterFlamePos[4]);
+            Matrix_MultVec3f(&D_8094A95C_143[0], &pthis->scepterFlamePos[0]);
+            Matrix_MultVec3f(&D_8094A95C_143[1], &pthis->scepterFlamePos[1]);
+            Matrix_MultVec3f(&D_8094A95C_143[2], &pthis->scepterFlamePos[2]);
+            Matrix_MultVec3f(&D_8094A95C_143[3], &pthis->scepterFlamePos[3]);
+            Matrix_MultVec3f(&D_8094A95C_143[4], &pthis->scepterFlamePos[4]);
 
             if (pthis->scepterAlpha > 0.0f) {
                 gSPMatrix(POLY_XLU_DISP++, Matrix_NewMtx(globalCtx->state.gfxCtx, "../z_boss_tw.c", 6221),
@@ -3500,14 +3488,7 @@ void func_80943028(Actor* thisx, GlobalContext* globalCtx) {
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_boss_tw.c", 6933);
 }
 
-static void* sEyeTextures[] = {
-    object_tw_Tex_00A438,
-    object_tw_Tex_00B238,
-    object_tw_Tex_00B638,
-};
-
 void BossTw_Draw(Actor* thisx, GlobalContext* globalCtx2) {
-    static Vec3f D_8094A9A4 = { 0.0f, 200.0f, 2000.0f };
     GlobalContext* globalCtx = globalCtx2;
     BossTw* pthis = (BossTw*)thisx;
     Player* player = GET_PLAYER(globalCtx);
@@ -3515,8 +3496,8 @@ void BossTw_Draw(Actor* thisx, GlobalContext* globalCtx2) {
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_boss_tw.c", 6947);
 
     if (pthis->visible) {
-        gSPSegment(POLY_OPA_DISP++, 10, SEGMENTED_TO_VIRTUAL(sEyeTextures[pthis->eyeTexIdx]));
-        gSPSegment(POLY_XLU_DISP++, 10, SEGMENTED_TO_VIRTUAL(sEyeTextures[pthis->eyeTexIdx]));
+        gSPSegment(POLY_OPA_DISP++, 10, SEGMENTED_TO_VIRTUAL(sEyeTextures_143[pthis->eyeTexIdx]));
+        gSPSegment(POLY_XLU_DISP++, 10, SEGMENTED_TO_VIRTUAL(sEyeTextures_143[pthis->eyeTexIdx]));
         gSPSegment(POLY_XLU_DISP++, 8,
                    Gfx_TwoTexScroll(globalCtx->state.gfxCtx, 0, (s16)pthis->workf[OUTR_CRWN_TX_X1] & 0x7F,
                                     (s16)pthis->workf[OUTR_CRWN_TX_Y1] & 0x7F, 0x20, 0x20, 1,
@@ -3579,7 +3560,7 @@ void BossTw_Draw(Actor* thisx, GlobalContext* globalCtx2) {
             func_80943028(&pthis->actor, globalCtx);
         } else {
             func_809426F0(pthis, globalCtx);
-            Matrix_MultVec3f(&D_8094A9A4, &pthis->beamOrigin);
+            Matrix_MultVec3f(&D_8094A9A4_143, &pthis->beamOrigin);
             func_80942C70(&pthis->actor, globalCtx);
         }
     }
@@ -3657,10 +3638,6 @@ s32 BossTw_TwinrovaOverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx
 }
 
 void BossTw_TwinrovaPostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx) {
-    static Vec3f D_8094A9BC = { 0.0f, 0.0f, 0.0f };
-    static Vec3f D_8094A9C8 = { 0.0f, 2000.0f, -2000.0f };
-    static Vec3f D_8094A9D4 = { 13000.0f, 0.0f, 0.0f };
-    static Vec3f D_8094A9E0 = { 13000.0f, 0.0f, 0.0f };
 
     BossTw* pthis = (BossTw*)thisx;
 
@@ -3668,14 +3645,14 @@ void BossTw_TwinrovaPostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** 
 
     switch (limbIndex) {
         case 34:
-            Matrix_MultVec3f(&D_8094A9D4, &pthis->leftScepterPos);
+            Matrix_MultVec3f(&D_8094A9D4_143, &pthis->leftScepterPos);
             break;
         case 40:
-            Matrix_MultVec3f(&D_8094A9E0, &pthis->rightScepterPos);
+            Matrix_MultVec3f(&D_8094A9E0_143, &pthis->rightScepterPos);
             break;
         case 21:
-            Matrix_MultVec3f(&D_8094A9BC, &pthis->actor.focus.pos);
-            Matrix_MultVec3f(&D_8094A9C8, &pthis->crownPos);
+            Matrix_MultVec3f(&D_8094A9BC_143, &pthis->actor.focus.pos);
+            Matrix_MultVec3f(&D_8094A9C8_143, &pthis->crownPos);
             break;
         case 15:
         case 16:
@@ -3887,7 +3864,6 @@ void func_80944C50(BossTw* pthis, GlobalContext* globalCtx) {
 }
 
 void BossTw_TwinrovaDraw(Actor* thisx, GlobalContext* globalCtx2) {
-    static Vec3f D_8094A9EC = { 0.0f, 200.0f, 2000.0f };
     GlobalContext* globalCtx = globalCtx2;
     BossTw* pthis = (BossTw*)thisx;
 
@@ -3907,7 +3883,7 @@ void BossTw_TwinrovaDraw(Actor* thisx, GlobalContext* globalCtx2) {
                               thisx);
         Matrix_Pop();
 
-        Matrix_MultVec3f(&D_8094A9EC, &pthis->beamOrigin);
+        Matrix_MultVec3f(&D_8094A9EC_143, &pthis->beamOrigin);
         POLY_OPA_DISP = Gfx_SetFog2(POLY_OPA_DISP, globalCtx->lightCtx.fogColor[0], globalCtx->lightCtx.fogColor[1],
                                     globalCtx->lightCtx.fogColor[2], 0, globalCtx->lightCtx.fogNear, 1000);
     }
@@ -4577,10 +4553,6 @@ void BossTw_DrawDeathBall(Actor* thisx, GlobalContext* globalCtx2) {
 }
 
 void BossTw_UpdateEffects(GlobalContext* globalCtx) {
-    static Color_RGB8 sDotColors[] = {
-        { 255, 128, 0 },   { 255, 0, 0 },     { 255, 255, 0 },   { 255, 0, 0 },
-        { 100, 100, 100 }, { 255, 255, 255 }, { 150, 150, 150 }, { 255, 255, 255 },
-    };
     Vec3f sp11C;
     BossTwEffect* eff = (BossTwEffect*)globalCtx->specialEffects;
     Player* player = GET_PLAYER(globalCtx);
@@ -4618,9 +4590,9 @@ void BossTw_UpdateEffects(GlobalContext* globalCtx) {
                     colorIdx += 4;
                 }
 
-                eff->color.r = sDotColors[colorIdx].r;
-                eff->color.g = sDotColors[colorIdx].g;
-                eff->color.b = sDotColors[colorIdx].b;
+                eff->color.r = sDotColors_143[colorIdx].r;
+                eff->color.g = sDotColors_143[colorIdx].g;
+                eff->color.b = sDotColors_143[colorIdx].b;
                 eff->alpha -= 20;
 
                 if (eff->alpha <= 0) {
@@ -4890,25 +4862,21 @@ void BossTw_UpdateEffects(GlobalContext* globalCtx) {
     }
 }
 
-static s32 sRandSeed0;
-static s32 sRandSeed1;
-static s32 sRandSeed2;
-
 void BossTw_InitRand(s32 seed0, s32 seed1, s32 seed2) {
-    sRandSeed0 = seed0;
-    sRandSeed1 = seed1;
-    sRandSeed2 = seed2;
+    sRandSeed0_143 = seed0;
+    sRandSeed1_143 = seed1;
+    sRandSeed2_143 = seed2;
 }
 
 f32 BossTw_RandZeroOne(void) {
     f32 rand;
 
     // Wichmann-Hill algorithm
-    sRandSeed0 = (sRandSeed0 * 171) % 30269;
-    sRandSeed1 = (sRandSeed1 * 172) % 30307;
-    sRandSeed2 = (sRandSeed2 * 170) % 30323;
+    sRandSeed0_143 = (sRandSeed0_143 * 171) % 30269;
+    sRandSeed1_143 = (sRandSeed1_143 * 172) % 30307;
+    sRandSeed2_143 = (sRandSeed2_143 * 170) % 30323;
 
-    rand = (sRandSeed0 / 30269.0f) + (sRandSeed1 / 30307.0f) + (sRandSeed2 / 30323.0f);
+    rand = (sRandSeed0_143 / 30269.0f) + (sRandSeed1_143 / 30307.0f) + (sRandSeed2_143 / 30323.0f);
     while (rand >= 1.0f) {
         rand -= 1.0f;
     }
@@ -5482,4 +5450,159 @@ void BossTw_TwinrovaLaugh(BossTw* pthis, GlobalContext* globalCtx) {
     if (Animation_OnFrame(&pthis->skelAnime, pthis->workf[ANIM_SW_TGT])) {
         BossTw_TwinrovaSetupFly(pthis, globalCtx);
     }
+}
+
+
+void BossTw_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    D_8094A944_143 = { 0.0f, 0.0f, 0.0f };
+
+    D_8094A950_143 = { 0.0f, 2000.0f, -2000.0f };
+
+    D_8094A9A4_143 = { 0.0f, 200.0f, 2000.0f };
+
+    D_8094A9BC_143 = { 0.0f, 0.0f, 0.0f };
+
+    D_8094A9C8_143 = { 0.0f, 2000.0f, -2000.0f };
+
+    D_8094A9D4_143 = { 13000.0f, 0.0f, 0.0f };
+
+    D_8094A9E0_143 = { 13000.0f, 0.0f, 0.0f };
+
+    D_8094A9EC_143 = { 0.0f, 200.0f, 2000.0f };
+
+    sRandSeed0_143 = 0;
+
+    sRandSeed1_143 = 0;
+
+    sRandSeed2_143 = 0;
+
+    Boss_Tw_InitVars = {
+        ACTOR_BOSS_TW,
+        ACTORCAT_BOSS,
+        FLAGS,
+        OBJECT_TW,
+        sizeof(BossTw),
+        (ActorFunc)BossTw_Init,
+        (ActorFunc)BossTw_Destroy,
+        (ActorFunc)BossTw_Update,
+        (ActorFunc)BossTw_Draw,
+        (ActorFunc)BossTw_Reset,
+    };
+
+    D_8094A7D0 = { 0.0f, 0.0f, 1000.0f };
+
+    sZeroVector = { 0.0f, 0.0f, 0.0f };
+
+    sCylinderInitBlasts = {
+        {
+            COLTYPE_NONE,
+            AT_ON | AT_TYPE_ALL,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_PLAYER,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x00, 0x30 },
+            { 0x00100000, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NORMAL,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 25, 35, -17, { 0, 0, 0 } },
+    };
+
+    sCylinderInitKoumeKotake = {
+        {
+            COLTYPE_HIT3,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_PLAYER,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x00, 0x20 },
+            { 0xFFCDFFFE, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NORMAL,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 45, 120, -30, { 0, 0, 0 } },
+    };
+
+    sCylinderInitTwinrova = {
+        {
+            COLTYPE_HIT3,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x00, 0x20 },
+            { 0xFFCDFFFE, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NORMAL,
+            BUMP_ON | BUMP_HOOKABLE,
+            OCELEM_ON,
+        },
+        { 45, 120, -30, { 0, 0, 0 } },
+    };
+
+    sTwInitalized = false;
+
+    sEnvType = 0;
+
+    sGroundBlastType = 0;
+
+    sKotakePtr = 0;
+
+    sKoumePtr = 0;
+
+    sTwinrovaPtr = 0;
+
+    sShieldFireCharge = 0;
+
+    sShieldIceCharge = 0;
+
+    D_8094C854 = {0};
+
+    D_8094C858 = {0};
+
+    sTwinrovaBlastType = 0;
+
+    sFixedBlastType = 0;
+
+    sFixedBlatSeq = 0;
+
+    sFreezeState = 0;
+
+    sShieldHitPos = {0, 0, 0};
+
+    sShieldHitYaw = 0;
+
+    sBeamDivertTimer = 0;
+
+    D_8094C86F = 0;
+
+    D_8094C870 = 0;
+
+    D_8094C872 = 0;
+
+    D_8094C874 = 0;
+
+    D_8094C876 = 0;
+
+    D_8094C878 = 0;
+
+    D_8094C87A = 0;
+
+    D_8094C87C = 0;
+
+    D_8094C87E = 0;
+
 }

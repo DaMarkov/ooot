@@ -20,6 +20,7 @@
 #define FLAGS ACTOR_FLAG_4
 
 void EnPart_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnPart_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnPart_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnPart_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnPart_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -34,6 +35,7 @@ ActorInit En_Part_InitVars = {
     (ActorFunc)EnPart_Destroy,
     (ActorFunc)EnPart_Update,
     (ActorFunc)EnPart_Draw,
+    (ActorFunc)EnPart_Reset,
 };
 
 void EnPart_Init(Actor* thisx, GlobalContext* globalCtx) {
@@ -243,11 +245,11 @@ void func_80ACE7E8(EnPart* pthis, GlobalContext* globalCtx) {
     }
 }
 
-void EnPart_Update(Actor* thisx, GlobalContext* globalCtx) {
-    static EnPartActionFunc sActionFuncs[] = {
-        func_80ACDDE8, func_80ACE13C, func_80ACE5B8, func_80ACE5C8, func_80ACE7E8,
-    };
+static EnPartActionFunc sActionFuncs[] = {
+    func_80ACDDE8, func_80ACE13C, func_80ACE5B8, func_80ACE5C8, func_80ACE7E8,
+};
 
+void EnPart_Update(Actor* thisx, GlobalContext* globalCtx) {
     EnPart* pthis = (EnPart*)thisx;
 
     Actor_MoveForward(&pthis->actor);
@@ -322,4 +324,20 @@ void EnPart_Draw(Actor* thisx, GlobalContext* globalCtx) {
     }
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_part.c", 700);
+}
+
+void EnPart_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_Part_InitVars = {
+        ACTOR_EN_PART,
+        ACTORCAT_ITEMACTION,
+        FLAGS,
+        OBJECT_GAMEPLAY_KEEP,
+        sizeof(EnPart),
+        (ActorFunc)EnPart_Init,
+        (ActorFunc)EnPart_Destroy,
+        (ActorFunc)EnPart_Update,
+        (ActorFunc)EnPart_Draw,
+        (ActorFunc)EnPart_Reset,
+    };
+
 }

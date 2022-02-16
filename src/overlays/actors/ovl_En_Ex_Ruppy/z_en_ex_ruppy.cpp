@@ -17,6 +17,7 @@
 #define FLAGS ACTOR_FLAG_4
 
 void EnExRuppy_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnExRuppy_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnExRuppy_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnExRuppy_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnExRuppy_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -29,6 +30,15 @@ void EnExRuppy_EnterWater(EnExRuppy* pthis, GlobalContext* globalCtx);
 void EnExRuppy_Sink(EnExRuppy* pthis, GlobalContext* globalCtx);
 void EnExRuppy_WaitInGame(EnExRuppy* pthis, GlobalContext* globalCtx);
 void EnExRuppy_Kill(EnExRuppy* pthis, GlobalContext* globalCtx);
+
+static Vec3f velocities_35[] = { { 0.0f, 0.1f, 0.0f }, { 0.0f, 0.0f, 0.0f } };
+
+static Vec3f accelerations_35[] = { { 0.0f, 0.01f, 0.0f }, { 0.0f, 0.0f, 0.0f } };
+
+static void* rupeeTextures_47[] = {
+    gRupeeGreenTex, gRupeeBlueTex, gRupeeRedTex, gRupeePinkTex, gRupeeOrangeTex,
+};
+
 
 static s16 sEnExRuppyCollectibleTypes[] = {
     ITEM00_RUPEE_GREEN, ITEM00_RUPEE_BLUE, ITEM00_RUPEE_RED, ITEM00_RUPEE_ORANGE, ITEM00_RUPEE_PURPLE,
@@ -49,6 +59,7 @@ ActorInit En_Ex_Ruppy_InitVars = {
     (ActorFunc)EnExRuppy_Destroy,
     (ActorFunc)EnExRuppy_Update,
     (ActorFunc)EnExRuppy_Draw,
+    (ActorFunc)EnExRuppy_Reset,
 };
 
 void EnExRuppy_Init(Actor* thisx, GlobalContext* globalCtx) {
@@ -175,8 +186,6 @@ void EnExRuppy_Destroy(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void EnExRuppy_SpawnSparkles(EnExRuppy* pthis, GlobalContext* globalCtx, s16 numSparkles, s32 movementType) {
-    static Vec3f velocities[] = { { 0.0f, 0.1f, 0.0f }, { 0.0f, 0.0f, 0.0f } };
-    static Vec3f accelerations[] = { { 0.0f, 0.01f, 0.0f }, { 0.0f, 0.0f, 0.0f } };
     Vec3f pos;
     Vec3f velocity;
     Vec3f accel;
@@ -196,8 +205,8 @@ void EnExRuppy_SpawnSparkles(EnExRuppy* pthis, GlobalContext* globalCtx, s16 num
     envColor.r = 255;
     envColor.g = 255;
     envColor.b = 255;
-    velocity = velocities[movementType];
-    accel = accelerations[movementType];
+    velocity = velocities_35[movementType];
+    accel = accelerations_35[movementType];
     scale = 3000;
     life = 16;
 
@@ -311,13 +320,7 @@ void EnExRuppy_Kill(EnExRuppy* pthis, GlobalContext* globalCtx) {
     if (pthis->timer == 0) {
         Actor_Kill(&pthis->actor);
     }
-}
-
-typedef struct {
-    /* 0x000 */ Actor actor;
-    /* 0x14C */ char unk_14C[0x11A];
-    /* 0x226 */ s16 unk_226;
-} EnExRuppyParentActor; // Unclear what actor was intended to spawn pthis.
+} // Unclear what actor was intended to spawn pthis.
 
 void EnExRuppy_WaitToBlowUp(EnExRuppy* pthis, GlobalContext* globalCtx) {
     EnExRuppyParentActor* parent;
@@ -386,9 +389,6 @@ void EnExRuppy_Update(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void EnExRuppy_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static void* rupeeTextures[] = {
-        gRupeeGreenTex, gRupeeBlueTex, gRupeeRedTex, gRupeePinkTex, gRupeeOrangeTex,
-    };
     s32 pad;
     EnExRuppy* pthis = (EnExRuppy*)thisx;
 
@@ -399,9 +399,25 @@ void EnExRuppy_Draw(Actor* thisx, GlobalContext* globalCtx) {
         func_8002EBCC(thisx, globalCtx, 0);
         gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtx(globalCtx->state.gfxCtx, "../z_en_ex_ruppy.c", 780),
                   G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-        gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(rupeeTextures[pthis->colorIdx]));
+        gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(rupeeTextures_47[pthis->colorIdx]));
         gSPDisplayList(POLY_OPA_DISP++, gRupeeDL);
 
         CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_ex_ruppy.c", 784);
     }
+}
+
+void EnExRuppy_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_Ex_Ruppy_InitVars = {
+        ACTOR_EN_EX_RUPPY,
+        ACTORCAT_PROP,
+        FLAGS,
+        OBJECT_GAMEPLAY_KEEP,
+        sizeof(EnExRuppy),
+        (ActorFunc)EnExRuppy_Init,
+        (ActorFunc)EnExRuppy_Destroy,
+        (ActorFunc)EnExRuppy_Update,
+        (ActorFunc)EnExRuppy_Draw,
+        (ActorFunc)EnExRuppy_Reset,
+    };
+
 }

@@ -25,6 +25,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_2 | ACTOR_FLAG_4 | ACTOR_FLAG_5)
 
 void BossDodongo_Init(Actor* thisx, GlobalContext* globalCtx);
+void BossDodongo_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BossDodongo_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BossDodongo_Update(Actor* thisx, GlobalContext* globalCtx);
 void BossDodongo_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -52,6 +53,35 @@ f32 func_808C50A8(BossDodongo* pthis, GlobalContext* globalCtx);
 void BossDodongo_DrawEffects(GlobalContext* globalCtx);
 void BossDodongo_UpdateEffects(GlobalContext* globalCtx);
 
+static Color_RGBA8 dustPrimColor_75 = { 255, 255, 0, 255 };
+
+static Color_RGBA8 dustEnvColor_75 = { 255, 10, 0, 255 };
+
+static Color_RGBA8 magmaPrimColor_84[] = { { 255, 255, 0, 255 }, { 0, 0, 0, 150 } };
+
+static Color_RGBA8 magmaEnvColor_84[] = { { 255, 0, 0, 255 }, { 0, 0, 0, 0 } };
+
+static Vec3f D_808CA450_86 = { 5000.0f, -2500.0f, 0.0f };
+
+static Vec3f D_808CA45C_86 = { 0.0f, 0.0f, 0.0f };
+
+static Vec3f D_808CA468_86 = { 11500.0f, -3000.0f, 0.0f };
+
+static Vec3f D_808CA474_86 = { 5000.0f, -2000.0f, 0.0f };
+
+static Vec3f D_808CA480_86 = { 8000.0f, 0.0f, 0.0f };
+
+static Vec3f D_808CA48C_86 = { 8000.0f, 0.0f, 0.0f };
+
+static Vec3f dustVel_95 = { 0.0f, 0.0f, 0.0f };
+
+static Vec3f dustAcell_95 = { 0.0f, 1.0f, 0.0f };
+
+static Color_RGBA8 dustPrimColor_95 = { 255, 255, 100, 255 };
+
+static Color_RGBA8 dustEnvColor_95 = { 255, 100, 0, 255 };
+
+
 ActorInit Boss_Dodongo_InitVars = {
     ACTOR_EN_DODONGO,
     ACTORCAT_BOSS,
@@ -62,6 +92,7 @@ ActorInit Boss_Dodongo_InitVars = {
     (ActorFunc)BossDodongo_Destroy,
     (ActorFunc)BossDodongo_Update,
     (ActorFunc)BossDodongo_Draw,
+    (ActorFunc)BossDodongo_Reset,
 };
 
 #include "z_boss_dodongo_data.cpp"
@@ -538,8 +569,6 @@ void BossDodongo_Damaged(BossDodongo* pthis, GlobalContext* globalCtx) {
 }
 
 void BossDodongo_Explode(BossDodongo* pthis, GlobalContext* globalCtx) {
-    static Color_RGBA8 dustPrimColor = { 255, 255, 0, 255 };
-    static Color_RGBA8 dustEnvColor = { 255, 10, 0, 255 };
     s16 pad;
     Vec3f dustVel;
     Vec3f dustAcell;
@@ -563,7 +592,7 @@ void BossDodongo_Explode(BossDodongo* pthis, GlobalContext* globalCtx) {
             dustPos.y = pthis->actor.world.pos.y + 90.0f + (dustVel.y * 3.0f);
             dustPos.z = pthis->actor.world.pos.z + (dustVel.z * 3.0f);
 
-            func_8002836C(globalCtx, &dustPos, &dustVel, &dustAcell, &dustPrimColor, &dustEnvColor, 500, 10, 10);
+            func_8002836C(globalCtx, &dustPos, &dustVel, &dustAcell, &dustPrimColor_75, &dustEnvColor_75, 500, 10, 10);
         }
 
         Animation_Change(&pthis->skelAnime, &object_kingdodongo_Anim_004E0C, 1.0f, 0.0f,
@@ -975,8 +1004,6 @@ void BossDodongo_Update(Actor* thisx, GlobalContext* globalCtx2) {
         }
 
         if ((pthis->unk_19E & phi_s0_3) == 0) {
-            static Color_RGBA8 magmaPrimColor[] = { { 255, 255, 0, 255 }, { 0, 0, 0, 150 } };
-            static Color_RGBA8 magmaEnvColor[] = { { 255, 0, 0, 255 }, { 0, 0, 0, 0 } };
             Vec3f sp84;
             f32 temp_f12;
             f32 temp_f10;
@@ -986,7 +1013,7 @@ void BossDodongo_Update(Actor* thisx, GlobalContext* globalCtx2) {
             sp84.x = (sinf(temp_f10) * temp_f12) + (-890.0f);
             sp84.y = -1523.76f;
             sp84.z = (cosf(temp_f10) * temp_f12) + (-3304.0f);
-            EffectSsGMagma2_Spawn(globalCtx, &sp84, &magmaPrimColor[magma2DrawMode], &magmaEnvColor[magma2DrawMode],
+            EffectSsGMagma2_Spawn(globalCtx, &sp84, &magmaPrimColor_84[magma2DrawMode], &magmaEnvColor_84[magma2DrawMode],
                                   10 - (magma2DrawMode * 5), magma2DrawMode, magmaScale + 100);
         }
 
@@ -1114,23 +1141,17 @@ block_1:
 }
 
 void BossDodongo_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx) {
-    static Vec3f D_808CA450 = { 5000.0f, -2500.0f, 0.0f };
-    static Vec3f D_808CA45C = { 0.0f, 0.0f, 0.0f };
-    static Vec3f D_808CA468 = { 11500.0f, -3000.0f, 0.0f };
-    static Vec3f D_808CA474 = { 5000.0f, -2000.0f, 0.0f };
-    static Vec3f D_808CA480 = { 8000.0f, 0.0f, 0.0f };
-    static Vec3f D_808CA48C = { 8000.0f, 0.0f, 0.0f };
     BossDodongo* pthis = (BossDodongo*)thisx;
 
     if (limbIndex == 6) {
-        Matrix_MultVec3f(&D_808CA45C, &pthis->vec);
-        Matrix_MultVec3f(&D_808CA450, &pthis->actor.focus.pos);
-        Matrix_MultVec3f(&D_808CA468, &pthis->firePos);
-        Matrix_MultVec3f(&D_808CA474, &pthis->mouthPos);
+        Matrix_MultVec3f(&D_808CA45C_86, &pthis->vec);
+        Matrix_MultVec3f(&D_808CA450_86, &pthis->actor.focus.pos);
+        Matrix_MultVec3f(&D_808CA468_86, &pthis->firePos);
+        Matrix_MultVec3f(&D_808CA474_86, &pthis->mouthPos);
     } else if (limbIndex == 39) {
-        Matrix_MultVec3f(&D_808CA480, &pthis->unk_410);
+        Matrix_MultVec3f(&D_808CA480_86, &pthis->unk_410);
     } else if (limbIndex == 46) {
-        Matrix_MultVec3f(&D_808CA48C, &pthis->unk_404);
+        Matrix_MultVec3f(&D_808CA48C_86, &pthis->unk_404);
     }
     Collider_UpdateSpheres(limbIndex, &pthis->collider);
 }
@@ -1516,10 +1537,6 @@ void BossDodongo_DeathCutscene(BossDodongo* pthis, GlobalContext* globalCtx) {
                         Math_SmoothStepToF(&pthis->unk_228, -6600.0f, 0.2f, 30.0f, 0.0f);
                     }
                     {
-                        static Vec3f dustVel = { 0.0f, 0.0f, 0.0f };
-                        static Vec3f dustAcell = { 0.0f, 1.0f, 0.0f };
-                        static Color_RGBA8 dustPrimColor = { 255, 255, 100, 255 };
-                        static Color_RGBA8 dustEnvColor = { 255, 100, 0, 255 };
                         s16 colorIndex;
                         Color_RGBA8 magmaPrimColor2[] = { { 255, 255, 0, 255 }, { 0, 0, 0, 100 } };
                         Color_RGBA8 magmaEnvColor2[] = { { 255, 0, 0, 255 }, { 0, 0, 0, 0 } };
@@ -1527,7 +1544,7 @@ void BossDodongo_DeathCutscene(BossDodongo* pthis, GlobalContext* globalCtx) {
                         effectPos.x = Rand_CenteredFloat(120.0f) + pthis->actor.focus.pos.x;
                         effectPos.y = Rand_ZeroFloat(50.0f) + pthis->actor.world.pos.y;
                         effectPos.z = Rand_CenteredFloat(120.0f) + pthis->actor.focus.pos.z;
-                        func_8002836C(globalCtx, &effectPos, &dustVel, &dustAcell, &dustPrimColor, &dustEnvColor, 0x1F4,
+                        func_8002836C(globalCtx, &effectPos, &dustVel_95, &dustAcell_95, &dustPrimColor_95, &dustEnvColor_95, 0x1F4,
                                       0xA, 0xA);
                         effectPos.x = Rand_CenteredFloat(120.0f) + pthis->actor.focus.pos.x;
                         effectPos.y = -1498.76f;
@@ -1722,4 +1739,44 @@ void BossDodongo_DrawEffects(GlobalContext* globalCtx) {
     }
 
     CLOSE_DISPS(gfxCtx, "../z_boss_dodongo.c", 5258);
+}
+
+void BossDodongo_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    dustPrimColor_75 = { 255, 255, 0, 255 };
+
+    dustEnvColor_75 = { 255, 10, 0, 255 };
+
+    D_808CA450_86 = { 5000.0f, -2500.0f, 0.0f };
+
+    D_808CA45C_86 = { 0.0f, 0.0f, 0.0f };
+
+    D_808CA468_86 = { 11500.0f, -3000.0f, 0.0f };
+
+    D_808CA474_86 = { 5000.0f, -2000.0f, 0.0f };
+
+    D_808CA480_86 = { 8000.0f, 0.0f, 0.0f };
+
+    D_808CA48C_86 = { 8000.0f, 0.0f, 0.0f };
+
+    dustVel_95 = { 0.0f, 0.0f, 0.0f };
+
+    dustAcell_95 = { 0.0f, 1.0f, 0.0f };
+
+    dustPrimColor_95 = { 255, 255, 100, 255 };
+
+    dustEnvColor_95 = { 255, 100, 0, 255 };
+
+    Boss_Dodongo_InitVars = {
+        ACTOR_EN_DODONGO,
+        ACTORCAT_BOSS,
+        FLAGS,
+        OBJECT_KINGDODONGO,
+        sizeof(BossDodongo),
+        (ActorFunc)BossDodongo_Init,
+        (ActorFunc)BossDodongo_Destroy,
+        (ActorFunc)BossDodongo_Update,
+        (ActorFunc)BossDodongo_Draw,
+        (ActorFunc)BossDodongo_Reset,
+    };
+
 }

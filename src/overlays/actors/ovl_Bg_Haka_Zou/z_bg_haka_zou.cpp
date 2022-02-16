@@ -22,14 +22,9 @@
 
 #define FLAGS ACTOR_FLAG_4
 
-typedef enum {
-    /* 0x0 */ STA_GIANT_BIRD_STATUE,
-    /* 0x1 */ STA_BOMBABLE_SKULL_WALL,
-    /* 0x2 */ STA_BOMBABLE_RUBBLE,
-    /* 0x3 */ STA_UNKNOWN
-} ShadowTempleAssetsType;
 
 void BgHakaZou_Init(Actor* thisx, GlobalContext* globalCtx);
+void BgHakaZou_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BgHakaZou_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BgHakaZou_Update(Actor* thisx, GlobalContext* globalCtx);
 void BgHakaZou_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -43,6 +38,14 @@ void func_80883254(BgHakaZou* pthis, GlobalContext* globalCtx);
 void func_80883328(BgHakaZou* pthis, GlobalContext* globalCtx);
 void func_808834D8(BgHakaZou* pthis, GlobalContext* globalCtx);
 void BgHakaZou_DoNothing(BgHakaZou* pthis, GlobalContext* globalCtx);
+
+static Gfx* dLists_52[] = {
+    object_haka_objects_DL_0064E0,
+    object_haka_objects_DL_005CE0,
+    gBotwBombSpotDL,
+    object_haka_objects_DL_005CE0,
+};
+
 
 static ColliderCylinderInit sCylinderInit = {
     {
@@ -76,6 +79,7 @@ ActorInit Bg_Haka_Zou_InitVars = {
     (ActorFunc)BgHakaZou_Destroy,
     (ActorFunc)BgHakaZou_Update,
     NULL,
+    (ActorFunc)BgHakaZou_Reset,
 };
 
 static InitChainEntry sInitChain[] = {
@@ -412,12 +416,44 @@ void BgHakaZou_Update(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void BgHakaZou_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static Gfx* dLists[] = {
-        object_haka_objects_DL_0064E0,
-        object_haka_objects_DL_005CE0,
-        gBotwBombSpotDL,
-        object_haka_objects_DL_005CE0,
+
+    Gfx_DrawDListOpa(globalCtx, dLists_52[thisx->params]);
+}
+
+void BgHakaZou_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_NONE,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000008, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_NONE,
+        },
+        { 5, 60, 0, { 0, 0, 0 } },
     };
 
-    Gfx_DrawDListOpa(globalCtx, dLists[thisx->params]);
+    sZeroVec = { 0.0f, 0.0f, 0.0f };
+
+    Bg_Haka_Zou_InitVars = {
+        ACTOR_BG_HAKA_ZOU,
+        ACTORCAT_PROP,
+        FLAGS,
+        OBJECT_GAMEPLAY_KEEP,
+        sizeof(BgHakaZou),
+        (ActorFunc)BgHakaZou_Init,
+        (ActorFunc)BgHakaZou_Destroy,
+        (ActorFunc)BgHakaZou_Update,
+        NULL,
+        (ActorFunc)BgHakaZou_Reset,
+    };
+
 }

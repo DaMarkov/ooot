@@ -18,6 +18,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_2)
 
 void EnOkuta_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnOkuta_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnOkuta_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnOkuta_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnOkuta_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -33,6 +34,19 @@ void EnOkuta_Die(EnOkuta* pthis, GlobalContext* globalCtx);
 void EnOkuta_Freeze(EnOkuta* pthis, GlobalContext* globalCtx);
 void EnOkuta_ProjectileFly(EnOkuta* pthis, GlobalContext* globalCtx);
 
+static Vec3f accel_41 = { 0.0f, 0.0f, 0.0f };
+
+static Color_RGBA8 primColor_41 = { 255, 255, 255, 255 };
+
+static Color_RGBA8 envColor_41 = { 150, 150, 150, 255 };
+
+static Vec3f accel_59 = { 0.0f, -0.5f, 0.0f };
+
+static Color_RGBA8 primColor_59 = { 255, 255, 255, 255 };
+
+static Color_RGBA8 envColor_59 = { 150, 150, 150, 0 };
+
+
 ActorInit En_Okuta_InitVars = {
     ACTOR_EN_OKUTA,
     ACTORCAT_ENEMY,
@@ -43,6 +57,7 @@ ActorInit En_Okuta_InitVars = {
     (ActorFunc)EnOkuta_Destroy,
     (ActorFunc)EnOkuta_Update,
     (ActorFunc)EnOkuta_Draw,
+    (ActorFunc)EnOkuta_Reset,
 };
 
 static ColliderCylinderInit sProjectileColliderInit = {
@@ -186,11 +201,8 @@ void EnOkuta_SpawnBubbles(EnOkuta* pthis, GlobalContext* globalCtx) {
 }
 
 void EnOkuta_SpawnDust(Vec3f* pos, Vec3f* velocity, s16 scaleStep, GlobalContext* globalCtx) {
-    static Vec3f accel = { 0.0f, 0.0f, 0.0f };
-    static Color_RGBA8 primColor = { 255, 255, 255, 255 };
-    static Color_RGBA8 envColor = { 150, 150, 150, 255 };
 
-    func_8002829C(globalCtx, pos, velocity, &accel, &primColor, &envColor, 0x190, scaleStep);
+    func_8002829C(globalCtx, pos, velocity, &accel_41, &primColor_41, &envColor_41, 0x190, scaleStep);
 }
 
 void EnOkuta_SpawnSplash(EnOkuta* pthis, GlobalContext* globalCtx) {
@@ -411,9 +423,6 @@ void EnOkuta_WaitToDie(EnOkuta* pthis, GlobalContext* globalCtx) {
 }
 
 void EnOkuta_Die(EnOkuta* pthis, GlobalContext* globalCtx) {
-    static Vec3f accel = { 0.0f, -0.5f, 0.0f };
-    static Color_RGBA8 primColor = { 255, 255, 255, 255 };
-    static Color_RGBA8 envColor = { 150, 150, 150, 0 };
     Vec3f velocity;
     Vec3f pos;
     s32 i;
@@ -450,8 +459,8 @@ void EnOkuta_Die(EnOkuta* pthis, GlobalContext* globalCtx) {
                 velocity.x = (Rand_ZeroOne() - 0.5f) * 7.0f;
                 velocity.y = Rand_ZeroOne() * 7.0f;
                 velocity.z = (Rand_ZeroOne() - 0.5f) * 7.0f;
-                EffectSsDtBubble_SpawnCustomColor(globalCtx, &pthis->actor.world.pos, &velocity, &accel, &primColor,
-                                                  &envColor, Rand_S16Offset(100, 50), 25, 0);
+                EffectSsDtBubble_SpawnCustomColor(globalCtx, &pthis->actor.world.pos, &velocity, &accel_59, &primColor_59,
+                                                  &envColor_59, Rand_S16Offset(100, 50), 25, 0);
             }
             Actor_Kill(&pthis->actor);
         }
@@ -734,4 +743,109 @@ void EnOkuta_Draw(Actor* thisx, GlobalContext* globalCtx) {
 
         CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_okuta.c", 1662);
     }
+}
+
+void EnOkuta_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    accel_41 = { 0.0f, 0.0f, 0.0f };
+
+    primColor_41 = { 255, 255, 255, 255 };
+
+    envColor_41 = { 150, 150, 150, 255 };
+
+    accel_59 = { 0.0f, -0.5f, 0.0f };
+
+    primColor_59 = { 255, 255, 255, 255 };
+
+    envColor_59 = { 150, 150, 150, 0 };
+
+    En_Okuta_InitVars = {
+        ACTOR_EN_OKUTA,
+        ACTORCAT_ENEMY,
+        FLAGS,
+        OBJECT_OKUTA,
+        sizeof(EnOkuta),
+        (ActorFunc)EnOkuta_Init,
+        (ActorFunc)EnOkuta_Destroy,
+        (ActorFunc)EnOkuta_Update,
+        (ActorFunc)EnOkuta_Draw,
+        (ActorFunc)EnOkuta_Reset,
+    };
+
+    sProjectileColliderInit = {
+        {
+            COLTYPE_NONE,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x00, 0x08 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_HARD,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 13, 20, 0, { 0, 0, 0 } },
+    };
+
+    sOctorockColliderInit = {
+        {
+            COLTYPE_HIT0,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK1,
+            { 0x00000000, 0x00, 0x00 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 20, 40, -30, { 0, 0, 0 } },
+    };
+
+    sColChkInfoInit = { 1, 15, 60, 100 };
+
+    sDamageTable = {
+        /* Deku nut      */ DMG_ENTRY(0, 0x0),
+        /* Deku stick    */ DMG_ENTRY(2, 0x0),
+        /* Slingshot     */ DMG_ENTRY(1, 0x0),
+        /* Explosive     */ DMG_ENTRY(2, 0x0),
+        /* Boomerang     */ DMG_ENTRY(1, 0x0),
+        /* Normal arrow  */ DMG_ENTRY(2, 0x0),
+        /* Hammer swing  */ DMG_ENTRY(2, 0x0),
+        /* Hookshot      */ DMG_ENTRY(2, 0x0),
+        /* Kokiri sword  */ DMG_ENTRY(1, 0x0),
+        /* Master sword  */ DMG_ENTRY(2, 0x0),
+        /* Giant's Knife */ DMG_ENTRY(4, 0x0),
+        /* Fire arrow    */ DMG_ENTRY(2, 0x0),
+        /* Ice arrow     */ DMG_ENTRY(4, 0x3),
+        /* Light arrow   */ DMG_ENTRY(2, 0x0),
+        /* Unk arrow 1   */ DMG_ENTRY(2, 0x0),
+        /* Unk arrow 2   */ DMG_ENTRY(2, 0x0),
+        /* Unk arrow 3   */ DMG_ENTRY(2, 0x0),
+        /* Fire magic    */ DMG_ENTRY(0, 0x0),
+        /* Ice magic     */ DMG_ENTRY(0, 0x0),
+        /* Light magic   */ DMG_ENTRY(0, 0x0),
+        /* Shield        */ DMG_ENTRY(0, 0x0),
+        /* Mirror Ray    */ DMG_ENTRY(0, 0x0),
+        /* Kokiri spin   */ DMG_ENTRY(1, 0x0),
+        /* Giant spin    */ DMG_ENTRY(4, 0x0),
+        /* Master spin   */ DMG_ENTRY(2, 0x0),
+        /* Kokiri jump   */ DMG_ENTRY(2, 0x0),
+        /* Giant jump    */ DMG_ENTRY(8, 0x0),
+        /* Master jump   */ DMG_ENTRY(4, 0x0),
+        /* Unknown 1     */ DMG_ENTRY(0, 0x0),
+        /* Unblockable   */ DMG_ENTRY(0, 0x0),
+        /* Hammer jump   */ DMG_ENTRY(4, 0x0),
+        /* Unknown 2     */ DMG_ENTRY(0, 0x0),
+    };
+
 }

@@ -20,6 +20,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3 | ACTOR_FLAG_4 | ACTOR_FLAG_25)
 
 void EnSa_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnSa_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnSa_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnSa_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnSa_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -30,21 +31,15 @@ void func_80AF683C(EnSa* pthis, GlobalContext* globalCtx);
 void func_80AF68E4(EnSa* pthis, GlobalContext* globalCtx);
 void func_80AF6B20(EnSa* pthis, GlobalContext* globalCtx);
 
-typedef enum {
-    /* 0 */ SARIA_EYE_OPEN,
-    /* 1 */ SARIA_EYE_HALF,
-    /* 2 */ SARIA_EYE_CLOSED,
-    /* 3 */ SARIA_EYE_SUPRISED,
-    /* 4 */ SARIA_EYE_SAD
-} SariaEyeState;
+static void* mouthTextures_67[] = {
+    gSariaMouthClosed2Tex,  gSariaMouthSmilingOpenTex, gSariaMouthFrowningTex,
+    gSariaMouthSuprisedTex, gSariaMouthClosedTex,
+};
 
-typedef enum {
-    /* 0 */ SARIA_MOUTH_CLOSED2,
-    /* 1 */ SARIA_MOUTH_SUPRISED,
-    /* 2 */ SARIA_MOUTH_CLOSED,
-    /* 3 */ SARIA_MOUTH_SMILING_OPEN,
-    /* 4 */ SARIA_MOUTH_FROWNING
-} SariaMouthState;
+static void* eyeTextures_67[] = {
+    gSariaEyeOpenTex, gSariaEyeHalfTex, gSariaEyeClosedTex, gSariaEyeSuprisedTex, gSariaEyeSadTex,
+};
+
 
 ActorInit En_Sa_InitVars = {
     ACTOR_EN_SA,
@@ -56,6 +51,7 @@ ActorInit En_Sa_InitVars = {
     (ActorFunc)EnSa_Destroy,
     (ActorFunc)EnSa_Update,
     (ActorFunc)EnSa_Draw,
+    (ActorFunc)EnSa_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -459,6 +455,8 @@ void EnSa_Init(Actor* thisx, GlobalContext* globalCtx) {
     EnSa* pthis = (EnSa*)thisx;
     s32 pad;
 
+    pthis->counter = 0;
+
     ActorShape_Init(&pthis->actor.shape, 0.0f, ActorShadow_DrawCircle, 12.0f);
     SkelAnime_InitFlex(globalCtx, &pthis->skelAnime, &gSariaSkel, NULL, pthis->jointTable, pthis->morphTable, 17);
     Collider_InitCylinder(globalCtx, &pthis->collider);
@@ -618,7 +616,9 @@ void func_80AF68E4(EnSa* pthis, GlobalContext* globalCtx) {
     f32 gravity;
 
     if (globalCtx->csCtx.state == CS_STATE_IDLE) {
-        pthis->actionFunc = func_80AF6B20;
+        if(pthis->counter) {
+            pthis->actionFunc = func_80AF6B20;
+        }
         return;
     }
     csAction = globalCtx->csCtx.npcActions[1];
@@ -734,6 +734,8 @@ void EnSa_Update(Actor* thisx, GlobalContext* globalCtx) {
     pthis->actionFunc(pthis, globalCtx);
     func_80AF57D8(pthis, globalCtx);
     func_80AF5F34(pthis, globalCtx);
+
+    pthis->counter++;
 }
 
 s32 EnSa_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s* rot, void* thisx,
@@ -773,28 +775,61 @@ void EnSa_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec
 }
 
 void EnSa_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static void* mouthTextures[] = {
-        gSariaMouthClosed2Tex,  gSariaMouthSmilingOpenTex, gSariaMouthFrowningTex,
-        gSariaMouthSuprisedTex, gSariaMouthClosedTex,
-    };
-    static void* eyeTextures[] = {
-        gSariaEyeOpenTex, gSariaEyeHalfTex, gSariaEyeClosedTex, gSariaEyeSuprisedTex, gSariaEyeSadTex,
-    };
     EnSa* pthis = (EnSa*)thisx;
 
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_en_sa.c", 1444);
 
     if (pthis->alpha == 255) {
-        gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures[pthis->rightEyeIndex]));
-        gSPSegment(POLY_OPA_DISP++, 0x09, SEGMENTED_TO_VIRTUAL(eyeTextures[pthis->leftEyeIndex]));
-        gSPSegment(POLY_OPA_DISP++, 0x0A, SEGMENTED_TO_VIRTUAL(mouthTextures[pthis->mouthIndex]));
+        gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures_67[pthis->rightEyeIndex]));
+        gSPSegment(POLY_OPA_DISP++, 0x09, SEGMENTED_TO_VIRTUAL(eyeTextures_67[pthis->leftEyeIndex]));
+        gSPSegment(POLY_OPA_DISP++, 0x0A, SEGMENTED_TO_VIRTUAL(mouthTextures_67[pthis->mouthIndex]));
         func_80034BA0(globalCtx, &pthis->skelAnime, EnSa_OverrideLimbDraw, EnSa_PostLimbDraw, &pthis->actor, pthis->alpha);
     } else if (pthis->alpha != 0) {
-        gSPSegment(POLY_XLU_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures[pthis->rightEyeIndex]));
-        gSPSegment(POLY_XLU_DISP++, 0x09, SEGMENTED_TO_VIRTUAL(eyeTextures[pthis->leftEyeIndex]));
-        gSPSegment(POLY_XLU_DISP++, 0x0A, SEGMENTED_TO_VIRTUAL(mouthTextures[pthis->mouthIndex]));
+        gSPSegment(POLY_XLU_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures_67[pthis->rightEyeIndex]));
+        gSPSegment(POLY_XLU_DISP++, 0x09, SEGMENTED_TO_VIRTUAL(eyeTextures_67[pthis->leftEyeIndex]));
+        gSPSegment(POLY_XLU_DISP++, 0x0A, SEGMENTED_TO_VIRTUAL(mouthTextures_67[pthis->mouthIndex]));
         func_80034CC4(globalCtx, &pthis->skelAnime, EnSa_OverrideLimbDraw, EnSa_PostLimbDraw, &pthis->actor, pthis->alpha);
     }
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_sa.c", 1497);
+}
+
+void EnSa_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_Sa_InitVars = {
+        ACTOR_EN_SA,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_SA,
+        sizeof(EnSa),
+        (ActorFunc)EnSa_Init,
+        (ActorFunc)EnSa_Destroy,
+        (ActorFunc)EnSa_Update,
+        (ActorFunc)EnSa_Draw,
+        (ActorFunc)EnSa_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_NONE,
+            OCELEM_ON,
+        },
+        { 20, 46, 0, { 0, 0, 0 } },
+    };
+
+    sColChkInfoInit = {
+        0, 0, 0, 0, MASS_IMMOVABLE,
+    };
+
 }

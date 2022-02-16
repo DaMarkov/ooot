@@ -23,6 +23,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_2 | ACTOR_FLAG_12 | ACTOR_FLAG_14)
 
 void EnFirefly_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnFirefly_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnFirefly_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnFirefly_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnFirefly_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -40,11 +41,20 @@ void EnFirefly_FrozenFall(EnFirefly* pthis, GlobalContext* globalCtx);
 void EnFirefly_Perch(EnFirefly* pthis, GlobalContext* globalCtx);
 void EnFirefly_DisturbDiveAttack(EnFirefly* pthis, GlobalContext* globalCtx);
 
-typedef enum {
-    /* 0 */ KEESE_AURA_NONE,
-    /* 1 */ KEESE_AURA_FIRE,
-    /* 2 */ KEESE_AURA_ICE
-} KeeseAuraType;
+static Color_RGBA8 fireAuraPrimColor_75 = { 255, 255, 100, 255 };
+
+static Color_RGBA8 fireAuraEnvColor_75 = { 255, 50, 0, 0 };
+
+static Color_RGBA8 iceAuraPrimColor_75 = { 100, 200, 255, 255 };
+
+static Color_RGBA8 iceAuraEnvColor_75 = { 0, 0, 255, 0 };
+
+static Vec3f effVelocity_75 = { 0.0f, 0.5f, 0.0f };
+
+static Vec3f effAccel_75 = { 0.0f, 0.5f, 0.0f };
+
+static Vec3f limbSrc_75 = { 0.0f, 0.0f, 0.0f };
+
 
 ActorInit En_Firefly_InitVars = {
     ACTOR_EN_FIREFLY,
@@ -56,6 +66,7 @@ ActorInit En_Firefly_InitVars = {
     (ActorFunc)EnFirefly_Destroy,
     (ActorFunc)EnFirefly_Update,
     (ActorFunc)EnFirefly_Draw,
+    (ActorFunc)EnFirefly_Reset,
 };
 
 static ColliderJntSphElementInit sJntSphElementsInit[1] = {
@@ -743,13 +754,6 @@ s32 EnFirefly_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dL
 }
 
 void EnFirefly_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx, Gfx** gfx) {
-    static Color_RGBA8 fireAuraPrimColor = { 255, 255, 100, 255 };
-    static Color_RGBA8 fireAuraEnvColor = { 255, 50, 0, 0 };
-    static Color_RGBA8 iceAuraPrimColor = { 100, 200, 255, 255 };
-    static Color_RGBA8 iceAuraEnvColor = { 0, 0, 255, 0 };
-    static Vec3f effVelocity = { 0.0f, 0.5f, 0.0f };
-    static Vec3f effAccel = { 0.0f, 0.5f, 0.0f };
-    static Vec3f limbSrc = { 0.0f, 0.0f, 0.0f };
     Vec3f effPos;
     Vec3f* limbDest;
     Color_RGBA8* effPrimColor;
@@ -786,14 +790,14 @@ void EnFirefly_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList
                 }
 
                 if (pthis->auraType == KEESE_AURA_FIRE) {
-                    effPrimColor = &fireAuraPrimColor;
-                    effEnvColor = &fireAuraEnvColor;
+                    effPrimColor = &fireAuraPrimColor_75;
+                    effEnvColor = &fireAuraEnvColor_75;
                 } else {
-                    effPrimColor = &iceAuraPrimColor;
-                    effEnvColor = &iceAuraEnvColor;
+                    effPrimColor = &iceAuraPrimColor_75;
+                    effEnvColor = &iceAuraEnvColor_75;
                 }
 
-                func_8002843C(globalCtx, &effPos, &effVelocity, &effAccel, effPrimColor, effEnvColor, 250, effScaleStep,
+                func_8002843C(globalCtx, &effPos, &effVelocity_75, &effAccel_75, effPrimColor, effEnvColor, 250, effScaleStep,
                               effLife);
             }
         }
@@ -807,7 +811,7 @@ void EnFirefly_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList
             limbDest = &pthis->bodyPartsPos[2];
         }
 
-        Matrix_MultVec3f(&limbSrc, limbDest);
+        Matrix_MultVec3f(&limbSrc_75, limbDest);
         limbDest->y -= 5.0f;
     }
 }
@@ -844,4 +848,84 @@ void EnFirefly_DrawInvisible(Actor* thisx, GlobalContext* globalCtx) {
     POLY_XLU_DISP = SkelAnime_Draw(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable,
                                    EnFirefly_OverrideLimbDraw, EnFirefly_PostLimbDraw, pthis, POLY_XLU_DISP);
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_firefly.c", 1805);
+}
+
+void EnFirefly_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    fireAuraPrimColor_75 = { 255, 255, 100, 255 };
+
+    fireAuraEnvColor_75 = { 255, 50, 0, 0 };
+
+    iceAuraPrimColor_75 = { 100, 200, 255, 255 };
+
+    iceAuraEnvColor_75 = { 0, 0, 255, 0 };
+
+    effVelocity_75 = { 0.0f, 0.5f, 0.0f };
+
+    effAccel_75 = { 0.0f, 0.5f, 0.0f };
+
+    limbSrc_75 = { 0.0f, 0.0f, 0.0f };
+
+    En_Firefly_InitVars = {
+        ACTOR_EN_FIREFLY,
+        ACTORCAT_ENEMY,
+        FLAGS,
+        OBJECT_FIREFLY,
+        sizeof(EnFirefly),
+        (ActorFunc)EnFirefly_Init,
+        (ActorFunc)EnFirefly_Destroy,
+        (ActorFunc)EnFirefly_Update,
+        (ActorFunc)EnFirefly_Draw,
+        (ActorFunc)EnFirefly_Reset,
+    };
+
+    sJntSphInit = {
+        {
+            COLTYPE_HIT3,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_JNTSPH,
+        },
+        1,
+        sJntSphElementsInit,
+    };
+
+    sColChkInfoInit = { 1, 10, 10, 30 };
+
+    sDamageTable = {
+        /* Deku nut      */ DMG_ENTRY(0, 0x1),
+        /* Deku stick    */ DMG_ENTRY(2, 0x0),
+        /* Slingshot     */ DMG_ENTRY(1, 0x0),
+        /* Explosive     */ DMG_ENTRY(2, 0x0),
+        /* Boomerang     */ DMG_ENTRY(1, 0x0),
+        /* Normal arrow  */ DMG_ENTRY(2, 0x0),
+        /* Hammer swing  */ DMG_ENTRY(2, 0x0),
+        /* Hookshot      */ DMG_ENTRY(2, 0x0),
+        /* Kokiri sword  */ DMG_ENTRY(1, 0x0),
+        /* Master sword  */ DMG_ENTRY(2, 0x0),
+        /* Giant's Knife */ DMG_ENTRY(4, 0x0),
+        /* Fire arrow    */ DMG_ENTRY(2, 0xF),
+        /* Ice arrow     */ DMG_ENTRY(4, 0x3),
+        /* Light arrow   */ DMG_ENTRY(2, 0x0),
+        /* Unk arrow 1   */ DMG_ENTRY(2, 0x0),
+        /* Unk arrow 2   */ DMG_ENTRY(2, 0x0),
+        /* Unk arrow 3   */ DMG_ENTRY(2, 0x0),
+        /* Fire magic    */ DMG_ENTRY(0, 0x2),
+        /* Ice magic     */ DMG_ENTRY(4, 0x3),
+        /* Light magic   */ DMG_ENTRY(0, 0x0),
+        /* Shield        */ DMG_ENTRY(0, 0x0),
+        /* Mirror Ray    */ DMG_ENTRY(0, 0x0),
+        /* Kokiri spin   */ DMG_ENTRY(1, 0x0),
+        /* Giant spin    */ DMG_ENTRY(4, 0x0),
+        /* Master spin   */ DMG_ENTRY(2, 0x0),
+        /* Kokiri jump   */ DMG_ENTRY(2, 0x0),
+        /* Giant jump    */ DMG_ENTRY(8, 0x0),
+        /* Master jump   */ DMG_ENTRY(4, 0x0),
+        /* Unknown 1     */ DMG_ENTRY(0, 0x0),
+        /* Unblockable   */ DMG_ENTRY(0, 0x0),
+        /* Hammer jump   */ DMG_ENTRY(4, 0x0),
+        /* Unknown 2     */ DMG_ENTRY(0, 0x0),
+    };
+
 }

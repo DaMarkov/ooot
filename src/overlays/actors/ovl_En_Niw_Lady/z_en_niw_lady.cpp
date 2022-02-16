@@ -19,6 +19,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3 | ACTOR_FLAG_4)
 
 void EnNiwLady_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnNiwLady_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnNiwLady_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnNiwLady_Update(Actor* thisx, GlobalContext* globalCtx);
 
@@ -37,6 +38,9 @@ void func_80ABA244(EnNiwLady* pthis, GlobalContext* globalCtx);
 void func_80ABA654(EnNiwLady* pthis, GlobalContext* globalCtx);
 void func_80ABAD7C(EnNiwLady* pthis, GlobalContext* globalCtx);
 
+static void* sEyeTextures_60[] = { gCuccoLadyEyeOpenTex, gCuccoLadyEyeHalfTex, gCuccoLadyEyeClosedTex };
+
+
 ActorInit En_Niw_Lady_InitVars = {
     ACTOR_EN_NIW_LADY,
     ACTORCAT_NPC,
@@ -47,6 +51,7 @@ ActorInit En_Niw_Lady_InitVars = {
     (ActorFunc)EnNiwLady_Destroy,
     (ActorFunc)EnNiwLady_Update,
     NULL,
+    (ActorFunc)EnNiwLady_Reset,
 };
 
 static s16 sMissingCuccoTextIds[] = {
@@ -577,7 +582,6 @@ s32 EnNiwLady_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dL
 }
 
 void EnNiwLady_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static void* sEyeTextures[] = { gCuccoLadyEyeOpenTex, gCuccoLadyEyeHalfTex, gCuccoLadyEyeClosedTex };
     EnNiwLady* pthis = (EnNiwLady*)thisx;
     s32 pad;
 
@@ -585,10 +589,46 @@ void EnNiwLady_Draw(Actor* thisx, GlobalContext* globalCtx) {
     if (pthis->unk_27E != 0) {
         func_80093D18(globalCtx->state.gfxCtx);
         gDPSetEnvColor(POLY_OPA_DISP++, 0, 0, 0, 255);
-        gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sEyeTextures[pthis->faceState]));
+        gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sEyeTextures_60[pthis->faceState]));
         gSPSegment(POLY_OPA_DISP++, 0x0C, func_80ABB0A0(globalCtx->state.gfxCtx));
         SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable,
                               pthis->skelAnime.dListCount, EnNiwLady_OverrideLimbDraw, NULL, pthis);
     }
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_niw_lady.c", 1370);
+}
+
+void EnNiwLady_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_Niw_Lady_InitVars = {
+        ACTOR_EN_NIW_LADY,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_ANE,
+        sizeof(EnNiwLady),
+        (ActorFunc)EnNiwLady_Init,
+        (ActorFunc)EnNiwLady_Destroy,
+        (ActorFunc)EnNiwLady_Update,
+        NULL,
+        (ActorFunc)EnNiwLady_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 10, 10, 0, { 0, 0, 0 } },
+    };
+
 }

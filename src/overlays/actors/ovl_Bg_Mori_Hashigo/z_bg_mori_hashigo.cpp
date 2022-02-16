@@ -20,6 +20,7 @@
 #define FLAGS 0
 
 void BgMoriHashigo_Init(Actor* thisx, GlobalContext* globalCtx);
+void BgMoriHashigo_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BgMoriHashigo_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BgMoriHashigo_Update(Actor* thisx, GlobalContext* globalCtx);
 void BgMoriHashigo_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -34,6 +35,9 @@ void BgMoriHashigo_SetupLadderFall(BgMoriHashigo* pthis);
 void BgMoriHashigo_LadderFall(BgMoriHashigo* pthis, GlobalContext* globalCtx);
 void BgMoriHashigo_SetupLadderRest(BgMoriHashigo* pthis);
 
+static f32 bounceSpeed_48[3] = { 4.0f, 2.7f, 1.7f };
+
+
 ActorInit Bg_Mori_Hashigo_InitVars = {
     ACTOR_BG_MORI_HASHIGO,
     ACTORCAT_BG,
@@ -44,6 +48,7 @@ ActorInit Bg_Mori_Hashigo_InitVars = {
     (ActorFunc)BgMoriHashigo_Destroy,
     (ActorFunc)BgMoriHashigo_Update,
     NULL,
+    (ActorFunc)BgMoriHashigo_Reset,
 };
 
 static ColliderJntSphElementInit sJntSphElementsInit[1] = {
@@ -251,16 +256,15 @@ void BgMoriHashigo_SetupLadderFall(BgMoriHashigo* pthis) {
 }
 
 void BgMoriHashigo_LadderFall(BgMoriHashigo* pthis, GlobalContext* globalCtx) {
-    static f32 bounceSpeed[3] = { 4.0f, 2.7f, 1.7f };
     Actor* thisx = &pthis->dyna.actor;
 
     Actor_MoveForward(thisx);
     if ((thisx->bgCheckFlags & 1) && (thisx->velocity.y < 0.0f)) {
-        if (pthis->bounceCounter >= ARRAY_COUNT(bounceSpeed)) {
+        if (pthis->bounceCounter >= ARRAY_COUNT(bounceSpeed_48)) {
             BgMoriHashigo_SetupLadderRest(pthis);
         } else {
             Actor_UpdateBgCheckInfo(globalCtx, thisx, 0.0f, 0.0f, 0.0f, 0x1C);
-            thisx->velocity.y = bounceSpeed[pthis->bounceCounter];
+            thisx->velocity.y = bounceSpeed_48[pthis->bounceCounter];
             pthis->bounceCounter++;
         }
     } else {
@@ -308,4 +312,33 @@ void BgMoriHashigo_Draw(Actor* thisx, GlobalContext* globalCtx) {
             break;
     }
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_bg_mori_hashigo.c", 531);
+}
+
+void BgMoriHashigo_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    Bg_Mori_Hashigo_InitVars = {
+        ACTOR_BG_MORI_HASHIGO,
+        ACTORCAT_BG,
+        FLAGS,
+        OBJECT_MORI_OBJECTS,
+        sizeof(BgMoriHashigo),
+        (ActorFunc)BgMoriHashigo_Init,
+        (ActorFunc)BgMoriHashigo_Destroy,
+        (ActorFunc)BgMoriHashigo_Update,
+        NULL,
+        (ActorFunc)BgMoriHashigo_Reset,
+    };
+
+    sJntSphInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_NONE,
+            OC2_NONE,
+            COLSHAPE_JNTSPH,
+        },
+        1,
+        sJntSphElementsInit,
+    };
+
 }

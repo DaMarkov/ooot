@@ -44,29 +44,9 @@
 #define ROOM_CENTER_Y 0.0f
 #define ROOM_CENTER_Z 0.0f
 
-typedef enum {
-    /*  0 */ HAND_WAIT,
-    /*  1 */ HAND_BEAT,
-    /*  2 */ HAND_RETREAT,
-    /*  3 */ HAND_SLAM,
-    /*  4 */ HAND_SWEEP,
-    /*  5 */ HAND_PUNCH,
-    /*  6 */ HAND_CLAP,
-    /*  7 */ HAND_GRAB,
-    /*  8 */ HAND_DAMAGED,
-    /*  9 */ HAND_FROZEN,
-    /* 10 */ HAND_BREAK_ICE,
-    /* 11 */ HAND_DEATH
-} BossSstHandState;
-
-typedef enum {
-    /* 0 */ BONGO_NULL,
-    /* 1 */ BONGO_ICE,
-    /* 2 */ BONGO_SHOCKWAVE,
-    /* 3 */ BONGO_SHADOW
-} BossSstEffectMode;
 
 void BossSst_Init(Actor* thisx, GlobalContext* globalCtx);
+void BossSst_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BossSst_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BossSst_UpdateHand(Actor* thisx, GlobalContext* globalCtx);
 void BossSst_UpdateHead(Actor* thisx, GlobalContext* globalCtx);
@@ -206,6 +186,28 @@ void BossSst_SpawnIceCrystal(BossSst* pthis, s32 index);
 void BossSst_SpawnIceShard(BossSst* pthis);
 void BossSst_IceShatter(BossSst* pthis);
 
+static Color_RGBA8 colorIndigo_240 = { 80, 80, 150, 255 };
+
+static Color_RGBA8 colorDarkIndigo_240 = { 40, 40, 80, 255 };
+
+static Color_RGBA8 colorUnused_240[2] = {
+    { 0, 0, 0, 255 },
+    { 100, 100, 100, 0 },
+};
+
+static s32 dropFlag_270 = false;
+
+static Vec3f zeroVec_329 = { 0.0f, 0.0f, 0.0f };
+
+static Vec3f headVec_329 = { 1000.0f, 0.0f, 0.0f };
+
+static Vec3f shadowOffset_331[] = {
+    { 0.0f, 0.0f, 340.0f },
+    { -160.0f, 0.0f, 250.0f },
+    { 160.0f, 0.0f, 250.0f },
+};
+
+
 #include "overlays/ovl_Boss_Sst/ovl_Boss_Sst.cpp"
 
 static BossSst* sHead;
@@ -264,6 +266,7 @@ ActorInit Boss_Sst_InitVars = {
     (ActorFunc)BossSst_Destroy,
     (ActorFunc)BossSst_UpdateHand,
     (ActorFunc)BossSst_DrawHand,
+    (ActorFunc)BossSst_Reset,
 };
 
 #include "z_boss_sst_colchk.cpp"
@@ -1181,12 +1184,6 @@ void BossSst_HeadSetupFinish(BossSst* pthis) {
 }
 
 void BossSst_HeadFinish(BossSst* pthis, GlobalContext* globalCtx) {
-    static Color_RGBA8 colorIndigo = { 80, 80, 150, 255 };
-    static Color_RGBA8 colorDarkIndigo = { 40, 40, 80, 255 };
-    static Color_RGBA8 colorUnused[2] = {
-        { 0, 0, 0, 255 },
-        { 100, 100, 100, 0 },
-    };
     Vec3f spawnPos;
     s32 i;
 
@@ -1222,14 +1219,14 @@ void BossSst_HeadFinish(BossSst* pthis, GlobalContext* globalCtx) {
         BossSst_UpdateDeathCamera(pthis, globalCtx);
     }
 
-    colorIndigo.a = pthis->effects[0].alpha;
-    colorDarkIndigo.a = pthis->effects[0].alpha;
+    colorIndigo_240.a = pthis->effects[0].alpha;
+    colorDarkIndigo_240.a = pthis->effects[0].alpha;
 
     for (i = 0; i < 5; i++) {
         spawnPos.x = sRoomCenter.x + 0.0f + Rand_CenteredFloat(800.0f);
         spawnPos.y = sRoomCenter.y + (-28.0f) + (Rand_ZeroOne() * 5.0f);
         spawnPos.z = sRoomCenter.z + 0.0f + Rand_CenteredFloat(800.0f);
-        EffectSsGSplash_Spawn(globalCtx, &spawnPos, &colorIndigo, &colorDarkIndigo, 0, 0x3E8);
+        EffectSsGSplash_Spawn(globalCtx, &spawnPos, &colorIndigo_240, &colorDarkIndigo_240, 0, 0x3E8);
     }
 }
 
@@ -1708,7 +1705,6 @@ void BossSst_HandSetupClap(BossSst* pthis) {
 }
 
 void BossSst_HandClap(BossSst* pthis, GlobalContext* globalCtx) {
-    static s32 dropFlag = false;
     Player* player = GET_PLAYER(globalCtx);
 
     SkelAnime_Update(&pthis->skelAnime);
@@ -1718,10 +1714,10 @@ void BossSst_HandClap(BossSst* pthis, GlobalContext* globalCtx) {
         }
 
         if (pthis->timer == 0) {
-            if (dropFlag) {
+            if (dropFlag_270) {
                 Item_DropCollectible(globalCtx, &pthis->actor.world.pos,
                                      (Rand_ZeroOne() < 0.5f) ? ITEM00_ARROWS_SMALL : ITEM00_MAGIC_SMALL);
-                dropFlag = false;
+                dropFlag_270 = false;
             }
 
             BossSst_HandReleasePlayer(pthis, globalCtx, true);
@@ -1738,7 +1734,7 @@ void BossSst_HandClap(BossSst* pthis, GlobalContext* globalCtx) {
             pthis->timer = 30;
             pthis->colliderJntSph.base.atFlags &= ~(AT_ON | AT_HIT);
             if (!(player->stateFlags2 & 0x80)) {
-                dropFlag = true;
+                dropFlag_270 = true;
             }
         } else {
             pthis->handAngSpeed += 0x40;
@@ -2855,14 +2851,12 @@ s32 BossSst_OverrideHeadDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dLis
 }
 
 void BossSst_PostHeadDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx, Gfx** gfx) {
-    static Vec3f zeroVec = { 0.0f, 0.0f, 0.0f };
-    static Vec3f headVec = { 1000.0f, 0.0f, 0.0f };
     BossSst* pthis = (BossSst*)thisx;
     Vec3f headPos;
 
     if (limbIndex == 8) {
-        Matrix_MultVec3f(&zeroVec, &pthis->actor.focus.pos);
-        Matrix_MultVec3f(&headVec, &headPos);
+        Matrix_MultVec3f(&zeroVec_329, &pthis->actor.focus.pos);
+        Matrix_MultVec3f(&headVec_329, &headPos);
         pthis->colliderCyl.dim.pos.x = headPos.x;
         pthis->colliderCyl.dim.pos.y = headPos.y;
         pthis->colliderCyl.dim.pos.z = headPos.z;
@@ -2947,11 +2941,6 @@ void BossSst_DrawHead(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void BossSst_SpawnHeadShadow(BossSst* pthis) {
-    static Vec3f shadowOffset[] = {
-        { 0.0f, 0.0f, 340.0f },
-        { -160.0f, 0.0f, 250.0f },
-        { 160.0f, 0.0f, 250.0f },
-    };
     s32 pad;
     s32 i;
     f32 sn;
@@ -2963,7 +2952,7 @@ void BossSst_SpawnHeadShadow(BossSst* pthis) {
 
     for (i = 0; i < 3; i++) {
         BossSstEffect* shadow = &pthis->effects[i];
-        Vec3f* offset = &shadowOffset[i];
+        Vec3f* offset = &shadowOffset_331[i];
 
         shadow->pos.x = pthis->actor.world.pos.x + (sn * offset->z) + (cs * offset->x);
         shadow->pos.y = 0.0f;
@@ -3241,4 +3230,54 @@ void BossSst_DrawEffect(Actor* thisx, GlobalContext* globalCtx) {
 
         CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_boss_sst.c", 7433);
     }
+}
+
+void BossSst_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    colorIndigo_240 = { 80, 80, 150, 255 };
+
+    colorDarkIndigo_240 = { 40, 40, 80, 255 };
+
+    dropFlag_270 = false;
+
+    zeroVec_329 = { 0.0f, 0.0f, 0.0f };
+
+    headVec_329 = { 1000.0f, 0.0f, 0.0f };
+
+    sHead = 0;
+
+    sFloor = 0;
+
+    sRoomCenter = { ROOM_CENTER_X, ROOM_CENTER_Y, ROOM_CENTER_Z };
+
+    sCutsceneCamera = 0;
+
+    sCameraAt = { ROOM_CENTER_X + 50.0f, ROOM_CENTER_Y + 0.0f, ROOM_CENTER_Z + 0.0f };
+
+    sCameraEye = { ROOM_CENTER_X + 150.0f, ROOM_CENTER_Y + 100.0f, ROOM_CENTER_Z + 0.0f };
+
+    sCameraAtVel = { 0.0f, 0.0f, 0.0f };
+
+    sCameraEyeVel = { 0.0f, 0.0f, 0.0f };
+
+    sZeroVec = { 0.0f, 0.0f, 0.0f };
+
+    sBodyStatic = false;
+
+    sBodyColor = { 255, 255, 255, 255 };
+
+    sStaticColor = { 0, 0, 0, 255 };
+
+    Boss_Sst_InitVars = {
+        ACTOR_BOSS_SST,
+        ACTORCAT_BOSS,
+        FLAGS,
+        OBJECT_SST,
+        sizeof(BossSst),
+        (ActorFunc)BossSst_Init,
+        (ActorFunc)BossSst_Destroy,
+        (ActorFunc)BossSst_UpdateHand,
+        (ActorFunc)BossSst_DrawHand,
+        (ActorFunc)BossSst_Reset,
+    };
+
 }

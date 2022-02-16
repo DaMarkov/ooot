@@ -22,6 +22,7 @@
 #define FLAGS (ACTOR_FLAG_4 | ACTOR_FLAG_5)
 
 void BgMoriRakkatenjo_Init(Actor* thisx, GlobalContext* globalCtx);
+void BgMoriRakkatenjo_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BgMoriRakkatenjo_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BgMoriRakkatenjo_Update(Actor* thisx, GlobalContext* globalCtx);
 void BgMoriRakkatenjo_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -37,6 +38,9 @@ void BgMoriRakkatenjo_Rest(BgMoriRakkatenjo* pthis, GlobalContext* globalCtx);
 void BgMoriRakkatenjo_SetupRise(BgMoriRakkatenjo* pthis);
 void BgMoriRakkatenjo_Rise(BgMoriRakkatenjo* pthis, GlobalContext* globalCtx);
 
+static f32 bounceVel_44[] = { 4.0f, 1.5f, 0.4f, 0.1f };
+
+
 static s16 sCamSetting = 0;
 
 ActorInit Bg_Mori_Rakkatenjo_InitVars = {
@@ -49,6 +53,7 @@ ActorInit Bg_Mori_Rakkatenjo_InitVars = {
     (ActorFunc)BgMoriRakkatenjo_Destroy,
     (ActorFunc)BgMoriRakkatenjo_Update,
     NULL,
+    (ActorFunc)BgMoriRakkatenjo_Reset,
 };
 
 static InitChainEntry sInitChain[] = {
@@ -155,14 +160,13 @@ void BgMoriRakkatenjo_SetupFall(BgMoriRakkatenjo* pthis) {
 }
 
 void BgMoriRakkatenjo_Fall(BgMoriRakkatenjo* pthis, GlobalContext* globalCtx) {
-    static f32 bounceVel[] = { 4.0f, 1.5f, 0.4f, 0.1f };
     s32 pad;
     Actor* thisx = &pthis->dyna.actor;
     s32 quake;
 
     Actor_MoveForward(thisx);
     if ((thisx->velocity.y < 0.0f) && (thisx->world.pos.y <= 403.0f)) {
-        if (pthis->bounceCount >= ARRAY_COUNT(bounceVel)) {
+        if (pthis->bounceCount >= ARRAY_COUNT(bounceVel_44)) {
             BgMoriRakkatenjo_SetupRest(pthis);
         } else {
             if (pthis->bounceCount == 0) {
@@ -171,8 +175,8 @@ void BgMoriRakkatenjo_Fall(BgMoriRakkatenjo* pthis, GlobalContext* globalCtx) {
                 func_800AA000(SQ(thisx->yDistToPlayer), 0xFF, 0x14, 0x96);
             }
             thisx->world.pos.y =
-                403.0f - (thisx->world.pos.y - 403.0f) * bounceVel[pthis->bounceCount] / fabsf(thisx->velocity.y);
-            thisx->velocity.y = bounceVel[pthis->bounceCount];
+                403.0f - (thisx->world.pos.y - 403.0f) * bounceVel_44[pthis->bounceCount] / fabsf(thisx->velocity.y);
+            thisx->velocity.y = bounceVel_44[pthis->bounceCount];
             pthis->bounceCount++;
             quake = Quake_Add(GET_ACTIVE_CAM(globalCtx), 3);
             Quake_SetSpeed(quake, 50000);
@@ -244,4 +248,22 @@ void BgMoriRakkatenjo_Draw(Actor* thisx, GlobalContext* globalCtx) {
     gSPDisplayList(POLY_OPA_DISP++, gMoriRakkatenjoDL);
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_bg_mori_rakkatenjo.c", 506);
+}
+
+void BgMoriRakkatenjo_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    sCamSetting = 0;
+
+    Bg_Mori_Rakkatenjo_InitVars = {
+        ACTOR_BG_MORI_RAKKATENJO,
+        ACTORCAT_BG,
+        FLAGS,
+        OBJECT_MORI_OBJECTS,
+        sizeof(BgMoriRakkatenjo),
+        (ActorFunc)BgMoriRakkatenjo_Init,
+        (ActorFunc)BgMoriRakkatenjo_Destroy,
+        (ActorFunc)BgMoriRakkatenjo_Update,
+        NULL,
+        (ActorFunc)BgMoriRakkatenjo_Reset,
+    };
+
 }

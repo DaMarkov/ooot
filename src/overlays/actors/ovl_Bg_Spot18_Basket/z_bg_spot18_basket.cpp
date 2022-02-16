@@ -19,6 +19,7 @@
 #define FLAGS ACTOR_FLAG_4
 
 void BgSpot18Basket_Init(Actor* thisx, GlobalContext* globalCtx);
+void BgSpot18Basket_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BgSpot18Basket_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BgSpot18Basket_Update(Actor* thisx, GlobalContext* globalCtx);
 void BgSpot18Basket_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -36,6 +37,9 @@ void func_808B7D50(BgSpot18Basket* pthis, GlobalContext* globalCtx);
 void func_808B7FC0(BgSpot18Basket* pthis, GlobalContext* globalCtx);
 void func_808B81A0(BgSpot18Basket* pthis, GlobalContext* globalCtx);
 
+static s16 D_808B85D0_40 = 0;
+
+
 ActorInit Bg_Spot18_Basket_InitVars = {
     ACTOR_BG_SPOT18_BASKET,
     ACTORCAT_PROP,
@@ -46,6 +50,7 @@ ActorInit Bg_Spot18_Basket_InitVars = {
     (ActorFunc)BgSpot18Basket_Destroy,
     (ActorFunc)BgSpot18Basket_Update,
     (ActorFunc)BgSpot18Basket_Draw,
+    (ActorFunc)BgSpot18Basket_Reset,
 };
 
 static ColliderJntSphElementInit sJntSphElementsInit[2] = {
@@ -97,7 +102,6 @@ void func_808B7710(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void func_808B7770(BgSpot18Basket* pthis, GlobalContext* globalCtx, f32 arg2) {
-    static s16 D_808B85D0 = 0;
     Vec3f acceleration;
     Vec3f velocity;
     Vec3f position;
@@ -110,10 +114,10 @@ void func_808B7770(BgSpot18Basket* pthis, GlobalContext* globalCtx, f32 arg2) {
     for (i = 0, count = 2; i != count; i++) {
         if (globalCtx) {}
         if (!(arg2 < Rand_ZeroOne())) {
-            D_808B85D0 += 0x7530;
+            D_808B85D0_40 += 0x7530;
 
-            sinValue = Math_SinS(D_808B85D0);
-            cosValue = Math_CosS(D_808B85D0);
+            sinValue = Math_SinS(D_808B85D0_40);
+            cosValue = Math_CosS(D_808B85D0_40);
 
             randomValue = (Rand_ZeroOne() * 35.0f) + 35.0f;
 
@@ -463,4 +467,35 @@ void BgSpot18Basket_Draw(Actor* thisx, GlobalContext* globalCtx) {
     Collider_UpdateSpheres(0, &pthis->colliderJntSph);
     Collider_UpdateSpheres(1, &pthis->colliderJntSph);
     Gfx_DrawDListOpa(globalCtx, gGoronCityVaseDL);
+}
+
+void BgSpot18Basket_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    D_808B85D0_40 = 0;
+
+    Bg_Spot18_Basket_InitVars = {
+        ACTOR_BG_SPOT18_BASKET,
+        ACTORCAT_PROP,
+        FLAGS,
+        OBJECT_SPOT18_OBJ,
+        sizeof(BgSpot18Basket),
+        (ActorFunc)BgSpot18Basket_Init,
+        (ActorFunc)BgSpot18Basket_Destroy,
+        (ActorFunc)BgSpot18Basket_Update,
+        (ActorFunc)BgSpot18Basket_Draw,
+        (ActorFunc)BgSpot18Basket_Reset,
+    };
+
+    sJntSphInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_PLAYER,
+            OC2_TYPE_2,
+            COLSHAPE_JNTSPH,
+        },
+        2,
+        sJntSphElementsInit,
+    };
+
 }

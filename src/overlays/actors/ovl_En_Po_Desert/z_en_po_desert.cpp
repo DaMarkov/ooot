@@ -23,6 +23,7 @@
 #define FLAGS (ACTOR_FLAG_4 | ACTOR_FLAG_7 | ACTOR_FLAG_12)
 
 void EnPoDesert_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnPoDesert_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnPoDesert_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnPoDesert_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnPoDesert_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -31,6 +32,9 @@ void EnPoDesert_SetNextPathPoint(EnPoDesert* pthis, GlobalContext* globalCtx);
 void EnPoDesert_WaitForPlayer(EnPoDesert* pthis, GlobalContext* globalCtx);
 void EnPoDesert_MoveToNextPoint(EnPoDesert* pthis, GlobalContext* globalCtx);
 void EnPoDesert_Disappear(EnPoDesert* pthis, GlobalContext* globalCtx);
+
+static Vec3f baseLightPos_41 = { 0.0f, 1400.0f, 0.0f };
+
 
 ActorInit En_Po_Desert_InitVars = {
     ACTOR_EN_PO_DESERT,
@@ -42,6 +46,7 @@ ActorInit En_Po_Desert_InitVars = {
     (ActorFunc)EnPoDesert_Destroy,
     (ActorFunc)EnPoDesert_Update,
     (ActorFunc)EnPoDesert_Draw,
+    (ActorFunc)EnPoDesert_Reset,
 };
 
 static ColliderCylinderInit sColliderInit = {
@@ -236,7 +241,6 @@ s32 EnPoDesert_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** d
 
 void EnPoDesert_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx,
                              Gfx** gfxP) {
-    static Vec3f baseLightPos = { 0.0f, 1400.0f, 0.0f };
 
     EnPoDesert* pthis = (EnPoDesert*)thisx;
     f32 rand;
@@ -244,7 +248,7 @@ void EnPoDesert_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dLis
     Vec3f lightPos;
 
     if (limbIndex == 7) {
-        Matrix_MultVec3f(&baseLightPos, &lightPos);
+        Matrix_MultVec3f(&baseLightPos_41, &lightPos);
         rand = Rand_ZeroOne();
         color.r = (s16)(rand * 30.0f) + 225;
         color.g = (s16)(rand * 100.0f) + 155;
@@ -280,4 +284,42 @@ void EnPoDesert_Draw(Actor* thisx, GlobalContext* globalCtx) {
     POLY_XLU_DISP = SkelAnime_Draw(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable,
                                    EnPoDesert_OverrideLimbDraw, EnPoDesert_PostLimbDraw, &pthis->actor, POLY_XLU_DISP);
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_po_desert.c", 597);
+}
+
+void EnPoDesert_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    baseLightPos_41 = { 0.0f, 1400.0f, 0.0f };
+
+    En_Po_Desert_InitVars = {
+        ACTOR_EN_PO_DESERT,
+        ACTORCAT_BG,
+        FLAGS,
+        OBJECT_PO_FIELD,
+        sizeof(EnPoDesert),
+        (ActorFunc)EnPoDesert_Init,
+        (ActorFunc)EnPoDesert_Destroy,
+        (ActorFunc)EnPoDesert_Update,
+        (ActorFunc)EnPoDesert_Draw,
+        (ActorFunc)EnPoDesert_Reset,
+    };
+
+    sColliderInit = {
+        {
+            COLTYPE_HIT3,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 25, 50, 20, { 0, 0, 0 } },
+    };
+
 }

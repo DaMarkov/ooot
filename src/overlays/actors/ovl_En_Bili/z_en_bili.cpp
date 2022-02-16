@@ -25,6 +25,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_2 | ACTOR_FLAG_12 | ACTOR_FLAG_14)
 
 void EnBili_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnBili_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnBili_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnBili_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnBili_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -43,6 +44,15 @@ void EnBili_Die(EnBili* pthis, GlobalContext* globalCtx);
 void EnBili_Stunned(EnBili* pthis, GlobalContext* globalCtx);
 void EnBili_Frozen(EnBili* pthis, GlobalContext* globalCtx);
 
+static Color_RGBA8 primColor_76 = { 255, 255, 255, 255 };
+
+static Color_RGBA8 envColor_76 = { 200, 255, 255, 255 };
+
+static Vec3f effectVelocity_82 = { 0.0f, 0.0f, 0.0f };
+
+static Vec3f effectAccel_82 = { 0.0f, 0.0f, 0.0f };
+
+
 ActorInit En_Bili_InitVars = {
     ACTOR_EN_BILI,
     ACTORCAT_ENEMY,
@@ -53,6 +63,7 @@ ActorInit En_Bili_InitVars = {
     (ActorFunc)EnBili_Destroy,
     (ActorFunc)EnBili_Update,
     (ActorFunc)EnBili_Draw,
+    (ActorFunc)EnBili_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -76,15 +87,6 @@ static ColliderCylinderInit sCylinderInit = {
 };
 
 static CollisionCheckInfoInit2 sColChkInfoInit = { 1, 9, 28, -20, 30 };
-
-typedef enum {
-    /* 0x0 */ BIRI_DMGEFF_NONE,
-    /* 0x1 */ BIRI_DMGEFF_DEKUNUT,
-    /* 0x2 */ BIRI_DMGEFF_FIRE,
-    /* 0x3 */ BIRI_DMGEFF_ICE,
-    /* 0xE */ BIRI_DMGEFF_SLINGSHOT = 0xE,
-    /* 0xF */ BIRI_DMGEFF_SWORD
-} BiriDamageEffect;
 
 static DamageTable sDamageTable = {
     /* Deku nut      */ DMG_ENTRY(0, BIRI_DMGEFF_DEKUNUT),
@@ -372,8 +374,6 @@ void EnBili_SpawnedFlyApart(EnBili* pthis, GlobalContext* globalCtx) {
 }
 
 void EnBili_DischargeLightning(EnBili* pthis, GlobalContext* globalCtx) {
-    static Color_RGBA8 primColor = { 255, 255, 255, 255 };
-    static Color_RGBA8 envColor = { 200, 255, 255, 255 };
     s32 i;
     Vec3f effectPos;
     s16 effectYaw;
@@ -384,7 +384,7 @@ void EnBili_DischargeLightning(EnBili* pthis, GlobalContext* globalCtx) {
             effectPos.x = Rand_CenteredFloat(5.0f) + pthis->actor.world.pos.x;
             effectPos.y = (Rand_ZeroOne() * 5.0f) + pthis->actor.world.pos.y + 2.5f;
             effectPos.z = Rand_CenteredFloat(5.0f) + pthis->actor.world.pos.z;
-            EffectSsLightning_Spawn(globalCtx, &effectPos, &primColor, &envColor, 15, effectYaw, 6, 2);
+            EffectSsLightning_Spawn(globalCtx, &effectPos, &primColor_76, &envColor_76, 15, effectYaw, 6, 2);
         }
     }
 
@@ -484,8 +484,6 @@ void EnBili_Burnt(EnBili* pthis, GlobalContext* globalCtx) {
 }
 
 void EnBili_Die(EnBili* pthis, GlobalContext* globalCtx) {
-    static Vec3f effectVelocity = { 0.0f, 0.0f, 0.0f };
-    static Vec3f effectAccel = { 0.0f, 0.0f, 0.0f };
     s16 effectScale;
     Vec3f effectPos;
     s32 i;
@@ -508,14 +506,14 @@ void EnBili_Die(EnBili* pthis, GlobalContext* globalCtx) {
             effectPos.y = ((Rand_ZeroOne() * 5.0f) + pthis->actor.world.pos.y) - 2.5f;
             effectPos.z = ((Rand_ZeroOne() * 10.0f) + pthis->actor.world.pos.z) - 5.0f;
 
-            effectVelocity.y = Rand_ZeroOne() + 1.0f;
+            effectVelocity_82.y = Rand_ZeroOne() + 1.0f;
             effectScale = Rand_S16Offset(40, 40);
 
             if (Rand_ZeroOne() < 0.7f) {
-                EffectSsDtBubble_SpawnColorProfile(globalCtx, &effectPos, &effectVelocity, &effectAccel, effectScale,
+                EffectSsDtBubble_SpawnColorProfile(globalCtx, &effectPos, &effectVelocity_82, &effectAccel_82, effectScale,
                                                    25, 2, 1);
             } else {
-                EffectSsDtBubble_SpawnColorProfile(globalCtx, &effectPos, &effectVelocity, &effectAccel, effectScale,
+                EffectSsDtBubble_SpawnColorProfile(globalCtx, &effectPos, &effectVelocity_82, &effectAccel_82, effectScale,
                                                    25, 0, 1);
             }
         }
@@ -781,4 +779,85 @@ void EnBili_Draw(Actor* thisx, GlobalContext* globalCtx) {
     POLY_XLU_DISP = SkelAnime_Draw(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable,
                                    EnBili_OverrideLimbDraw, NULL, pthis, POLY_XLU_DISP);
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_bili.c", 1552);
+}
+
+void EnBili_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    primColor_76 = { 255, 255, 255, 255 };
+
+    envColor_76 = { 200, 255, 255, 255 };
+
+    effectVelocity_82 = { 0.0f, 0.0f, 0.0f };
+
+    effectAccel_82 = { 0.0f, 0.0f, 0.0f };
+
+    En_Bili_InitVars = {
+        ACTOR_EN_BILI,
+        ACTORCAT_ENEMY,
+        FLAGS,
+        OBJECT_BL,
+        sizeof(EnBili),
+        (ActorFunc)EnBili_Init,
+        (ActorFunc)EnBili_Destroy,
+        (ActorFunc)EnBili_Update,
+        (ActorFunc)EnBili_Draw,
+        (ActorFunc)EnBili_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_HIT8,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x03, 0x08 },
+            { 0xFFCFFFFF, 0x01, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NONE,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 9, 28, -20, { 0, 0, 0 } },
+    };
+
+    sColChkInfoInit = { 1, 9, 28, -20, 30 };
+
+    sDamageTable = {
+        /* Deku nut      */ DMG_ENTRY(0, BIRI_DMGEFF_DEKUNUT),
+        /* Deku stick    */ DMG_ENTRY(2, BIRI_DMGEFF_NONE),
+        /* Slingshot     */ DMG_ENTRY(0, BIRI_DMGEFF_SLINGSHOT),
+        /* Explosive     */ DMG_ENTRY(2, BIRI_DMGEFF_NONE),
+        /* Boomerang     */ DMG_ENTRY(1, BIRI_DMGEFF_NONE),
+        /* Normal arrow  */ DMG_ENTRY(2, BIRI_DMGEFF_NONE),
+        /* Hammer swing  */ DMG_ENTRY(2, BIRI_DMGEFF_NONE),
+        /* Hookshot      */ DMG_ENTRY(2, BIRI_DMGEFF_NONE),
+        /* Kokiri sword  */ DMG_ENTRY(1, BIRI_DMGEFF_SWORD),
+        /* Master sword  */ DMG_ENTRY(2, BIRI_DMGEFF_SWORD),
+        /* Giant's Knife */ DMG_ENTRY(4, BIRI_DMGEFF_SWORD),
+        /* Fire arrow    */ DMG_ENTRY(4, BIRI_DMGEFF_FIRE),
+        /* Ice arrow     */ DMG_ENTRY(4, BIRI_DMGEFF_ICE),
+        /* Light arrow   */ DMG_ENTRY(2, BIRI_DMGEFF_NONE),
+        /* Unk arrow 1   */ DMG_ENTRY(2, BIRI_DMGEFF_NONE),
+        /* Unk arrow 2   */ DMG_ENTRY(2, BIRI_DMGEFF_NONE),
+        /* Unk arrow 3   */ DMG_ENTRY(2, BIRI_DMGEFF_NONE),
+        /* Fire magic    */ DMG_ENTRY(4, BIRI_DMGEFF_FIRE),
+        /* Ice magic     */ DMG_ENTRY(4, BIRI_DMGEFF_ICE),
+        /* Light magic   */ DMG_ENTRY(0, BIRI_DMGEFF_NONE),
+        /* Shield        */ DMG_ENTRY(0, BIRI_DMGEFF_NONE),
+        /* Mirror Ray    */ DMG_ENTRY(0, BIRI_DMGEFF_NONE),
+        /* Kokiri spin   */ DMG_ENTRY(1, BIRI_DMGEFF_NONE),
+        /* Giant spin    */ DMG_ENTRY(4, BIRI_DMGEFF_NONE),
+        /* Master spin   */ DMG_ENTRY(2, BIRI_DMGEFF_NONE),
+        /* Kokiri jump   */ DMG_ENTRY(2, BIRI_DMGEFF_NONE),
+        /* Giant jump    */ DMG_ENTRY(8, BIRI_DMGEFF_NONE),
+        /* Master jump   */ DMG_ENTRY(4, BIRI_DMGEFF_NONE),
+        /* Unknown 1     */ DMG_ENTRY(0, BIRI_DMGEFF_NONE),
+        /* Unblockable   */ DMG_ENTRY(0, BIRI_DMGEFF_NONE),
+        /* Hammer jump   */ DMG_ENTRY(4, BIRI_DMGEFF_NONE),
+        /* Unknown 2     */ DMG_ENTRY(0, BIRI_DMGEFF_NONE),
+    };
+
 }

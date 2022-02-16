@@ -32,6 +32,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3 | ACTOR_FLAG_4)
 
 void EnOssan_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnOssan_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnOssan_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnOssan_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnOssan_DrawKokiriShopkeeper(Actor* thisx, GlobalContext* globalCtx);
@@ -113,6 +114,27 @@ s32 EnOssan_ReturnItemToShelf(EnOssan* pthis);
 void EnOssan_ResetItemPosition(EnOssan* pthis);
 void EnOssan_SetStateGiveDiscountDialog(GlobalContext* globalCtx, EnOssan* pthis);
 
+static void* sBazaarShopkeeperEyeTextures_238[] = { gOssanEyeOpenTex, gOssanEyeHalfTex, gOssanEyeClosedTex };
+
+static void* sKokiriShopkeeperEyeTextures_239[] = {
+    gKokiriShopkeeperEyeDefaultTex,
+    gKokiriShopkeeperEyeHalfTex,
+    gKokiriShopkeeperEyeOpenTex,
+};
+
+static void* sGoronShopkeeperEyeTextures_243[] = { gGoronCsEyeOpenTex, gGoronCsEyeHalfTex, gGoronCsEyeClosedTex };
+
+static void* sZoraShopkeeperEyeTextures_245[] = { gZoraEyeOpenTex, gZoraEyeHalfTex, gZoraEyeClosedTex };
+
+static void* sPotionShopkeeperEyeTextures_246[] = { gPotionShopkeeperEyeOpenTex, gPotionShopkeeperEyeHalfTex,
+                                                gPotionShopkeeperEyeClosedTex };
+
+static void* sHappyMaskShopkeeperEyeTextures_247[] = { gOsEyeClosedTex, gOsEyeOpenTex };
+
+static void* sBombchuShopkeeperEyeTextures_248[] = { gBombchuShopkeeperEyeOpenTex, gBombchuShopkeeperEyeHalfTex,
+                                                 gBombchuShopkeeperEyeClosedTex };
+
+
 #define CURSOR_INVALID 0xFF
 
 ActorInit En_Ossan_InitVars = {
@@ -125,6 +147,7 @@ ActorInit En_Ossan_InitVars = {
     (ActorFunc)EnOssan_Destroy,
     (ActorFunc)EnOssan_Update,
     NULL,
+    (ActorFunc)EnOssan_Reset,
 };
 
 // Unused collider
@@ -170,12 +193,6 @@ static const char* sShopkeeperPrintName[] = {
     "お面屋      ", // "Mask Shop"
 };
 
-typedef struct {
-    /* 0x00 */ s16 objId;
-    /* 0x02 */ s16 unk_02;
-    /* 0x04 */ s16 unk_04;
-} ShopkeeperObjInfo;
-
 static s16 sShopkeeperObjectIds[][3] = {
     { OBJECT_KM1, OBJECT_MASTERKOKIRIHEAD, OBJECT_MASTERKOKIRI },
     { OBJECT_DS2, OBJECT_ID_MAX, OBJECT_ID_MAX },
@@ -199,14 +216,7 @@ static EnOssanTalkOwnerFunc sShopkeeperTalkOwner[] = {
 
 static f32 sShopkeeperScale[] = {
     0.01f, 0.011f, 0.0105f, 0.011f, 0.01f, 0.01f, 0.01f, 0.01f, 0.01f, 0.01f, 0.01f,
-};
-
-typedef struct {
-    /* 0x00 */ s16 shopItemIndex;
-    /* 0x02 */ s16 xOffset;
-    /* 0x04 */ s16 yOffset;
-    /* 0x06 */ s16 zOffset;
-} ShopItem; // size 0x08
+}; 
 
 ShopItem sShopkeeperStores[][8] = {
     { { SI_DEKU_SHIELD, 50, 52, -20 },
@@ -2348,14 +2358,13 @@ void EnOssan_DrawStickDirectionPrompts(GlobalContext* globalCtx, EnOssan* pthis)
 }
 
 void EnOssan_DrawBazaarShopkeeper(Actor* thisx, GlobalContext* globalCtx) {
-    static void* sBazaarShopkeeperEyeTextures[] = { gOssanEyeOpenTex, gOssanEyeHalfTex, gOssanEyeClosedTex };
     EnOssan* pthis = (EnOssan*)thisx;
     s32 pad;
 
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_en_oB1.c", 4320);
 
     func_80093D18(globalCtx->state.gfxCtx);
-    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sBazaarShopkeeperEyeTextures[pthis->eyeTextureIdx]));
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sBazaarShopkeeperEyeTextures_238[pthis->eyeTextureIdx]));
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           EnOssan_OverrideLimbDrawDefaultShopkeeper, NULL, pthis);
     EnOssan_DrawCursor(globalCtx, pthis, pthis->cursorX, pthis->cursorY, pthis->cursorZ, pthis->drawCursor);
@@ -2366,11 +2375,6 @@ void EnOssan_DrawBazaarShopkeeper(Actor* thisx, GlobalContext* globalCtx) {
 
 s32 EnOssan_OverrideLimbDrawKokiriShopkeeper(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3f* pos,
                                              Vec3s* rot, void* thisx) {
-    static void* sKokiriShopkeeperEyeTextures[] = {
-        gKokiriShopkeeperEyeDefaultTex,
-        gKokiriShopkeeperEyeHalfTex,
-        gKokiriShopkeeperEyeOpenTex,
-    };
     EnOssan* pthis = (EnOssan*)thisx;
     s32 pad;
 
@@ -2380,7 +2384,7 @@ s32 EnOssan_OverrideLimbDrawKokiriShopkeeper(GlobalContext* globalCtx, s32 limbI
         gSPSegment(POLY_OPA_DISP++, 0x06, gObjectTable[pthis->objBankIndex2].vromStart.get());
         gSegments[6] = VIRTUAL_TO_PHYSICAL(gObjectTable[pthis->objBankIndex2].vromStart.get());
         *dList = gKokiriShopkeeperHeadDL;
-        gSPSegment(POLY_OPA_DISP++, 0x0A, SEGMENTED_TO_VIRTUAL(sKokiriShopkeeperEyeTextures[pthis->eyeTextureIdx]));
+        gSPSegment(POLY_OPA_DISP++, 0x0A, SEGMENTED_TO_VIRTUAL(sKokiriShopkeeperEyeTextures_239[pthis->eyeTextureIdx]));
     }
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_oB1.c", 4374);
@@ -2424,14 +2428,13 @@ void EnOssan_DrawKokiriShopkeeper(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void EnOssan_DrawGoronShopkeeper(Actor* thisx, GlobalContext* globalCtx) {
-    static void* sGoronShopkeeperEyeTextures[] = { gGoronCsEyeOpenTex, gGoronCsEyeHalfTex, gGoronCsEyeClosedTex };
     EnOssan* pthis = (EnOssan*)thisx;
     s32 pad;
 
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_en_oB1.c", 4455);
 
     func_80093D18(globalCtx->state.gfxCtx);
-    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sGoronShopkeeperEyeTextures[pthis->eyeTextureIdx]));
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sGoronShopkeeperEyeTextures_243[pthis->eyeTextureIdx]));
     gSPSegment(POLY_OPA_DISP++, 0x09, SEGMENTED_TO_VIRTUAL(gGoronCsMouthNeutralTex));
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           NULL, NULL, pthis);
@@ -2452,7 +2455,6 @@ s32 EnOssan_OverrideLimbDrawZoraShopkeeper(GlobalContext* globalCtx, s32 limbInd
 }
 
 void EnOssan_DrawZoraShopkeeper(Actor* thisx, GlobalContext* globalCtx) {
-    static void* sZoraShopkeeperEyeTextures[] = { gZoraEyeOpenTex, gZoraEyeHalfTex, gZoraEyeClosedTex };
     EnOssan* pthis = (EnOssan*)thisx;
     s32 pad;
 
@@ -2461,7 +2463,7 @@ void EnOssan_DrawZoraShopkeeper(Actor* thisx, GlobalContext* globalCtx) {
     func_80093D18(globalCtx->state.gfxCtx);
     gDPSetEnvColor(POLY_OPA_DISP++, 0, 0, 0, 255);
     gSPSegment(POLY_OPA_DISP++, 0x0C, EnOssan_EndDList(globalCtx->state.gfxCtx));
-    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sZoraShopkeeperEyeTextures[pthis->eyeTextureIdx]));
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sZoraShopkeeperEyeTextures_245[pthis->eyeTextureIdx]));
 
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           EnOssan_OverrideLimbDrawZoraShopkeeper, NULL, pthis);
@@ -2472,15 +2474,13 @@ void EnOssan_DrawZoraShopkeeper(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void EnOssan_DrawPotionShopkeeper(Actor* thisx, GlobalContext* globalCtx) {
-    static void* sPotionShopkeeperEyeTextures[] = { gPotionShopkeeperEyeOpenTex, gPotionShopkeeperEyeHalfTex,
-                                                    gPotionShopkeeperEyeClosedTex };
     EnOssan* pthis = (EnOssan*)thisx;
     s32 pad;
 
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_en_oB1.c", 4544);
 
     func_80093D18(globalCtx->state.gfxCtx);
-    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sPotionShopkeeperEyeTextures[pthis->eyeTextureIdx]));
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sPotionShopkeeperEyeTextures_246[pthis->eyeTextureIdx]));
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           NULL, NULL, pthis);
     EnOssan_DrawCursor(globalCtx, pthis, pthis->cursorX, pthis->cursorY, pthis->cursorZ, pthis->drawCursor);
@@ -2490,7 +2490,6 @@ void EnOssan_DrawPotionShopkeeper(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void EnOssan_DrawHappyMaskShopkeeper(Actor* thisx, GlobalContext* globalCtx) {
-    static void* sHappyMaskShopkeeperEyeTextures[] = { gOsEyeClosedTex, gOsEyeOpenTex };
     EnOssan* pthis = (EnOssan*)thisx;
     s32 pad;
 
@@ -2499,7 +2498,7 @@ void EnOssan_DrawHappyMaskShopkeeper(Actor* thisx, GlobalContext* globalCtx) {
     func_80093D18(globalCtx->state.gfxCtx);
 
     gSPSegment(POLY_OPA_DISP++, 0x08,
-               SEGMENTED_TO_VIRTUAL(sHappyMaskShopkeeperEyeTextures[pthis->happyMaskShopkeeperEyeIdx]));
+               SEGMENTED_TO_VIRTUAL(sHappyMaskShopkeeperEyeTextures_247[pthis->happyMaskShopkeeperEyeIdx]));
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           NULL, NULL, pthis);
     EnOssan_DrawCursor(globalCtx, pthis, pthis->cursorX, pthis->cursorY, pthis->cursorZ, pthis->drawCursor);
@@ -2509,8 +2508,6 @@ void EnOssan_DrawHappyMaskShopkeeper(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void EnOssan_DrawBombchuShopkeeper(Actor* thisx, GlobalContext* globalCtx) {
-    static void* sBombchuShopkeeperEyeTextures[] = { gBombchuShopkeeperEyeOpenTex, gBombchuShopkeeperEyeHalfTex,
-                                                     gBombchuShopkeeperEyeClosedTex };
     EnOssan* pthis = (EnOssan*)thisx;
     s32 pad;
 
@@ -2518,11 +2515,46 @@ void EnOssan_DrawBombchuShopkeeper(Actor* thisx, GlobalContext* globalCtx) {
 
     func_80093D18(globalCtx->state.gfxCtx);
 
-    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sBombchuShopkeeperEyeTextures[pthis->eyeTextureIdx]));
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sBombchuShopkeeperEyeTextures_248[pthis->eyeTextureIdx]));
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           NULL, NULL, pthis);
     EnOssan_DrawCursor(globalCtx, pthis, pthis->cursorX, pthis->cursorY, pthis->cursorZ, pthis->drawCursor);
     EnOssan_DrawStickDirectionPrompts(globalCtx, pthis);
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_oB1.c", 4631);
+}
+
+void EnOssan_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_Ossan_InitVars = {
+        ACTOR_EN_OSSAN,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_GAMEPLAY_KEEP,
+        sizeof(EnOssan),
+        (ActorFunc)EnOssan_Init,
+        (ActorFunc)EnOssan_Destroy,
+        (ActorFunc)EnOssan_Update,
+        NULL,
+        (ActorFunc)EnOssan_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_ALL,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_NONE | TOUCH_SFX_NORMAL,
+            BUMP_NONE,
+            OCELEM_ON,
+        },
+        { 30, 80, 0, { 0, 0, 0 } },
+    };
+
 }

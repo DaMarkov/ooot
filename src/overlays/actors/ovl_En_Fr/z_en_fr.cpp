@@ -21,6 +21,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3 | ACTOR_FLAG_4 | ACTOR_FLAG_25)
 
 void EnFr_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnFr_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnFr_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnFr_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnFr_UpdateIdle(Actor* thisx, GlobalContext* globalCtx);
@@ -64,6 +65,12 @@ void EnFr_Deactivate(EnFr* pthis, GlobalContext* globalCtx);
 void EnFr_GiveReward(EnFr* pthis, GlobalContext* globalCtx);
 void EnFr_SetIdle(EnFr* pthis, GlobalContext* globalCtx);
 
+static void* eyeTextures_137[] = {
+    object_fr_Tex_0059A0,
+    object_fr_Tex_005BA0,
+};
+
+
 /*
 Frogs params WIP docs
 
@@ -97,17 +104,6 @@ sEnFrPointers.flags = 1 to 11:
 sEnFrPointers.flags = 12
      - Deactivate frogs, frogs will jump back into the water
 */
-
-typedef struct {
-    u8 flags;
-    EnFr* frogs[5];
-} EnFrPointers;
-
-typedef struct {
-    f32 xzDist;
-    f32 yaw;
-    f32 yDist;
-} LogSpotToFromWater;
 
 static EnFrPointers sEnFrPointers = {
     0x00,
@@ -145,6 +141,7 @@ ActorInit En_Fr_InitVars = {
     (ActorFunc)EnFr_Destroy,
     (ActorFunc)EnFr_Update,
     NULL,
+    (ActorFunc)EnFr_Reset,
 };
 
 static Color_RGBA8 sEnFrColor[] = {
@@ -1067,10 +1064,6 @@ void EnFr_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec
 }
 
 void EnFr_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static void* eyeTextures[] = {
-        object_fr_Tex_0059A0,
-        object_fr_Tex_005BA0,
-    };
     s16 lightRadius;
     EnFr* pthis = (EnFr*)thisx;
     s16 frogIndex = pthis->actor.params - 1;
@@ -1084,8 +1077,8 @@ void EnFr_Draw(Actor* thisx, GlobalContext* globalCtx) {
     Lights_PointNoGlowSetInfo(&pthis->lightInfo, pthis->posButterflyLight.x, pthis->posButterflyLight.y,
                               pthis->posButterflyLight.z, 255, 255, 255, lightRadius);
     gDPSetEnvColor(POLY_OPA_DISP++, sEnFrColor[frogIndex].r, sEnFrColor[frogIndex].g, sEnFrColor[frogIndex].b, 255);
-    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures[pthis->eyeTexIndex]));
-    gSPSegment(POLY_OPA_DISP++, 0x09, SEGMENTED_TO_VIRTUAL(eyeTextures[pthis->eyeTexIndex]));
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures_137[pthis->eyeTexIndex]));
+    gSPSegment(POLY_OPA_DISP++, 0x09, SEGMENTED_TO_VIRTUAL(eyeTextures_137[pthis->eyeTexIndex]));
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           EnFr_OverrideLimbDraw, EnFr_PostLimbDraw, pthis);
     if (pthis->isButterflyDrawn) {
@@ -1096,4 +1089,31 @@ void EnFr_Draw(Actor* thisx, GlobalContext* globalCtx) {
                           NULL);
     }
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_fr.c", 1816);
+}
+
+void EnFr_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    sEnFrPointers = {
+        0x00,
+        {
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+        },
+    };
+
+    En_Fr_InitVars = {
+        ACTOR_EN_FR,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_FR,
+        sizeof(EnFr),
+        (ActorFunc)EnFr_Init,
+        (ActorFunc)EnFr_Destroy,
+        (ActorFunc)EnFr_Update,
+        NULL,
+        (ActorFunc)EnFr_Reset,
+    };
+
 }

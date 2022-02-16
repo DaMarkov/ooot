@@ -18,6 +18,7 @@
 #define FLAGS (ACTOR_FLAG_4 | ACTOR_FLAG_5)
 
 void EnNwc_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnNwc_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnNwc_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnNwc_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnNwc_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -30,13 +31,12 @@ void EnNwc_UpdateChicks(EnNwc* pthis, GlobalContext* globalCtx);
 void EnNwc_DrawChicks(EnNwc* pthis, GlobalContext* globalCtx);
 void EnNwc_Idle(EnNwc* pthis, GlobalContext* globalCtx);
 
+static EnNwcChickFunc chickActionFuncs_36[] = { EnNwc_ChickNoop, EnNwc_ChickFall };
+
+
 #define CHICK_BG_FLOOR (1 << 0)
 #define CHICK_BG_WALL (1 << 1)
 
-typedef enum {
-    /* 0 */ CHICK_NONE,
-    /* 1 */ CHICK_NORMAL
-} ChickTypes;
 
 ActorInit En_Nwc_InitVars = {
     ACTOR_EN_NWC,
@@ -48,6 +48,7 @@ ActorInit En_Nwc_InitVars = {
     (ActorFunc)EnNwc_Destroy,
     (ActorFunc)EnNwc_Update,
     (ActorFunc)EnNwc_Draw,
+    (ActorFunc)EnNwc_Reset,
 };
 
 static ColliderJntSphElementInit sJntSphElementInit = {
@@ -117,7 +118,6 @@ void EnNwc_ChickFall(EnNwcChick* chick, EnNwc* pthis, GlobalContext* globalCtx) 
 }
 
 void EnNwc_UpdateChicks(EnNwc* pthis, GlobalContext* globalCtx) {
-    static EnNwcChickFunc chickActionFuncs[] = { EnNwc_ChickNoop, EnNwc_ChickFall };
     EnNwcChick* chick = pthis->chicks;
     ColliderJntSphElement* element = pthis->collider.elements;
     Vec3f prevChickPos;
@@ -128,7 +128,7 @@ void EnNwc_UpdateChicks(EnNwc* pthis, GlobalContext* globalCtx) {
     for (i = 0; i < pthis->count; i++, prevChickPos = chick->pos, chick++, element++) {
         Math_Vec3f_Copy(&chick->lastPos, &chick->pos);
 
-        chickActionFuncs[chick->type](chick, pthis, globalCtx);
+        chickActionFuncs_36[chick->type](chick, pthis, globalCtx);
 
         element->dim.worldSphere.center.x = chick->pos.x;
         element->dim.worldSphere.center.y = chick->pos.y;
@@ -260,4 +260,44 @@ void EnNwc_Draw(Actor* thisx, GlobalContext* globalCtx) {
     EnNwc* pthis = (EnNwc*)thisx;
 
     EnNwc_DrawChicks(pthis, globalCtx);
+}
+
+void EnNwc_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_Nwc_InitVars = {
+        ACTOR_EN_NWC,
+        ACTORCAT_PROP,
+        FLAGS,
+        OBJECT_NWC,
+        sizeof(EnNwc),
+        (ActorFunc)EnNwc_Init,
+        (ActorFunc)EnNwc_Destroy,
+        (ActorFunc)EnNwc_Update,
+        (ActorFunc)EnNwc_Draw,
+        (ActorFunc)EnNwc_Reset,
+    };
+
+    sJntSphElementInit = {
+        {
+            ELEMTYPE_UNK1,
+            { 0x00000000, 0x00, 0x00 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_NONE,
+        },
+        { 0, { { 0, 0, 0 }, 10 }, 100 },
+    };
+
+    sJntSphInit = {
+        {
+            COLTYPE_HIT3,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            COLSHAPE_JNTSPH,
+        },
+        16,
+        NULL,
+    };
+
 }

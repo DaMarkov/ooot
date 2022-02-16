@@ -29,6 +29,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3 | ACTOR_FLAG_4)
 
 void EnDntJiji_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnDntJiji_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnDntJiji_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnDntJiji_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnDntJiji_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -55,6 +56,9 @@ void EnDntJiji_GivePrize(EnDntJiji* pthis, GlobalContext* globalCtx);
 void EnDntJiji_Hide(EnDntJiji* pthis, GlobalContext* globalCtx);
 void EnDntJiji_Return(EnDntJiji* pthis, GlobalContext* globalCtx);
 
+static void* blinkTex_74[] = { gDntJijiEyeOpenTex, gDntJijiEyeHalfTex, gDntJijiEyeShutTex };
+
+
 ActorInit En_Dnt_Jiji_InitVars = {
     ACTOR_EN_DNT_JIJI,
     ACTORCAT_NPC,
@@ -65,6 +69,7 @@ ActorInit En_Dnt_Jiji_InitVars = {
     (ActorFunc)EnDntJiji_Destroy,
     (ActorFunc)EnDntJiji_Update,
     (ActorFunc)EnDntJiji_Draw,
+    (ActorFunc)EnDntJiji_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -443,13 +448,12 @@ void EnDntJiji_Update(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void EnDntJiji_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static void* blinkTex[] = { gDntJijiEyeOpenTex, gDntJijiEyeHalfTex, gDntJijiEyeShutTex };
     EnDntJiji* pthis = (EnDntJiji*)thisx;
 
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_en_dnt_jiji.c", 1019);
     func_80093D18(globalCtx->state.gfxCtx);
     Matrix_Push();
-    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(blinkTex[pthis->eyeState]));
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(blinkTex_74[pthis->eyeState]));
     SkelAnime_DrawOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, NULL, NULL, pthis);
     Matrix_Pop();
     Matrix_Translate(pthis->flowerPos.x, pthis->flowerPos.y, pthis->flowerPos.z, MTXMODE_NEW);
@@ -458,4 +462,40 @@ void EnDntJiji_Draw(Actor* thisx, GlobalContext* globalCtx) {
               G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gSPDisplayList(POLY_OPA_DISP++, gDntJijiFlowerDL);
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_dnt_jiji.c", 1043);
+}
+
+void EnDntJiji_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_Dnt_Jiji_InitVars = {
+        ACTOR_EN_DNT_JIJI,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_DNS,
+        sizeof(EnDntJiji),
+        (ActorFunc)EnDntJiji_Init,
+        (ActorFunc)EnDntJiji_Destroy,
+        (ActorFunc)EnDntJiji_Update,
+        (ActorFunc)EnDntJiji_Draw,
+        (ActorFunc)EnDntJiji_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_NONE,
+            OCELEM_ON,
+        },
+        { 30, 80, 0, { 0, 0, 0 } },
+    };
+
 }

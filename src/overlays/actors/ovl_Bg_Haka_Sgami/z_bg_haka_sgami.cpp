@@ -19,21 +19,36 @@
 
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_4)
 
-typedef enum {
-    /* 0 */ SCYTHE_TRAP_SHADOW_TEMPLE,
-    /* 1 */ SCYTHE_TRAP_SHADOW_TEMPLE_INVISIBLE,
-    /* 2 */ SCYTHE_TRAP_ICE_CAVERN
-} SpinningScytheTrapMode;
 
 #define SCYTHE_SPIN_TIME 32
 
 void BgHakaSgami_Init(Actor* thisx, GlobalContext* globalCtx);
+void BgHakaSgami_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BgHakaSgami_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BgHakaSgami_Update(Actor* thisx, GlobalContext* globalCtx);
 void BgHakaSgami_Draw(Actor* thisx, GlobalContext* globalCtx);
 
 void BgHakaSgami_SetupSpin(BgHakaSgami* pthis, GlobalContext* globalCtx);
 void BgHakaSgami_Spin(BgHakaSgami* pthis, GlobalContext* globalCtx);
+
+static u8 sP1StartColor_31[] = { 250, 250, 250, 200 };
+
+static u8 sP2StartColor_31[] = { 200, 200, 200, 130 };
+
+static u8 sP1EndColor_31[] = { 200, 200, 200, 60 };
+
+static u8 sP2EndColor_31[] = { 150, 150, 150, 20 };
+
+static Vec3f blureEffectVertices2_34[] = {
+    { -20.0f, 50.0f, 130.0f },
+    { -50.0f, 33.0f, 20.0f },
+};
+
+static Vec3f blureEffectVertices1_34[] = {
+    { 380.0f, 50.0f, 50.0f },
+    { 310.0f, 33.0f, 0.0f },
+};
+
 
 ActorInit Bg_Haka_Sgami_InitVars = {
     ACTOR_BG_HAKA_SGAMI,
@@ -45,6 +60,7 @@ ActorInit Bg_Haka_Sgami_InitVars = {
     (ActorFunc)BgHakaSgami_Destroy,
     (ActorFunc)BgHakaSgami_Update,
     NULL,
+    (ActorFunc)BgHakaSgami_Reset,
 };
 
 static ColliderTrisElementInit sTrisElementsInit[4] = {
@@ -136,10 +152,6 @@ static InitChainEntry sInitChain[] = {
 };
 
 void BgHakaSgami_Init(Actor* thisx, GlobalContext* globalCtx) {
-    static u8 sP1StartColor[] = { 250, 250, 250, 200 };
-    static u8 sP2StartColor[] = { 200, 200, 200, 130 };
-    static u8 sP1EndColor[] = { 200, 200, 200, 60 };
-    static u8 sP2EndColor[] = { 150, 150, 150, 20 };
     BgHakaSgami* pthis = (BgHakaSgami*)thisx;
     EffectBlureInit1 blureInit;
     s32 i;
@@ -166,10 +178,10 @@ void BgHakaSgami_Init(Actor* thisx, GlobalContext* globalCtx) {
     CollisionCheck_SetInfo(&thisx->colChkInfo, NULL, &sColChkInfoInit);
 
     for (i = 0; i < 4; i++) {
-        blureInit.p1StartColor[i] = sP1StartColor[i];
-        blureInit.p2StartColor[i] = sP2StartColor[i];
-        blureInit.p1EndColor[i] = sP1EndColor[i];
-        blureInit.p2EndColor[i] = sP2EndColor[i];
+        blureInit.p1StartColor[i] = sP1StartColor_31[i];
+        blureInit.p2StartColor[i] = sP2StartColor_31[i];
+        blureInit.p1EndColor[i] = sP1EndColor_31[i];
+        blureInit.p2EndColor[i] = sP2EndColor_31[i];
     }
     blureInit.elemDuration = 10;
     blureInit.unkFlag = false;
@@ -215,14 +227,6 @@ void BgHakaSgami_SetupSpin(BgHakaSgami* pthis, GlobalContext* globalCtx) {
 }
 
 void BgHakaSgami_Spin(BgHakaSgami* pthis, GlobalContext* globalCtx) {
-    static Vec3f blureEffectVertices2[] = {
-        { -20.0f, 50.0f, 130.0f },
-        { -50.0f, 33.0f, 20.0f },
-    };
-    static Vec3f blureEffectVertices1[] = {
-        { 380.0f, 50.0f, 50.0f },
-        { 310.0f, 33.0f, 0.0f },
-    };
     s32 i;
     s32 j;
     Vec3f scytheVertices[3];
@@ -269,16 +273,16 @@ void BgHakaSgami_Spin(BgHakaSgami* pthis, GlobalContext* globalCtx) {
     }
 
     if ((pthis->unk_151 == 0) || (globalCtx->actorCtx.unk_03 != 0)) {
-        scytheVertices[0].x = pthis->actor.world.pos.x + blureEffectVertices1[pthis->actor.params].z * actorRotYSin +
-                              blureEffectVertices1[pthis->actor.params].x * actorRotYCos;
-        scytheVertices[0].y = pthis->actor.world.pos.y + blureEffectVertices1[pthis->actor.params].y;
-        scytheVertices[0].z = pthis->actor.world.pos.z + blureEffectVertices1[pthis->actor.params].z * actorRotYCos -
-                              blureEffectVertices1[pthis->actor.params].x * actorRotYSin;
-        scytheVertices[1].x = pthis->actor.world.pos.x + blureEffectVertices2[pthis->actor.params].z * actorRotYSin +
-                              blureEffectVertices2[pthis->actor.params].x * actorRotYCos;
-        scytheVertices[1].y = pthis->actor.world.pos.y + blureEffectVertices2[pthis->actor.params].y;
-        scytheVertices[1].z = pthis->actor.world.pos.z + blureEffectVertices2[pthis->actor.params].z * actorRotYCos -
-                              blureEffectVertices2[pthis->actor.params].x * actorRotYSin;
+        scytheVertices[0].x = pthis->actor.world.pos.x + blureEffectVertices1_34[pthis->actor.params].z * actorRotYSin +
+                              blureEffectVertices1_34[pthis->actor.params].x * actorRotYCos;
+        scytheVertices[0].y = pthis->actor.world.pos.y + blureEffectVertices1_34[pthis->actor.params].y;
+        scytheVertices[0].z = pthis->actor.world.pos.z + blureEffectVertices1_34[pthis->actor.params].z * actorRotYCos -
+                              blureEffectVertices1_34[pthis->actor.params].x * actorRotYSin;
+        scytheVertices[1].x = pthis->actor.world.pos.x + blureEffectVertices2_34[pthis->actor.params].z * actorRotYSin +
+                              blureEffectVertices2_34[pthis->actor.params].x * actorRotYCos;
+        scytheVertices[1].y = pthis->actor.world.pos.y + blureEffectVertices2_34[pthis->actor.params].y;
+        scytheVertices[1].z = pthis->actor.world.pos.z + blureEffectVertices2_34[pthis->actor.params].z * actorRotYCos -
+                              blureEffectVertices2_34[pthis->actor.params].x * actorRotYSin;
         EffectBlure_AddVertex((EffectBlure*)Effect_GetByIndex(pthis->blureEffectIndex[0]), &scytheVertices[0], &scytheVertices[1]);
 
         for (j = 0; j < 2; j++) {
@@ -313,4 +317,55 @@ void BgHakaSgami_Draw(Actor* thisx, GlobalContext* globalCtx) {
     } else {
         Gfx_DrawDListOpa(globalCtx, object_ice_objects_DL_0021F0);
     }
+}
+
+void BgHakaSgami_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    Bg_Haka_Sgami_InitVars = {
+        ACTOR_BG_HAKA_SGAMI,
+        ACTORCAT_PROP,
+        FLAGS,
+        OBJECT_GAMEPLAY_KEEP,
+        sizeof(BgHakaSgami),
+        (ActorFunc)BgHakaSgami_Init,
+        (ActorFunc)BgHakaSgami_Destroy,
+        (ActorFunc)BgHakaSgami_Update,
+        NULL,
+        (ActorFunc)BgHakaSgami_Reset,
+    };
+
+    sTrisInit = {
+        {
+            COLTYPE_NONE,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_NONE,
+            OC1_NONE,
+            OC2_TYPE_2,
+            COLSHAPE_TRIS,
+        },
+        4,
+        sTrisElementsInit,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_NONE,
+            OCELEM_ON,
+        },
+        { 80, 130, 0, { 0, 0, 0 } },
+    };
+
+    sColChkInfoInit = { 0, 80, 130, MASS_IMMOVABLE };
+
 }

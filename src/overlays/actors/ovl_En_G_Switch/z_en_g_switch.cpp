@@ -28,12 +28,9 @@
 
 #define FLAGS (ACTOR_FLAG_4 | ACTOR_FLAG_5)
 
-typedef enum {
-    /* 0 */ MOVE_TARGET,
-    /* 1 */ MOVE_HOME
-} GSwitchMoveState;
 
 void EnGSwitch_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnGSwitch_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnGSwitch_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnGSwitch_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnGSwitch_DrawRupee(Actor* thisx, GlobalContext* globalCtx);
@@ -50,6 +47,9 @@ void EnGSwitch_Kill(EnGSwitch* pthis, GlobalContext* globalCtx);
 void EnGSwitch_SpawnEffects(EnGSwitch* pthis, Vec3f* pos, s16 scale, s16 colorIdx);
 void EnGSwitch_UpdateEffects(EnGSwitch* pthis, GlobalContext* globalCtx);
 void EnGSwitch_DrawEffects(EnGSwitch* pthis, GlobalContext* globalCtx);
+
+static s8 majorScale_50[] = { 0, 2, 4, 5, 7 };
+
 
 static s16 sCollectedCount = 0;
 
@@ -88,6 +88,7 @@ ActorInit En_G_Switch_InitVars = {
     (ActorFunc)EnGSwitch_Destroy,
     (ActorFunc)EnGSwitch_Update,
     NULL,
+    (ActorFunc)EnGSwitch_Reset,
 };
 
 void EnGSwitch_Init(Actor* thisx, GlobalContext* globalCtx) {
@@ -220,13 +221,12 @@ void EnGSwitch_WaitForObject(EnGSwitch* pthis, GlobalContext* globalCtx) {
 }
 
 void EnGSwitch_SilverRupeeTracker(EnGSwitch* pthis, GlobalContext* globalCtx) {
-    static s8 majorScale[] = { 0, 2, 4, 5, 7 };
 
     if (pthis->noteIndex < sCollectedCount) {
         if (sCollectedCount < 5) {
             // "sound?"
             osSyncPrintf(VT_FGCOL(GREEN) "☆☆☆☆☆ 音？ ☆☆☆☆☆ %d\n" VT_RST, pthis->noteIndex);
-            Audio_PlaySoundTransposed(&D_801333D4, NA_SE_EV_FIVE_COUNT_LUPY, majorScale[pthis->noteIndex]);
+            Audio_PlaySoundTransposed(&D_801333D4, NA_SE_EV_FIVE_COUNT_LUPY, majorScale_50[pthis->noteIndex]);
             pthis->noteIndex = sCollectedCount;
         }
     }
@@ -576,4 +576,42 @@ void EnGSwitch_DrawEffects(EnGSwitch* pthis, GlobalContext* globalCtx) {
         }
     }
     CLOSE_DISPS(gfxCtx, "../z_en_g_switch.c", 1095);
+}
+
+void EnGSwitch_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    sCollectedCount = 0;
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_NONE,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK2,
+            { 0x00000000, 0x00, 0x00 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_NONE,
+        },
+        { 13, 40, 0, { 0, 0, 0 } },
+    };
+
+    En_G_Switch_InitVars = {
+        ACTOR_EN_G_SWITCH,
+        ACTORCAT_PROP,
+        FLAGS,
+        OBJECT_GAMEPLAY_KEEP,
+        sizeof(EnGSwitch),
+        (ActorFunc)EnGSwitch_Init,
+        (ActorFunc)EnGSwitch_Destroy,
+        (ActorFunc)EnGSwitch_Update,
+        NULL,
+        (ActorFunc)EnGSwitch_Reset,
+    };
+
 }

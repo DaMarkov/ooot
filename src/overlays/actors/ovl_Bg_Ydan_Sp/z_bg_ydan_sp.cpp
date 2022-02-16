@@ -25,6 +25,7 @@
 #define FLAGS 0
 
 void BgYdanSp_Init(Actor* thisx, GlobalContext* globalCtx);
+void BgYdanSp_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BgYdanSp_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BgYdanSp_Update(Actor* thisx, GlobalContext* globalCtx);
 void BgYdanSp_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -34,10 +35,16 @@ void BgYdanSp_FloorWebIdle(BgYdanSp* pthis, GlobalContext* globalCtx);
 void BgYdanSp_BurnWallWeb(BgYdanSp* pthis, GlobalContext* globalCtx);
 void BgYdanSp_WallWebIdle(BgYdanSp* pthis, GlobalContext* globalCtx);
 
-typedef enum {
-    /* 0 */ WEB_FLOOR,
-    /* 1 */ WEB_WALL
-} BgYdanSpType;
+static Vec3f accel_38 = { 0 };
+
+static Color_RGBA8 primColor_40 = { 250, 250, 250, 255 };
+
+static Color_RGBA8 envColor_40 = { 180, 180, 180, 255 };
+
+static Vec3f zeroVec_40 = { 0 };
+
+static Vec3f accel_42 = { 0 };
+
 
 ActorInit Bg_Ydan_Sp_InitVars = {
     ACTOR_BG_YDAN_SP,
@@ -49,6 +56,7 @@ ActorInit Bg_Ydan_Sp_InitVars = {
     (ActorFunc)BgYdanSp_Destroy,
     (ActorFunc)BgYdanSp_Update,
     (ActorFunc)BgYdanSp_Draw,
+    (ActorFunc)BgYdanSp_Reset,
 };
 
 static ColliderTrisElementInit sTrisItemsInit[2] = {
@@ -194,7 +202,6 @@ void BgYdanSp_BurnWeb(BgYdanSp* pthis, GlobalContext* globalCtx) {
 }
 
 void BgYdanSp_BurnFloorWeb(BgYdanSp* pthis, GlobalContext* globalCtx) {
-    static Vec3f accel = { 0 };
     Vec3f velocity;
     Vec3f pos2;
     f32 distXZ;
@@ -234,7 +241,7 @@ void BgYdanSp_BurnFloorWeb(BgYdanSp* pthis, GlobalContext* globalCtx) {
             velocity.x = (7.0f * sins) * distXZ;
             velocity.y = 0.0f;
             velocity.z = (7.0f * coss) * distXZ;
-            EffectSsDeadDb_Spawn(globalCtx, &pthis->dyna.actor.home.pos, &velocity, &accel, 60, 6, 255, 255, 150, 170,
+            EffectSsDeadDb_Spawn(globalCtx, &pthis->dyna.actor.home.pos, &velocity, &accel_38, 60, 6, 255, 255, 150, 170,
                                  255, 0, 0, 1, 0xE, 1);
             rot2 += 0x2AAA;
         }
@@ -252,9 +259,6 @@ void BgYdanSp_FloorWebBroken(BgYdanSp* pthis, GlobalContext* globalCtx) {
 }
 
 void BgYdanSp_FloorWebBreaking(BgYdanSp* pthis, GlobalContext* globalCtx) {
-    static Color_RGBA8 primColor = { 250, 250, 250, 255 };
-    static Color_RGBA8 envColor = { 180, 180, 180, 255 };
-    static Vec3f zeroVec = { 0 };
     s32 i;
     Vec3f pos;
     s16 rot;
@@ -275,7 +279,7 @@ void BgYdanSp_FloorWebBreaking(BgYdanSp* pthis, GlobalContext* globalCtx) {
         for (i = 0; i < 6; i++) {
             pos.x = Math_SinS(rot) * 60.0f + pthis->dyna.actor.world.pos.x;
             pos.z = Math_CosS(rot) * 60.0f + pthis->dyna.actor.world.pos.z;
-            func_8002829C(globalCtx, &pos, &zeroVec, &zeroVec, &primColor, &envColor, 1000, 10);
+            func_8002829C(globalCtx, &pos, &zeroVec_40, &zeroVec_40, &primColor_40, &envColor_40, 1000, 10);
 
             rot += 0x2AAA;
         }
@@ -354,7 +358,6 @@ void BgYdanSp_FloorWebIdle(BgYdanSp* pthis, GlobalContext* globalCtx) {
 }
 
 void BgYdanSp_BurnWallWeb(BgYdanSp* pthis, GlobalContext* globalCtx) {
-    static Vec3f accel = { 0 };
     Vec3f velocity;
     Vec3f spC8;
     f32 distXYZ;
@@ -399,7 +402,7 @@ void BgYdanSp_BurnWallWeb(BgYdanSp* pthis, GlobalContext* globalCtx) {
             velocity.x = 6.5f * coss2 * distXYZ;
             velocity.y = 6.5f * coss * distXYZ;
             velocity.z = -6.5f * sins * distXYZ;
-            EffectSsDeadDb_Spawn(globalCtx, &pthis->dyna.actor.home.pos, &velocity, &accel, 80, 6, 255, 255, 150, 170,
+            EffectSsDeadDb_Spawn(globalCtx, &pthis->dyna.actor.home.pos, &velocity, &accel_42, 80, 6, 255, 255, 150, 170,
                                  255, 0, 0, 1, 0xE, 1);
             rot2 += 0x2AAA;
         }
@@ -469,4 +472,43 @@ void BgYdanSp_Draw(Actor* thisx, GlobalContext* globalCtx) {
     }
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_bg_ydan_sp.c", 856);
+}
+
+void BgYdanSp_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    accel_38 = { 0 };
+
+    primColor_40 = { 250, 250, 250, 255 };
+
+    envColor_40 = { 180, 180, 180, 255 };
+
+    zeroVec_40 = { 0 };
+
+    accel_42 = { 0 };
+
+    Bg_Ydan_Sp_InitVars = {
+        ACTOR_BG_YDAN_SP,
+        ACTORCAT_BG,
+        FLAGS,
+        OBJECT_YDAN_OBJECTS,
+        sizeof(BgYdanSp),
+        (ActorFunc)BgYdanSp_Init,
+        (ActorFunc)BgYdanSp_Destroy,
+        (ActorFunc)BgYdanSp_Update,
+        (ActorFunc)BgYdanSp_Draw,
+        (ActorFunc)BgYdanSp_Reset,
+    };
+
+    sTrisInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_NONE,
+            OC2_TYPE_2,
+            COLSHAPE_TRIS,
+        },
+        2,
+        sTrisItemsInit,
+    };
+
 }

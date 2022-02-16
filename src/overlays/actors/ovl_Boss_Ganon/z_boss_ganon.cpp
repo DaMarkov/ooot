@@ -41,6 +41,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_2 | ACTOR_FLAG_4 | ACTOR_FLAG_5)
 
 void BossGanon_Init(Actor* thisx, GlobalContext* globalCtx);
+void BossGanon_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BossGanon_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BossGanon_Update(Actor* thisx, GlobalContext* globalCtx);
 void BossGanon_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -74,6 +75,47 @@ void BossGanon_UpdateEffects(GlobalContext* globalCtx);
 
 s32 BossGanon_CheckFallingPlatforms(BossGanon* pthis, GlobalContext* globalCtx, Vec3f* checkPos);
 
+static Color_RGB8 shardColors_87[] = { { 255, 175, 85 }, { 155, 205, 155 }, { 155, 125, 55 } };
+
+static Color_RGBA8 bloodPrimColor_109 = { 0, 120, 0, 255 };
+
+static Color_RGBA8 bloodEnvColor_109 = { 0, 120, 0, 255 };
+
+static AnimationHeader* volleyAnims_119[] = { &gDorfVolleyLeftAnim, &gDorfVolleyRightAnim };
+
+static s16 capeRightArmDurations_119[] = { 26, 20 };
+
+static s8 bodyPartLimbMap_132[] = {
+    -1, -1, 1, -1, 3, 4, 5, -1, 6, 7, 8, -1, -1, -1, -1, -1, -1, -1, -1, 2, 12, 13, 14, 9, 10, 11, -1, -1, -1, -1,
+};
+
+static Vec3f D_808E4DA0_132 = { -500.0f, 200.0f, -300.0f };
+
+static Vec3f D_808E4DAC_132 = { -500.0f, 200.0f, 300.0f };
+
+static Vec3f D_808E4DB8_132 = { 0.0f, 0.0f, 0.0f };
+
+static Vec3f D_808E4DC4_132 = { 0.0f, 0.0f, 0.0f };
+
+static Vec3f D_808E4DD0_132 = { 0.0f, 0.0f, 0.0f };
+
+static Vec3f D_808E4DDC_132 = { 1300.0f, 0.0f, 0.0f };
+
+static Vec3f D_808E4DE8_132 = { 600.0f, 420.0f, 100.0f };
+
+static s16 D_808E4DF4_140[] = { 1, 2, 3, 3, 2, 1 };
+
+static s16 D_808E4E00_140[] = { 2, 3, 4, 4, 4, 3, 2 };
+
+static s16 D_808E4E10_140[] = { 2, 3, 4, 4, 4, 4, 3, 2 };
+
+static s16 D_808E4E20_140[] = { 2, 4, 5, 5, 6, 6, 6, 6, 5, 5, 4, 2 };
+
+static s16 D_808E4E38_140[] = { 1, -1, 1, 1, 3, 4, 1, 6, 7, 2, 9, 10, 2, 12, 13 };
+
+static u8 D_808E4E58_140[] = { 3, 2, 2, 1, 3, 3, 1, 3, 3, 1, 0, 3, 1, 0, 3 };
+
+
 ActorInit Boss_Ganon_InitVars = {
     ACTOR_BOSS_GANON,
     ACTORCAT_BOSS,
@@ -84,6 +126,7 @@ ActorInit Boss_Ganon_InitVars = {
     (ActorFunc)BossGanon_Destroy,
     (ActorFunc)BossGanon_Update,
     (ActorFunc)BossGanon_Draw,
+    (ActorFunc)BossGanon_Reset,
 };
 
 static ColliderCylinderInit sDorfCylinderInit = {
@@ -137,30 +180,11 @@ static s32 sSeed3;
 
 static BossGanon* sGanondorf;
 
-static EnZl3* sZelda;
-
-typedef struct {
-    /* 0x00 */ u8 type;
-    /* 0x01 */ u8 timer;
-    /* 0x04 */ Vec3f pos;
-    /* 0x10 */ Vec3f velocity;
-    /* 0x1C */ Vec3f accel;
-    /* 0x28 */ Color_RGB8 color;
-    /* 0x2C */ s16 alpha;
-    /* 0x2E */ s16 unk_2E;
-    /* 0x30 */ s16 unk_30;
-    /* 0x34 */ f32 scale;
-    /* 0x38 */ f32 unk_38; // scale target mostly, but used for other things
-    /* 0x3C */ f32 unk_3C; // mostly z rot
-    /* 0x40 */ f32 unk_40;
-    /* 0x44 */ f32 unk_44; // mostly x rot
-    /* 0x48 */ f32 unk_48; // mostly y rot
-} GanondorfEffect;         // size = 0x4C
+static EnZl3* sZelda;         
 
 GanondorfEffect sEffectBuf[200];
 
 void BossGanonEff_SpawnWindowShard(GlobalContext* globalCtx, Vec3f* pos, Vec3f* velocity, f32 scale) {
-    static Color_RGB8 shardColors[] = { { 255, 175, 85 }, { 155, 205, 155 }, { 155, 125, 55 } };
     s16 i;
     GanondorfEffect* eff = (GanondorfEffect*)globalCtx->specialEffects;
     Color_RGB8* color;
@@ -175,7 +199,7 @@ void BossGanonEff_SpawnWindowShard(GlobalContext* globalCtx, Vec3f* pos, Vec3f* 
             eff->accel.y = -1.5f;
             eff->unk_44 = Rand_ZeroFloat(6.28f);
             eff->unk_48 = Rand_ZeroFloat(6.28f);
-            color = &shardColors[(s16)Rand_ZeroFloat(2.99f)];
+            color = &shardColors_87[(s16)Rand_ZeroFloat(2.99f)];
             eff->color.r = color->r;
             eff->color.g = color->g;
             eff->color.b = color->b;
@@ -517,12 +541,7 @@ void BossGanon_SetupIntroCutscene(BossGanon* pthis, GlobalContext* globalCtx) {
     } else {
         pthis->actionFunc = BossGanon_SetupIntroCutscene;
     }
-}
-
-typedef struct {
-    /* 0x00 */ Vec3s eye;
-    /* 0x06 */ Vec3s at;
-} CutsceneCameraPosition; // size = 0x12
+} 
 
 static CutsceneCameraPosition sIntroCsCameraPositions[] = {
     { { 0, 40, 0 }, { 0, 50, 430 } },
@@ -1239,8 +1258,6 @@ void BossGanon_ShatterWindows(u8 windowShatterState) {
 }
 
 void BossGanon_DeathAndTowerCutscene(BossGanon* pthis, GlobalContext* globalCtx) {
-    static Color_RGBA8 bloodPrimColor = { 0, 120, 0, 255 };
-    static Color_RGBA8 bloodEnvColor = { 0, 120, 0, 255 };
     s16 i;
     u8 moveCam = false;
     Player* player = GET_PLAYER(globalCtx);
@@ -1366,7 +1383,7 @@ void BossGanon_DeathAndTowerCutscene(BossGanon* pthis, GlobalContext* globalCtx)
                         sp80.y = pthis->unk_208.y - 10.0f;
                         sp80.z = pthis->unk_208.z;
 
-                        func_8002836C(globalCtx, &sp80, &sp98, &sp8C, &bloodPrimColor, &bloodEnvColor,
+                        func_8002836C(globalCtx, &sp80, &sp98, &sp8C, &bloodPrimColor_109, &bloodEnvColor_109,
                                       (s16)Rand_ZeroFloat(50.0f) + 50, 0, 17);
                     }
                 }
@@ -2325,8 +2342,6 @@ void BossGanon_SetupPlayTennis(BossGanon* pthis, GlobalContext* globalCtx) {
 }
 
 void BossGanon_PlayTennis(BossGanon* pthis, GlobalContext* globalCtx) {
-    static AnimationHeader* volleyAnims[] = { &gDorfVolleyLeftAnim, &gDorfVolleyRightAnim };
-    static s16 capeRightArmDurations[] = { 26, 20 };
     s16 rand;
 
     SkelAnime_Update(&pthis->skelAnime);
@@ -2363,9 +2378,9 @@ void BossGanon_PlayTennis(BossGanon* pthis, GlobalContext* globalCtx) {
         case 1:
             if (pthis->startVolley) {
                 rand = Rand_ZeroOne() * 1.99f;
-                pthis->fwork[GDF_FWORK_1] = Animation_GetLastFrame(volleyAnims[rand]);
-                Animation_MorphToPlayOnce(&pthis->skelAnime, volleyAnims[rand], 0.0f);
-                sCape->attachRightArmTimer = capeRightArmDurations[rand];
+                pthis->fwork[GDF_FWORK_1] = Animation_GetLastFrame(volleyAnims_119[rand]);
+                Animation_MorphToPlayOnce(&pthis->skelAnime, volleyAnims_119[rand], 0.0f);
+                sCape->attachRightArmTimer = capeRightArmDurations_119[rand];
                 Audio_PlayActorSound2(&pthis->actor, NA_SE_EV_GANON_MANTLE);
                 pthis->startVolley = false;
             }
@@ -3268,53 +3283,43 @@ s32 BossGanon_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dL
 }
 
 void BossGanon_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx) {
-    static s8 bodyPartLimbMap[] = {
-        -1, -1, 1, -1, 3, 4, 5, -1, 6, 7, 8, -1, -1, -1, -1, -1, -1, -1, -1, 2, 12, 13, 14, 9, 10, 11, -1, -1, -1, -1,
-    };
-    static Vec3f D_808E4DA0 = { -500.0f, 200.0f, -300.0f };
-    static Vec3f D_808E4DAC = { -500.0f, 200.0f, 300.0f };
-    static Vec3f D_808E4DB8 = { 0.0f, 0.0f, 0.0f };
-    static Vec3f D_808E4DC4 = { 0.0f, 0.0f, 0.0f };
-    static Vec3f D_808E4DD0 = { 0.0f, 0.0f, 0.0f };
-    static Vec3f D_808E4DDC = { 1300.0f, 0.0f, 0.0f };
-    static Vec3f D_808E4DE8 = { 600.0f, 420.0f, 100.0f };
     s8 bodyPart;
     BossGanon* pthis = (BossGanon*)thisx;
 
-    bodyPart = bodyPartLimbMap[limbIndex];
+    bodyPart = bodyPartLimbMap_132[limbIndex];
     if (bodyPart >= 0) {
-        Matrix_MultVec3f(&D_808E4DB8, &pthis->unk_2EC[bodyPart]);
+        Matrix_MultVec3f(&D_808E4DB8_132, &pthis->unk_2EC[bodyPart]);
     }
 
     if (limbIndex == 2) {
-        Matrix_MultVec3f(&D_808E4DB8, &pthis->unk_1FC);
+        Matrix_MultVec3f(&D_808E4DB8_132, &pthis->unk_1FC);
     } else if (limbIndex == 19) {
-        Matrix_MultVec3f(&D_808E4DB8, &pthis->actor.focus.pos);
+        Matrix_MultVec3f(&D_808E4DB8_132, &pthis->actor.focus.pos);
     } else if (limbIndex == 11) {
         OPEN_DISPS(globalCtx->state.gfxCtx, "../z_boss_ganon.c", 7191);
 
-        Matrix_MultVec3f(&D_808E4DB8, &pthis->unk_208);
+        Matrix_MultVec3f(&D_808E4DB8_132, &pthis->unk_208);
         gSPMatrix(POLY_XLU_DISP++, Matrix_NewMtx(globalCtx->state.gfxCtx, "../z_boss_ganon.c", 7196),
                   G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
         gSPDisplayList(POLY_XLU_DISP++, SEGMENTED_TO_VIRTUAL(object_ganon_DL_00BE90));
 
         CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_boss_ganon.c", 7198);
     } else if (limbIndex == 6) {
-        Matrix_MultVec3f(&D_808E4DC4, &pthis->unk_238);
+        Matrix_MultVec3f(&D_808E4DC4_132, &pthis->unk_238);
     } else if (limbIndex == 10) {
-        Matrix_MultVec3f(&D_808E4DD0, &pthis->unk_22C);
+        Matrix_MultVec3f(&D_808E4DD0_132, &pthis->unk_22C);
 
         if (pthis->unk_25C == 0) {
-            Matrix_MultVec3f(&D_808E4DDC, &pthis->unk_260);
+            Matrix_MultVec3f(&D_808E4DDC_132, &pthis->unk_260);
         }
 
         pthis->unk_25C = 0;
 
         if (pthis->triforceType == GDF_TRIFORCE_DORF) {
-            Matrix_MultVec3f(&D_808E4DE8, &pthis->triforcePos);
+            Matrix_MultVec3f(&D_808E4DE8_132, &pthis->triforcePos);
         }
     } else if (limbIndex == 4) {
-        Vec3f sp28 = D_808E4DA0;
+        Vec3f sp28 = D_808E4DA0_132;
 
         if (pthis->unk_198 == 1) {
             sp28.x += -300.0f;
@@ -3327,7 +3332,7 @@ void BossGanon_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList
 
         Matrix_MultVec3f(&sp28, &pthis->unk_220);
     } else if (limbIndex == 8) {
-        Vec3f sp1C = D_808E4DAC;
+        Vec3f sp1C = D_808E4DAC_132;
 
         if (pthis->unk_198 == 1) {
             sp1C.x += -300.0f;
@@ -3635,12 +3640,6 @@ void BossGanon_DrawDarkVortex(BossGanon* pthis, GlobalContext* globalCtx) {
 }
 
 void func_808E0254(BossGanon* pthis, u8* tex, f32 arg2) {
-    static s16 D_808E4DF4[] = { 1, 2, 3, 3, 2, 1 };
-    static s16 D_808E4E00[] = { 2, 3, 4, 4, 4, 3, 2 };
-    static s16 D_808E4E10[] = { 2, 3, 4, 4, 4, 4, 3, 2 };
-    static s16 D_808E4E20[] = { 2, 4, 5, 5, 6, 6, 6, 6, 5, 5, 4, 2 };
-    static s16 D_808E4E38[] = { 1, -1, 1, 1, 3, 4, 1, 6, 7, 2, 9, 10, 2, 12, 13 };
-    static u8 D_808E4E58[] = { 3, 2, 2, 1, 3, 3, 1, 3, 3, 1, 0, 3, 1, 0, 3 };
     s16 baseX;
     s16 index;
     s16 i;
@@ -3655,7 +3654,7 @@ void func_808E0254(BossGanon* pthis, u8* tex, f32 arg2) {
     Vec3f sp5C;
 
     for (i = 0; i < 15; i++) {
-        if (arg2 == 0.0f || (y = D_808E4E38[i]) >= 0) {
+        if (arg2 == 0.0f || (y = D_808E4E38_140[i]) >= 0) {
             if (arg2 > 0.0f) {
                 lerpX = pthis->unk_2EC[i].x + (pthis->unk_2EC[y].x - pthis->unk_2EC[i].x) * arg2;
                 lerpY = pthis->unk_2EC[i].y + (pthis->unk_2EC[y].y - pthis->unk_2EC[i].y) * arg2;
@@ -3678,27 +3677,27 @@ void func_808E0254(BossGanon* pthis, u8* tex, f32 arg2) {
             baseX = (s16)(sp5C.x + 32.0f);
             baseY = (s16)sp5C.y * 64;
 
-            if (D_808E4E58[i] == 2) {
+            if (D_808E4E58_140[i] == 2) {
                 for (y = 0, addY = -0x180; y < 12; y++, addY += 0x40) {
-                    for (x = -D_808E4E20[y]; x < D_808E4E20[y]; x++) {
+                    for (x = -D_808E4E20_140[y]; x < D_808E4E20_140[y]; x++) {
                         index = baseX + x + baseY + addY;
                         if ((index >= 0) && (index < 0x1000)) {
                             tex[index] = 255;
                         }
                     }
                 }
-            } else if (D_808E4E58[i] == 1) {
+            } else if (D_808E4E58_140[i] == 1) {
                 for (y = 0, addY = -0x100; y < 8; y++, addY += 0x40) {
-                    for (x = -D_808E4E10[y]; x < D_808E4E10[y]; x++) {
+                    for (x = -D_808E4E10_140[y]; x < D_808E4E10_140[y]; x++) {
                         index = baseX + x + baseY + addY;
                         if ((index >= 0) && (index < 0x1000)) {
                             tex[index] = 255;
                         }
                     }
                 }
-            } else if (D_808E4E58[i] == 0) {
+            } else if (D_808E4E58_140[i] == 0) {
                 for (y = 0, addY = -0xC0; y < 7; y++, addY += 0x40) {
-                    for (x = -D_808E4E00[y]; x < D_808E4E00[y] - 1; x++) {
+                    for (x = -D_808E4E00_140[y]; x < D_808E4E00_140[y] - 1; x++) {
                         index = baseX + x + baseY + addY;
                         if ((index >= 0) && (index < 0x1000)) {
                             tex[index] = 255;
@@ -3707,7 +3706,7 @@ void func_808E0254(BossGanon* pthis, u8* tex, f32 arg2) {
                 }
             } else {
                 for (y = 0, addY = -0x80; y < 6; y++, addY += 0x40) {
-                    for (x = -D_808E4DF4[y]; x < D_808E4DF4[y] - 1; x++) {
+                    for (x = -D_808E4DF4_140[y]; x < D_808E4DF4_140[y] - 1; x++) {
                         index = baseX + x + baseY + addY;
                         if ((index >= 0) && (index < 0x1000)) {
                             tex[index] = 255;
@@ -5037,3 +5036,92 @@ void BossGanon_DrawEffects(GlobalContext* globalCtx) {
 }
 
 #include "overlays/ovl_Boss_Ganon/ovl_Boss_Ganon.cpp"
+
+
+void BossGanon_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    bloodPrimColor_109 = { 0, 120, 0, 255 };
+
+    bloodEnvColor_109 = { 0, 120, 0, 255 };
+
+    D_808E4DA0_132 = { -500.0f, 200.0f, -300.0f };
+
+    D_808E4DAC_132 = { -500.0f, 200.0f, 300.0f };
+
+    D_808E4DB8_132 = { 0.0f, 0.0f, 0.0f };
+
+    D_808E4DC4_132 = { 0.0f, 0.0f, 0.0f };
+
+    D_808E4DD0_132 = { 0.0f, 0.0f, 0.0f };
+
+    D_808E4DDC_132 = { 1300.0f, 0.0f, 0.0f };
+
+    D_808E4DE8_132 = { 600.0f, 420.0f, 100.0f };
+
+    Boss_Ganon_InitVars = {
+        ACTOR_BOSS_GANON,
+        ACTORCAT_BOSS,
+        FLAGS,
+        OBJECT_GANON,
+        sizeof(BossGanon),
+        (ActorFunc)BossGanon_Init,
+        (ActorFunc)BossGanon_Destroy,
+        (ActorFunc)BossGanon_Update,
+        (ActorFunc)BossGanon_Draw,
+        (ActorFunc)BossGanon_Reset,
+    };
+
+    sDorfCylinderInit = {
+        {
+            COLTYPE_HIT3,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x00, 0x10 },
+            { 0xFFCFFFFE, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NORMAL,
+            BUMP_ON | BUMP_HOOKABLE,
+            OCELEM_ON,
+        },
+        { 20, 80, -50, { 0, 0, 0 } },
+    };
+
+    sLightBallCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK6,
+            { 0x00100700, 0x00, 0x08 },
+            { 0x0D900740, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NORMAL,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 20, 30, -15, { 0, 0, 0 } },
+    };
+
+    sZeroVec = { 0.0f, 0.0f, 0.0f };
+
+    sCape = 0;
+
+    sSeed1 = 0;
+
+    sSeed2 = 0;
+
+    sSeed3 = 0;
+
+    sGanondorf = 0;
+
+    sZelda = 0;
+
+}

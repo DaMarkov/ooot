@@ -22,9 +22,15 @@
 #define FLAGS 0
 
 void BgVbSima_Init(Actor* thisx, GlobalContext* globalCtx);
+void BgVbSima_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BgVbSima_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BgVbSima_Update(Actor* thisx, GlobalContext* globalCtx);
 void BgVbSima_Draw(Actor* thisx, GlobalContext* globalCtx);
+
+static Color_RGBA8 colorYellow_27 = { 255, 255, 0, 255 };
+
+static Color_RGBA8 colorRed_27 = { 255, 10, 0, 255 };
+
 
 ActorInit Bg_Vb_Sima_InitVars = {
     ACTOR_BG_VB_SIMA,
@@ -36,6 +42,7 @@ ActorInit Bg_Vb_Sima_InitVars = {
     (ActorFunc)BgVbSima_Destroy,
     (ActorFunc)BgVbSima_Update,
     (ActorFunc)BgVbSima_Draw,
+    (ActorFunc)BgVbSima_Reset,
 };
 
 static InitChainEntry sInitChain[] = {
@@ -78,8 +85,6 @@ void BgVbSima_SpawnEmber(BossFdEffect* effect, Vec3f* position, Vec3f* velocity,
 }
 
 void BgVbSima_Update(Actor* thisx, GlobalContext* globalCtx) {
-    static Color_RGBA8 colorYellow = { 255, 255, 0, 255 };
-    static Color_RGBA8 colorRed = { 255, 10, 0, 255 };
     s32 pad;
     BgVbSima* pthis = (BgVbSima*)thisx;
     BossFd* bossFd = (BossFd*)pthis->dyna.actor.parent;
@@ -135,7 +140,7 @@ void BgVbSima_Update(Actor* thisx, GlobalContext* globalCtx) {
                 splashPos.y = -80.0f;
                 splashPos.z = pthis->dyna.actor.world.pos.z + edgeZ;
 
-                func_8002836C(globalCtx, &splashPos, &splashVel, &splashAcc, &colorYellow, &colorRed,
+                func_8002836C(globalCtx, &splashPos, &splashVel, &splashAcc, &colorYellow_27, &colorRed_27,
                               (s16)Rand_ZeroFloat(100.0f) + 500, 10, 20);
 
                 for (i2 = 0; i2 < 3; i2++) {
@@ -166,4 +171,24 @@ void BgVbSima_Draw(Actor* thisx, GlobalContext* globalCtx) {
               G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gSPDisplayList(POLY_OPA_DISP++, gVolvagiaPlatformDL);
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_bg_vb_sima.c", 296);
+}
+
+void BgVbSima_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    colorYellow_27 = { 255, 255, 0, 255 };
+
+    colorRed_27 = { 255, 10, 0, 255 };
+
+    Bg_Vb_Sima_InitVars = {
+        ACTOR_BG_VB_SIMA,
+        ACTORCAT_BG,
+        FLAGS,
+        OBJECT_FD,
+        sizeof(BgVbSima),
+        (ActorFunc)BgVbSima_Init,
+        (ActorFunc)BgVbSima_Destroy,
+        (ActorFunc)BgVbSima_Update,
+        (ActorFunc)BgVbSima_Draw,
+        (ActorFunc)BgVbSima_Reset,
+    };
+
 }

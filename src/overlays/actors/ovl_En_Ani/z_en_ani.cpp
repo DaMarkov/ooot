@@ -20,6 +20,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3)
 
 void EnAni_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnAni_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnAni_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnAni_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnAni_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -36,6 +37,15 @@ void func_809B0994(EnAni* pthis, GlobalContext* globalCtx);
 void func_809B0A28(EnAni* pthis, GlobalContext* globalCtx);
 void func_809B0A6C(EnAni* pthis, GlobalContext* globalCtx);
 
+static Vec3f sMultVec_50 = { 800.0f, 500.0f, 0.0f };
+
+static void* eyeTextures_51[] = {
+    gRoofManEyeOpenTex,
+    gRoofManEyeHalfTex,
+    gRoofManEyeClosedTex,
+};
+
+
 ActorInit En_Ani_InitVars = {
     ACTOR_EN_ANI,
     ACTORCAT_NPC,
@@ -46,6 +56,7 @@ ActorInit En_Ani_InitVars = {
     (ActorFunc)EnAni_Destroy,
     (ActorFunc)EnAni_Update,
     (ActorFunc)EnAni_Draw,
+    (ActorFunc)EnAni_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -311,20 +322,14 @@ s32 EnAni_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList,
 }
 
 void EnAni_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx) {
-    static Vec3f sMultVec = { 800.0f, 500.0f, 0.0f };
     EnAni* pthis = (EnAni*)thisx;
 
     if (limbIndex == 15) {
-        Matrix_MultVec3f(&sMultVec, &pthis->actor.focus.pos);
+        Matrix_MultVec3f(&sMultVec_50, &pthis->actor.focus.pos);
     }
 }
 
 void EnAni_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static void* eyeTextures[] = {
-        gRoofManEyeOpenTex,
-        gRoofManEyeHalfTex,
-        gRoofManEyeClosedTex,
-    };
     EnAni* pthis = (EnAni*)thisx;
     s32 pad;
 
@@ -332,10 +337,48 @@ void EnAni_Draw(Actor* thisx, GlobalContext* globalCtx) {
 
     func_800943C8(globalCtx->state.gfxCtx);
 
-    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures[pthis->eyeIndex]));
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures_51[pthis->eyeIndex]));
 
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           EnAni_OverrideLimbDraw, EnAni_PostLimbDraw, pthis);
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_ani.c", 736);
+}
+
+void EnAni_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    sMultVec_50 = { 800.0f, 500.0f, 0.0f };
+
+    En_Ani_InitVars = {
+        ACTOR_EN_ANI,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_ANI,
+        sizeof(EnAni),
+        (ActorFunc)EnAni_Init,
+        (ActorFunc)EnAni_Destroy,
+        (ActorFunc)EnAni_Update,
+        (ActorFunc)EnAni_Draw,
+        (ActorFunc)EnAni_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_ENEMY,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 30, 40, 0, { 0 } },
+    };
+
 }

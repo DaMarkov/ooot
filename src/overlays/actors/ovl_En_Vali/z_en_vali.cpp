@@ -26,6 +26,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_2 | ACTOR_FLAG_4 | ACTOR_FLAG_12)
 
 void EnVali_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnVali_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnVali_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnVali_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnVali_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -45,6 +46,19 @@ void EnVali_Stunned(EnVali* pthis, GlobalContext* globalCtx);
 void EnVali_Frozen(EnVali* pthis, GlobalContext* globalCtx);
 void EnVali_ReturnToLurk(EnVali* pthis, GlobalContext* globalCtx);
 
+static Color_RGBA8 primColor_61 = { 255, 255, 255, 255 };
+
+static Color_RGBA8 envColor_61 = { 200, 255, 255, 255 };
+
+static Vec3f velocity_69 = { 0.0f, 0.0f, 0.0f };
+
+static Vec3f accel_69 = { 0.0f, 0.0f, 0.0f };
+
+static Vec3f D_80B28970_80 = { 3000.0f, 0.0f, 0.0f };
+
+static Vec3f D_80B2897C_80 = { -1000.0f, 0.0f, 0.0f };
+
+
 ActorInit En_Vali_InitVars = {
     ACTOR_EN_VALI,
     ACTORCAT_ENEMY,
@@ -55,6 +69,7 @@ ActorInit En_Vali_InitVars = {
     (ActorFunc)EnVali_Destroy,
     (ActorFunc)EnVali_Update,
     (ActorFunc)EnVali_Draw,
+    (ActorFunc)EnVali_Reset,
 };
 
 static ColliderQuadInit sQuadInit = {
@@ -98,15 +113,6 @@ static ColliderCylinderInit sCylinderInit = {
 };
 
 static CollisionCheckInfoInit sColChkInfoInit = { 2, 18, 32, MASS_HEAVY };
-
-typedef enum {
-    /* 0x0 */ BARI_DMGEFF_NONE,
-    /* 0x1 */ BARI_DMGEFF_STUN,
-    /* 0x2 */ BARI_DMGEFF_FIRE,
-    /* 0x3 */ BARI_DMGEFF_ICE,
-    /* 0xE */ BARI_DMGEFF_SLINGSHOT = 0xE,
-    /* 0xF */ BARI_DMGEFF_SWORD
-} BariDamageEffect;
 
 static DamageTable sDamageTable = {
     /* Deku nut      */ DMG_ENTRY(0, BARI_DMGEFF_STUN),
@@ -296,8 +302,6 @@ void EnVali_SetupReturnToLurk(EnVali* pthis) {
 }
 
 void EnVali_DischargeLightning(EnVali* pthis, GlobalContext* globalCtx) {
-    static Color_RGBA8 primColor = { 255, 255, 255, 255 };
-    static Color_RGBA8 envColor = { 200, 255, 255, 255 };
     Vec3f pos;
     s32 i;
     f32 cos;
@@ -313,7 +317,7 @@ void EnVali_DischargeLightning(EnVali* pthis, GlobalContext* globalCtx) {
             pos.y = pthis->actor.world.pos.y - (Math_CosS(yaw) * 12.0f) + 10.0f;
             pos.z = pthis->actor.world.pos.z + (Math_SinS(yaw) * 12.0f * sin);
 
-            EffectSsLightning_Spawn(globalCtx, &pos, &primColor, &envColor, 17, yaw, 6, 2);
+            EffectSsLightning_Spawn(globalCtx, &pos, &primColor_61, &envColor_61, 17, yaw, 6, 2);
         }
     }
 
@@ -418,8 +422,6 @@ void EnVali_Burnt(EnVali* pthis, GlobalContext* globalCtx) {
 }
 
 void EnVali_DivideAndDie(EnVali* pthis, GlobalContext* globalCtx) {
-    static Vec3f velocity = { 0.0f, 0.0f, 0.0f };
-    static Vec3f accel = { 0.0f, 0.0f, 0.0f };
     s16 scale;
     Vec3f pos;
     s32 i;
@@ -432,13 +434,13 @@ void EnVali_DivideAndDie(EnVali* pthis, GlobalContext* globalCtx) {
         pos.x = pthis->actor.world.pos.x + Rand_CenteredFloat(20.0f);
         pos.y = pthis->actor.world.pos.y + Rand_CenteredFloat(8.0f);
         pos.z = pthis->actor.world.pos.z + Rand_CenteredFloat(20.0f);
-        velocity.y = (Rand_ZeroOne() + 1.0f);
+        velocity_69.y = (Rand_ZeroOne() + 1.0f);
         scale = Rand_S16Offset(40, 40);
 
         if (Rand_ZeroOne() < 0.7f) {
-            EffectSsDtBubble_SpawnColorProfile(globalCtx, &pos, &velocity, &accel, scale, 25, 2, 1);
+            EffectSsDtBubble_SpawnColorProfile(globalCtx, &pos, &velocity_69, &accel_69, scale, 25, 2, 1);
         } else {
-            EffectSsDtBubble_SpawnColorProfile(globalCtx, &pos, &velocity, &accel, scale, 25, 0, 1);
+            EffectSsDtBubble_SpawnColorProfile(globalCtx, &pos, &velocity_69, &accel_69, scale, 25, 0, 1);
         }
     }
 
@@ -709,16 +711,14 @@ s32 EnVali_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList
 }
 
 void EnVali_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx, Gfx** gfx) {
-    static Vec3f D_80B28970 = { 3000.0f, 0.0f, 0.0f };
-    static Vec3f D_80B2897C = { -1000.0f, 0.0f, 0.0f };
     Vec3f sp3C;
     Vec3f sp30;
     EnVali* pthis = (EnVali*)thisx;
 
     if (pthis->actionFunc == EnVali_FloatIdle) {
         if ((limbIndex == EN_VALI_LIMB_LEFT_FOREARM_BASE) || (limbIndex == EN_VALI_LIMB_RIGHT_FOREARM_BASE)) {
-            Matrix_MultVec3f(&D_80B28970, &sp3C);
-            Matrix_MultVec3f(&D_80B2897C, &sp30);
+            Matrix_MultVec3f(&D_80B28970_80, &sp3C);
+            Matrix_MultVec3f(&D_80B2897C_80, &sp30);
 
             if (limbIndex == EN_VALI_LIMB_LEFT_FOREARM_BASE) {
                 Collider_SetQuadVertices(&pthis->leftArmCollider, &sp30, &sp3C, &pthis->leftArmCollider.dim.quad[0],
@@ -821,4 +821,109 @@ void EnVali_Draw(Actor* thisx, GlobalContext* globalCtx) {
                                    EnVali_OverrideLimbDraw, EnVali_PostLimbDraw, pthis, POLY_XLU_DISP);
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_vali.c", 1538);
+}
+
+void EnVali_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    primColor_61 = { 255, 255, 255, 255 };
+
+    envColor_61 = { 200, 255, 255, 255 };
+
+    velocity_69 = { 0.0f, 0.0f, 0.0f };
+
+    accel_69 = { 0.0f, 0.0f, 0.0f };
+
+    D_80B28970_80 = { 3000.0f, 0.0f, 0.0f };
+
+    D_80B2897C_80 = { -1000.0f, 0.0f, 0.0f };
+
+    En_Vali_InitVars = {
+        ACTOR_EN_VALI,
+        ACTORCAT_ENEMY,
+        FLAGS,
+        OBJECT_VALI,
+        sizeof(EnVali),
+        (ActorFunc)EnVali_Init,
+        (ActorFunc)EnVali_Destroy,
+        (ActorFunc)EnVali_Update,
+        (ActorFunc)EnVali_Draw,
+        (ActorFunc)EnVali_Reset,
+    };
+
+    sQuadInit = {
+        {
+            COLTYPE_NONE,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_NONE,
+            OC1_NONE,
+            OC2_TYPE_1,
+            COLSHAPE_QUAD,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x07, 0x08 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NONE,
+            BUMP_NONE,
+            OCELEM_NONE,
+        },
+        { { { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } } },
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_HIT8,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x07, 0x08 },
+            { 0xFFCFFFFF, 0x01, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NORMAL,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 17, 35, -15, { 0, 0, 0 } },
+    };
+
+    sColChkInfoInit = { 2, 18, 32, MASS_HEAVY };
+
+    sDamageTable = {
+        /* Deku nut      */ DMG_ENTRY(0, BARI_DMGEFF_STUN),
+        /* Deku stick    */ DMG_ENTRY(2, BARI_DMGEFF_NONE),
+        /* Slingshot     */ DMG_ENTRY(0, BARI_DMGEFF_SLINGSHOT),
+        /* Explosive     */ DMG_ENTRY(2, BARI_DMGEFF_NONE),
+        /* Boomerang     */ DMG_ENTRY(0, BARI_DMGEFF_STUN),
+        /* Normal arrow  */ DMG_ENTRY(2, BARI_DMGEFF_NONE),
+        /* Hammer swing  */ DMG_ENTRY(2, BARI_DMGEFF_NONE),
+        /* Hookshot      */ DMG_ENTRY(2, BARI_DMGEFF_NONE),
+        /* Kokiri sword  */ DMG_ENTRY(1, BARI_DMGEFF_SWORD),
+        /* Master sword  */ DMG_ENTRY(2, BARI_DMGEFF_SWORD),
+        /* Giant's Knife */ DMG_ENTRY(4, BARI_DMGEFF_SWORD),
+        /* Fire arrow    */ DMG_ENTRY(4, BARI_DMGEFF_FIRE),
+        /* Ice arrow     */ DMG_ENTRY(4, BARI_DMGEFF_ICE),
+        /* Light arrow   */ DMG_ENTRY(2, BARI_DMGEFF_NONE),
+        /* Unk arrow 1   */ DMG_ENTRY(2, BARI_DMGEFF_NONE),
+        /* Unk arrow 2   */ DMG_ENTRY(2, BARI_DMGEFF_NONE),
+        /* Unk arrow 3   */ DMG_ENTRY(2, BARI_DMGEFF_NONE),
+        /* Fire magic    */ DMG_ENTRY(4, BARI_DMGEFF_FIRE),
+        /* Ice magic     */ DMG_ENTRY(4, BARI_DMGEFF_ICE),
+        /* Light magic   */ DMG_ENTRY(0, BARI_DMGEFF_NONE),
+        /* Shield        */ DMG_ENTRY(0, BARI_DMGEFF_NONE),
+        /* Mirror Ray    */ DMG_ENTRY(0, BARI_DMGEFF_NONE),
+        /* Kokiri spin   */ DMG_ENTRY(1, BARI_DMGEFF_NONE),
+        /* Giant spin    */ DMG_ENTRY(4, BARI_DMGEFF_NONE),
+        /* Master spin   */ DMG_ENTRY(2, BARI_DMGEFF_NONE),
+        /* Kokiri jump   */ DMG_ENTRY(2, BARI_DMGEFF_NONE),
+        /* Giant jump    */ DMG_ENTRY(8, BARI_DMGEFF_NONE),
+        /* Master jump   */ DMG_ENTRY(4, BARI_DMGEFF_NONE),
+        /* Unknown 1     */ DMG_ENTRY(0, BARI_DMGEFF_NONE),
+        /* Unblockable   */ DMG_ENTRY(0, BARI_DMGEFF_NONE),
+        /* Hammer jump   */ DMG_ENTRY(4, BARI_DMGEFF_NONE),
+        /* Unknown 2     */ DMG_ENTRY(0, BARI_DMGEFF_NONE),
+    };
+
 }

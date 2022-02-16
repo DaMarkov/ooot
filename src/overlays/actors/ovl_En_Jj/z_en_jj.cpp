@@ -23,14 +23,9 @@
 
 #define FLAGS (ACTOR_FLAG_4 | ACTOR_FLAG_5)
 
-typedef enum {
-    /* 0 */ JABUJABU_EYE_OPEN,
-    /* 1 */ JABUJABU_EYE_HALF,
-    /* 2 */ JABUJABU_EYE_CLOSED,
-    /* 3 */ JABUJABU_EYE_MAX
-} EnJjEyeState;
 
 void EnJj_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnJj_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnJj_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnJj_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnJj_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -40,6 +35,11 @@ void EnJj_WaitToOpenMouth(EnJj* pthis, GlobalContext* globalCtx);
 void EnJj_WaitForFish(EnJj* pthis, GlobalContext* globalCtx);
 void EnJj_BeginCutscene(EnJj* pthis, GlobalContext* globalCtx);
 void EnJj_RemoveDust(EnJj* pthis, GlobalContext* globalCtx);
+
+static Vec3f feedingSpot_45 = { -1589.0f, 53.0f, -43.0f };
+
+static void* eyeTextures_51[] = { gJabuJabuEyeOpenTex, gJabuJabuEyeHalfTex, gJabuJabuEyeClosedTex };
+
 
 ActorInit En_Jj_InitVars = {
     ACTOR_EN_JJ,
@@ -51,6 +51,7 @@ ActorInit En_Jj_InitVars = {
     (ActorFunc)EnJj_Destroy,
     (ActorFunc)EnJj_Update,
     (ActorFunc)EnJj_Draw,
+    (ActorFunc)EnJj_Reset,
 };
 
 static s32 sUnused = 0;
@@ -206,10 +207,9 @@ void EnJj_WaitToOpenMouth(EnJj* pthis, GlobalContext* globalCtx) {
 }
 
 void EnJj_WaitForFish(EnJj* pthis, GlobalContext* globalCtx) {
-    static Vec3f feedingSpot = { -1589.0f, 53.0f, -43.0f };
     Player* player = GET_PLAYER(globalCtx);
 
-    if ((Math_Vec3f_DistXZ(&feedingSpot, &player->actor.world.pos) < 300.0f) &&
+    if ((Math_Vec3f_DistXZ(&feedingSpot_45, &player->actor.world.pos) < 300.0f) &&
         globalCtx->isPlayerDroppingFish(globalCtx)) {
         pthis->cutsceneCountdownTimer = 100;
         EnJj_SetupAction(pthis, EnJj_BeginCutscene);
@@ -318,7 +318,6 @@ void EnJj_Update(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void EnJj_Draw(Actor* thisx, GlobalContext* globalCtx2) {
-    static void* eyeTextures[] = { gJabuJabuEyeOpenTex, gJabuJabuEyeHalfTex, gJabuJabuEyeClosedTex };
     GlobalContext* globalCtx = globalCtx2;
     EnJj* pthis = (EnJj*)thisx;
 
@@ -327,9 +326,49 @@ void EnJj_Draw(Actor* thisx, GlobalContext* globalCtx2) {
     func_800943C8(globalCtx->state.gfxCtx);
     Matrix_Translate(0.0f, (cosf(pthis->skelAnime.curFrame * (M_PI / 41.0f)) * 10.0f) - 10.0f, 0.0f, MTXMODE_APPLY);
     Matrix_Scale(10.0f, 10.0f, 10.0f, MTXMODE_APPLY);
-    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures[pthis->eyeIndex]));
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures_51[pthis->eyeIndex]));
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           NULL, NULL, pthis);
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_jj.c", 898);
+}
+
+void EnJj_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    feedingSpot_45 = { -1589.0f, 53.0f, -43.0f };
+
+    En_Jj_InitVars = {
+        ACTOR_EN_JJ,
+        ACTORCAT_ITEMACTION,
+        FLAGS,
+        OBJECT_JJ,
+        sizeof(EnJj),
+        (ActorFunc)EnJj_Init,
+        (ActorFunc)EnJj_Destroy,
+        (ActorFunc)EnJj_Update,
+        (ActorFunc)EnJj_Draw,
+        (ActorFunc)EnJj_Reset,
+    };
+
+    sUnused = 0;
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000004, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 170, 150, 0, { 0, 0, 0 } },
+    };
+
 }

@@ -22,6 +22,7 @@
 #define FLAGS ACTOR_FLAG_4
 
 void EnAnubiceFire_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnAnubiceFire_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnAnubiceFire_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnAnubiceFire_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnAnubiceFire_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -29,6 +30,11 @@ void EnAnubiceFire_Draw(Actor* thisx, GlobalContext* globalCtx);
 void func_809B26EC(EnAnubiceFire* pthis, GlobalContext* globalCtx);
 void func_809B27D8(EnAnubiceFire* pthis, GlobalContext* globalCtx);
 void func_809B2B48(EnAnubiceFire* pthis, GlobalContext* globalCtx);
+
+static void* D_809B3270_33[] = {
+    gDust4Tex, gDust5Tex, gDust6Tex, gDust7Tex, gDust8Tex, gDust7Tex, gDust6Tex, gDust5Tex,
+};
+
 
 ActorInit En_Anubice_Fire_InitVars = {
     ACTOR_EN_ANUBICE_FIRE,
@@ -40,6 +46,7 @@ ActorInit En_Anubice_Fire_InitVars = {
     (ActorFunc)EnAnubiceFire_Destroy,
     (ActorFunc)EnAnubiceFire_Update,
     (ActorFunc)EnAnubiceFire_Draw,
+    (ActorFunc)EnAnubiceFire_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -225,9 +232,6 @@ void EnAnubiceFire_Update(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void EnAnubiceFire_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static void* D_809B3270[] = {
-        gDust4Tex, gDust5Tex, gDust6Tex, gDust7Tex, gDust8Tex, gDust7Tex, gDust6Tex, gDust5Tex,
-    };
     EnAnubiceFire* pthis = (EnAnubiceFire*)thisx;
     s32 pad[2];
     s32 i;
@@ -238,7 +242,7 @@ void EnAnubiceFire_Draw(Actor* thisx, GlobalContext* globalCtx) {
     gDPSetPrimColor(POLY_XLU_DISP++, 0, 0, 255, 255, 0, 255);
     gDPSetEnvColor(POLY_XLU_DISP++, 255, 0, 0, 0);
     gDPPipeSync(POLY_XLU_DISP++);
-    gSPSegment(POLY_XLU_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(D_809B3270[0]));
+    gSPSegment(POLY_XLU_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(D_809B3270_33[0]));
 
     Matrix_Push();
     for (i = pthis->unk_15E; i < 6; ++i) {
@@ -267,4 +271,40 @@ void EnAnubiceFire_Draw(Actor* thisx, GlobalContext* globalCtx) {
     Matrix_Pop();
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_anubice_fire.c", 556);
+}
+
+void EnAnubiceFire_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_Anubice_Fire_InitVars = {
+        ACTOR_EN_ANUBICE_FIRE,
+        ACTORCAT_ENEMY,
+        FLAGS,
+        OBJECT_ANUBICE,
+        sizeof(EnAnubiceFire),
+        (ActorFunc)EnAnubiceFire_Init,
+        (ActorFunc)EnAnubiceFire_Destroy,
+        (ActorFunc)EnAnubiceFire_Update,
+        (ActorFunc)EnAnubiceFire_Draw,
+        (ActorFunc)EnAnubiceFire_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_NONE,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x01, 0x04 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NORMAL,
+            BUMP_ON,
+            OCELEM_NONE,
+        },
+        { 0, 0, 0, { 0, 0, 0 } },
+    };
+
 }

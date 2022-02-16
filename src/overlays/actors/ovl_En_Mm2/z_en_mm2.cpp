@@ -21,22 +21,9 @@
 
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3 | ACTOR_FLAG_4)
 
-typedef enum {
-    /* 0 */ RM2_ANIM_RUN,
-    /* 1 */ RM2_ANIM_SIT,
-    /* 2 */ RM2_ANIM_SIT_WAIT,
-    /* 3 */ RM2_ANIM_STAND,
-    /* 4 */ RM2_ANIM_SPRINT,
-    /* 5 */ RM2_ANIM_EXCITED, // plays when talking to him with bunny hood on
-    /* 6 */ RM2_ANIM_HAPPY    // plays when you sell him the bunny hood
-} RunningManAnimIndex;
-
-typedef enum {
-    /* 0 */ RM2_MOUTH_CLOSED,
-    /* 1 */ RM2_MOUTH_OPEN
-} RunningManMouthTex;
 
 void EnMm2_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnMm2_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnMm2_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnMm2_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnMm2_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -45,6 +32,11 @@ void func_80AAF57C(EnMm2* pthis, GlobalContext* globalCtx);
 void func_80AAF668(EnMm2* pthis, GlobalContext* globalCtx);
 s32 EnMm2_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s* rot, void* thisx);
 void EnMm2_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx);
+
+static void* mouthTextures_46[] = { gRunningManMouthOpenTex, gRunningManMouthClosedTex };
+
+static Vec3f headOffset_48 = { 200.0f, 800.0f, 0.0f };
+
 
 ActorInit En_Mm2_InitVars = {
     ACTOR_EN_MM2,
@@ -56,6 +48,7 @@ ActorInit En_Mm2_InitVars = {
     (ActorFunc)EnMm2_Destroy,
     (ActorFunc)EnMm2_Update,
     (ActorFunc)EnMm2_Draw,
+    (ActorFunc)EnMm2_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -76,14 +69,7 @@ static ColliderCylinderInit sCylinderInit = {
         OCELEM_ON,
     },
     { 18, 63, 0, { 0, 0, 0 } },
-};
-
-typedef struct {
-    /* 0x00 */ AnimationHeader* animation;
-    /* 0x04 */ f32 playSpeed;
-    /* 0x08 */ u8 mode;
-    /* 0x0C */ f32 morphFrames;
-} EnMm2AnimEntry; // size = 0x10
+}; 
 
 static EnMm2AnimEntry sAnimationEntries[] = {
     { &gRunningManRunAnim, 1.0f, ANIMMODE_LOOP, -7.0f },     { &gRunningManSitStandAnim, -1.0f, ANIMMODE_ONCE, -7.0f },
@@ -327,12 +313,11 @@ void EnMm2_Update(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void EnMm2_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static void* mouthTextures[] = { gRunningManMouthOpenTex, gRunningManMouthClosedTex };
     EnMm2* pthis = (EnMm2*)thisx;
 
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_en_mm2.c", 634);
     func_80093D18(globalCtx->state.gfxCtx);
-    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(mouthTextures[pthis->mouthTexIndex]));
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(mouthTextures_46[pthis->mouthTexIndex]));
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           EnMm2_OverrideLimbDraw, EnMm2_PostLimbDraw, pthis);
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_mm2.c", 654);
@@ -356,10 +341,47 @@ s32 EnMm2_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList,
 }
 
 void EnMm2_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx) {
-    static Vec3f headOffset = { 200.0f, 800.0f, 0.0f };
     EnMm2* pthis = (EnMm2*)thisx;
 
     if (limbIndex == 15) {
-        Matrix_MultVec3f(&headOffset, &pthis->actor.focus.pos);
+        Matrix_MultVec3f(&headOffset_48, &pthis->actor.focus.pos);
     }
+}
+
+void EnMm2_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    headOffset_48 = { 200.0f, 800.0f, 0.0f };
+
+    En_Mm2_InitVars = {
+        ACTOR_EN_MM2,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_MM,
+        sizeof(EnMm2),
+        (ActorFunc)EnMm2_Init,
+        (ActorFunc)EnMm2_Destroy,
+        (ActorFunc)EnMm2_Update,
+        (ActorFunc)EnMm2_Draw,
+        (ActorFunc)EnMm2_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000004, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 18, 63, 0, { 0, 0, 0 } },
+    };
+
 }

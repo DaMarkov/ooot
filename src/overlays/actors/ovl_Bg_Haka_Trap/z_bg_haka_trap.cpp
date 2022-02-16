@@ -25,6 +25,7 @@
 #define FLAGS 0
 
 void BgHakaTrap_Init(Actor* thisx, GlobalContext* globalCtx);
+void BgHakaTrap_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BgHakaTrap_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BgHakaTrap_Update(Actor* thisx, GlobalContext* globalCtx);
 void BgHakaTrap_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -42,6 +43,20 @@ void func_80880AE8(BgHakaTrap* pthis, GlobalContext* globalCtx);
 void func_80880C0C(BgHakaTrap* pthis, GlobalContext* globalCtx);
 void func_80880D68(BgHakaTrap* pthis);
 
+static UNK_TYPE D_80881014_44 = 0;
+
+static UNK_TYPE D_80881018_47 = 0;
+
+static Vec3f zeroVec_48 = { 0.0f, 0.0f, 0.0f };
+
+static Gfx* sDLists_59[5] = {
+    object_haka_objects_DL_007610, object_haka_objects_DL_009860, object_haka_objects_DL_007EF0,
+    object_haka_objects_DL_008A20, object_haka_objects_DL_0072C0,
+};
+
+static Color_RGBA8 D_8088103C_59 = { 0, 0, 0, 0 };
+
+
 static UNK_TYPE D_80880F30 = 0;
 
 ActorInit Bg_Haka_Trap_InitVars = {
@@ -54,6 +69,7 @@ ActorInit Bg_Haka_Trap_InitVars = {
     (ActorFunc)BgHakaTrap_Destroy,
     (ActorFunc)BgHakaTrap_Update,
     (ActorFunc)BgHakaTrap_Draw,
+    (ActorFunc)BgHakaTrap_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -121,7 +137,6 @@ static InitChainEntry sInitChain[] = {
 };
 
 void BgHakaTrap_Init(Actor* thisx, GlobalContext* globalCtx) {
-    static UNK_TYPE D_80881014 = 0;
     BgHakaTrap* pthis = (BgHakaTrap*)thisx;
     s32 pad;
     CollisionHeader* colHeader = NULL;
@@ -152,11 +167,11 @@ void BgHakaTrap_Init(Actor* thisx, GlobalContext* globalCtx) {
                 CollisionHeader_GetVirtual(&object_haka_objects_Col_009CD0, &colHeader);
                 pthis->timer = 30;
 
-                if (D_80881014 != 0) {
+                if (D_80881014_44 != 0) {
                     pthis->actionFunc = func_808808F4;
-                    D_80881014 = 0;
+                    D_80881014_44 = 0;
                 } else {
-                    D_80881014 = 1;
+                    D_80881014_44 = 1;
                     pthis->actionFunc = func_808806BC;
                     thisx->velocity.y = 0.5f;
                 }
@@ -242,16 +257,15 @@ void func_8087FFC0(BgHakaTrap* pthis, GlobalContext* globalCtx) {
 }
 
 void func_808801B8(BgHakaTrap* pthis, GlobalContext* globalCtx) {
-    static UNK_TYPE D_80881018 = 0;
     Player* player = GET_PLAYER(globalCtx);
 
     if ((D_80880F30 == 0) && (!Player_InCsMode(globalCtx))) {
         if (!Math_StepToF(&pthis->dyna.actor.world.pos.x, pthis->dyna.actor.home.pos.x, 0.5f)) {
             func_8002F974(&pthis->dyna.actor, NA_SE_EV_TRAP_OBJ_SLIDE - SFX_FLAG);
         } else if (pthis->dyna.actor.params == HAKA_TRAP_SPIKED_WALL) {
-            D_80881018 |= 1;
+            D_80881018_47 |= 1;
         } else if (pthis->dyna.actor.params == HAKA_TRAP_SPIKED_WALL_2) {
-            D_80881018 |= 2;
+            D_80881018_47 |= 2;
         }
     }
 
@@ -261,14 +275,13 @@ void func_808801B8(BgHakaTrap* pthis, GlobalContext* globalCtx) {
         pthis->timer = 20;
         D_80880F30 = 1;
         pthis->actionFunc = func_808802D8;
-    } else if (D_80881018 == 3) {
-        D_80881018 = 4;
+    } else if (D_80881018_47 == 3) {
+        D_80881018_47 = 4;
         player->actor.bgCheckFlags |= 0x100;
     }
 }
 
 void func_808802D8(BgHakaTrap* pthis, GlobalContext* globalCtx) {
-    static Vec3f zeroVec = { 0.0f, 0.0f, 0.0f };
     Vec3f vector;
     f32 xScale;
     s32 i;
@@ -288,7 +301,7 @@ void func_808802D8(BgHakaTrap* pthis, GlobalContext* globalCtx) {
         vector.y = Rand_ZeroOne() * 10.0f + pthis->dyna.actor.world.pos.y + 30.0f;
         vector.z = Rand_CenteredFloat(320.0f) + pthis->dyna.actor.world.pos.z;
 
-        EffectSsDeadDb_Spawn(globalCtx, &vector, &zeroVec, &zeroVec, 130, 20, 255, 255, 150, 170, 255, 0, 0, 1, 9,
+        EffectSsDeadDb_Spawn(globalCtx, &vector, &zeroVec_48, &zeroVec_48, 130, 20, 255, 255, 150, 170, 255, 0, 0, 1, 9,
                              false);
     }
 
@@ -530,20 +543,15 @@ void func_80880D68(BgHakaTrap* pthis) {
 }
 
 void BgHakaTrap_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static Gfx* sDLists[5] = {
-        object_haka_objects_DL_007610, object_haka_objects_DL_009860, object_haka_objects_DL_007EF0,
-        object_haka_objects_DL_008A20, object_haka_objects_DL_0072C0,
-    };
-    static Color_RGBA8 D_8088103C = { 0, 0, 0, 0 };
     BgHakaTrap* pthis = (BgHakaTrap*)thisx;
     s32 pad;
     Vec3f sp2C;
 
     if (pthis->actionFunc == func_808802D8) {
-        func_80026230(globalCtx, &D_8088103C, pthis->timer + 20, 0x28);
+        func_80026230(globalCtx, &D_8088103C_59, pthis->timer + 20, 0x28);
     }
 
-    Gfx_DrawDListOpa(globalCtx, sDLists[pthis->dyna.actor.params]);
+    Gfx_DrawDListOpa(globalCtx, sDLists_59[pthis->dyna.actor.params]);
 
     if (pthis->actionFunc == func_808801B8) {
         func_80880D68(pthis);
@@ -561,4 +569,65 @@ void BgHakaTrap_Draw(Actor* thisx, GlobalContext* globalCtx) {
         SkinMatrix_Vec3fMtxFMultXYZ(&globalCtx->viewProjectionMtxF, &sp2C, &pthis->unk_16C);
         func_80078914(&pthis->unk_16C, NA_SE_EV_BRIDGE_CLOSE - SFX_FLAG);
     }
+}
+
+void BgHakaTrap_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    D_80881014_44 = 0;
+
+    D_80881018_47 = 0;
+
+    zeroVec_48 = { 0.0f, 0.0f, 0.0f };
+
+    D_8088103C_59 = { 0, 0, 0, 0 };
+
+    D_80880F30 = 0;
+
+    Bg_Haka_Trap_InitVars = {
+        ACTOR_BG_HAKA_TRAP,
+        ACTORCAT_BG,
+        FLAGS,
+        OBJECT_HAKA_OBJECTS,
+        sizeof(BgHakaTrap),
+        (ActorFunc)BgHakaTrap_Init,
+        (ActorFunc)BgHakaTrap_Destroy,
+        (ActorFunc)BgHakaTrap_Update,
+        (ActorFunc)BgHakaTrap_Draw,
+        (ActorFunc)BgHakaTrap_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_METAL,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_ON | AC_HARD | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_PLAYER,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0xFFCFFFFF, 0x00, 0x04 },
+            { 0xFFCFFFFF, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NORMAL,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 30, 90, 0, { 0, 0, 0 } },
+    };
+
+    sTrisInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_NONE,
+            OC2_TYPE_2,
+            COLSHAPE_TRIS,
+        },
+        2,
+        sTrisElementsInit,
+    };
+
+    sColChkInfoInit = { 0, 80, 100, MASS_IMMOVABLE };
+
 }

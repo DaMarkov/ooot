@@ -28,6 +28,7 @@
 #define PIECE_FLAG_HIT_FLOOR (1 << 0)
 
 void BgHeavyBlock_Init(Actor* thisx, GlobalContext* globalCtx);
+void BgHeavyBlock_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BgHeavyBlock_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BgHeavyBlock_Update(Actor* thisx, GlobalContext* globalCtx);
 void BgHeavyBlock_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -41,6 +42,11 @@ void BgHeavyBlock_Fly(BgHeavyBlock* pthis, GlobalContext* globalCtx);
 void BgHeavyBlock_Land(BgHeavyBlock* pthis, GlobalContext* globalCtx);
 void BgHeavyBlock_DoNothing(BgHeavyBlock* pthis, GlobalContext* globalCtx);
 
+static Vec3f D_80884EC8_51 = { 0.0f, 0.0f, 0.0f };
+
+static Vec3f D_80884ED4_51 = { 0.0f, 400.0f, 0.0f };
+
+
 ActorInit Bg_Heavy_Block_InitVars = {
     ACTOR_BG_HEAVY_BLOCK,
     ACTORCAT_BG,
@@ -51,6 +57,7 @@ ActorInit Bg_Heavy_Block_InitVars = {
     (ActorFunc)BgHeavyBlock_Destroy,
     (ActorFunc)BgHeavyBlock_Update,
     (ActorFunc)BgHeavyBlock_Draw,
+    (ActorFunc)BgHeavyBlock_Reset,
 };
 
 static InitChainEntry sInitChain[] = {
@@ -496,8 +503,6 @@ void BgHeavyBlock_Update(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void BgHeavyBlock_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static Vec3f D_80884EC8 = { 0.0f, 0.0f, 0.0f };
-    static Vec3f D_80884ED4 = { 0.0f, 400.0f, 0.0f };
     BgHeavyBlock* pthis = (BgHeavyBlock*)thisx;
     s32 pad;
     Player* player = GET_PLAYER(globalCtx);
@@ -509,11 +514,11 @@ void BgHeavyBlock_Draw(Actor* thisx, GlobalContext* globalCtx) {
         Matrix_Translate(-pthis->unk_164.x, -pthis->unk_164.y, -pthis->unk_164.z, MTXMODE_APPLY);
     } else if ((thisx->gravity == 0.0f) && (BgHeavyBlock_Land == pthis->actionFunc)) {
         func_800D1694(thisx->home.pos.x, thisx->home.pos.y, thisx->home.pos.z, &thisx->shape.rot);
-        Matrix_Translate(-D_80884ED4.x, -D_80884ED4.y, -D_80884ED4.z, MTXMODE_APPLY);
+        Matrix_Translate(-D_80884ED4_51.x, -D_80884ED4_51.y, -D_80884ED4_51.z, MTXMODE_APPLY);
     }
 
-    Matrix_MultVec3f(&D_80884EC8, &thisx->world.pos);
-    Matrix_MultVec3f(&D_80884ED4, &thisx->home.pos);
+    Matrix_MultVec3f(&D_80884EC8_51, &thisx->world.pos);
+    Matrix_MultVec3f(&D_80884ED4_51, &thisx->home.pos);
     func_80093D18(globalCtx->state.gfxCtx);
 
     gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtx(globalCtx->state.gfxCtx, "../z_bg_heavy_block.c", 931),
@@ -534,4 +539,24 @@ void BgHeavyBlock_DrawPiece(Actor* thisx, GlobalContext* globalCtx) {
             Gfx_DrawDListOpa(globalCtx, gHeavyBlockSmallPieceDL);
             break;
     }
+}
+
+void BgHeavyBlock_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    D_80884EC8_51 = { 0.0f, 0.0f, 0.0f };
+
+    D_80884ED4_51 = { 0.0f, 400.0f, 0.0f };
+
+    Bg_Heavy_Block_InitVars = {
+        ACTOR_BG_HEAVY_BLOCK,
+        ACTORCAT_BG,
+        FLAGS,
+        OBJECT_HEAVY_OBJECT,
+        sizeof(BgHeavyBlock),
+        (ActorFunc)BgHeavyBlock_Init,
+        (ActorFunc)BgHeavyBlock_Destroy,
+        (ActorFunc)BgHeavyBlock_Update,
+        (ActorFunc)BgHeavyBlock_Draw,
+        (ActorFunc)BgHeavyBlock_Reset,
+    };
+
 }

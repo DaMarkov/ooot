@@ -28,6 +28,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3)
 
 void EnTa_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnTa_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnTa_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnTa_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnTa_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -48,6 +49,19 @@ void func_80B167FC(EnTa* pthis);
 void func_80B16854(EnTa* pthis);
 void func_80B16938(EnTa* pthis);
 
+static Vec3f D_80B16E7C_111 = {
+    1100.0f,
+    1000.0f,
+    0.0f,
+};
+
+static void* eyeTextures_112[] = {
+    gTalonEyeOpenTex,
+    gTalonEyeHalfTex,
+    gTalonEyeClosedTex,
+};
+
+
 ActorInit En_Ta_InitVars = {
     ACTOR_EN_TA,
     ACTORCAT_NPC,
@@ -58,6 +72,7 @@ ActorInit En_Ta_InitVars = {
     (ActorFunc)EnTa_Destroy,
     (ActorFunc)EnTa_Update,
     (ActorFunc)EnTa_Draw,
+    (ActorFunc)EnTa_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -1206,24 +1221,14 @@ s32 EnTa_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, 
 }
 
 void EnTa_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx) {
-    static Vec3f D_80B16E7C = {
-        1100.0f,
-        1000.0f,
-        0.0f,
-    };
     EnTa* pthis = (EnTa*)thisx;
 
     if (limbIndex == 15) {
-        Matrix_MultVec3f(&D_80B16E7C, &pthis->actor.focus.pos);
+        Matrix_MultVec3f(&D_80B16E7C_111, &pthis->actor.focus.pos);
     }
 }
 
 void EnTa_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static void* eyeTextures[] = {
-        gTalonEyeOpenTex,
-        gTalonEyeHalfTex,
-        gTalonEyeClosedTex,
-    };
     EnTa* pthis = (EnTa*)thisx;
     s32 pad;
 
@@ -1231,11 +1236,53 @@ void EnTa_Draw(Actor* thisx, GlobalContext* globalCtx) {
 
     func_800943C8(globalCtx->state.gfxCtx);
 
-    gSPSegment(POLY_OPA_DISP++, 0x8, SEGMENTED_TO_VIRTUAL(eyeTextures[pthis->eyeIndex]));
+    gSPSegment(POLY_OPA_DISP++, 0x8, SEGMENTED_TO_VIRTUAL(eyeTextures_112[pthis->eyeIndex]));
     gSPSegment(POLY_OPA_DISP++, 0x9, SEGMENTED_TO_VIRTUAL(gTalonHeadSkinTex));
 
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           EnTa_OverrideLimbDraw, EnTa_PostLimbDraw, pthis);
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_ta.c", 2400);
+}
+
+void EnTa_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    D_80B16E7C_111 = {
+        1100.0f,
+        1000.0f,
+        0.0f,
+    };
+
+    En_Ta_InitVars = {
+        ACTOR_EN_TA,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_TA,
+        sizeof(EnTa),
+        (ActorFunc)EnTa_Init,
+        (ActorFunc)EnTa_Destroy,
+        (ActorFunc)EnTa_Update,
+        (ActorFunc)EnTa_Draw,
+        (ActorFunc)EnTa_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000004, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_ON,
+        },
+        { 30, 40, 0, { 0, 0, 0 } },
+    };
+
 }

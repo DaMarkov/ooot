@@ -20,6 +20,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3 | ACTOR_FLAG_25)
 
 void EnDu_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnDu_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnDu_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnDu_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnDu_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -37,6 +38,26 @@ void func_809FEC70(EnDu* pthis, GlobalContext* globalCtx);
 void func_809FECE4(EnDu* pthis, GlobalContext* globalCtx);
 void func_809FEB08(EnDu* pthis, GlobalContext* globalCtx);
 
+static void* eyeTextures_67[] = {
+    gDaruniaEyeOpenTex,
+    gDaruniaEyeOpeningTex,
+    gDaruniaEyeShutTex,
+    gDaruniaEyeClosingTex,
+};
+
+static void* mouthTextures_67[] = {
+    gDaruniaMouthSeriousTex,
+    gDaruniaMouthGrinningTex,
+    gDaruniaMouthOpenTex,
+    gDaruniaMouthHappyTex,
+};
+
+static void* noseTextures_67[] = {
+    gDaruniaNoseSeriousTex,
+    gDaruniaNoseHappyTex,
+};
+
+
 ActorInit En_Du_InitVars = {
     ACTOR_EN_DU,
     ACTORCAT_NPC,
@@ -47,6 +68,7 @@ ActorInit En_Du_InitVars = {
     (ActorFunc)EnDu_Destroy,
     (ActorFunc)EnDu_Update,
     (ActorFunc)EnDu_Draw,
+    (ActorFunc)EnDu_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -600,31 +622,55 @@ void EnDu_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec
 }
 
 void EnDu_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static void* eyeTextures[] = {
-        gDaruniaEyeOpenTex,
-        gDaruniaEyeOpeningTex,
-        gDaruniaEyeShutTex,
-        gDaruniaEyeClosingTex,
-    };
-    static void* mouthTextures[] = {
-        gDaruniaMouthSeriousTex,
-        gDaruniaMouthGrinningTex,
-        gDaruniaMouthOpenTex,
-        gDaruniaMouthHappyTex,
-    };
-    static void* noseTextures[] = {
-        gDaruniaNoseSeriousTex,
-        gDaruniaNoseHappyTex,
-    };
     EnDu* pthis = (EnDu*)thisx;
 
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_en_du.c", 1470);
 
-    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures[pthis->eyeTexIndex]));
-    gSPSegment(POLY_OPA_DISP++, 0x09, SEGMENTED_TO_VIRTUAL(mouthTextures[pthis->mouthTexIndex]));
-    gSPSegment(POLY_OPA_DISP++, 0x0A, SEGMENTED_TO_VIRTUAL(noseTextures[pthis->noseTexIndex]));
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(eyeTextures_67[pthis->eyeTexIndex]));
+    gSPSegment(POLY_OPA_DISP++, 0x09, SEGMENTED_TO_VIRTUAL(mouthTextures_67[pthis->mouthTexIndex]));
+    gSPSegment(POLY_OPA_DISP++, 0x0A, SEGMENTED_TO_VIRTUAL(noseTextures_67[pthis->noseTexIndex]));
 
     func_80034BA0(globalCtx, &pthis->skelAnime, EnDu_OverrideLimbDraw, EnDu_PostLimbDraw, &pthis->actor, 255);
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_du.c", 1487);
+}
+
+void EnDu_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_Du_InitVars = {
+        ACTOR_EN_DU,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_DU,
+        sizeof(EnDu),
+        (ActorFunc)EnDu_Init,
+        (ActorFunc)EnDu_Destroy,
+        (ActorFunc)EnDu_Update,
+        (ActorFunc)EnDu_Draw,
+        (ActorFunc)EnDu_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_NONE,
+            OCELEM_ON,
+        },
+        { 20, 46, 0, { 0, 0, 0 } },
+    };
+
+    sColChkInfoInit = {
+        0, 0, 0, 0, MASS_IMMOVABLE,
+    };
+
 }

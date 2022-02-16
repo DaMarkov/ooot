@@ -25,12 +25,16 @@
 #define FLAGS ACTOR_FLAG_4
 
 void BgHakaTubo_Init(Actor* thisx, GlobalContext* globalCtx);
+void BgHakaTubo_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void BgHakaTubo_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void BgHakaTubo_Update(Actor* thisx, GlobalContext* globalCtx);
 void BgHakaTubo_Draw(Actor* thisx, GlobalContext* globalCtx);
 
 void BgHakaTubo_Idle(BgHakaTubo* pthis, GlobalContext* globalCtx);
 void BgHakaTubo_DropCollectible(BgHakaTubo* pthis, GlobalContext* globalCtx);
+
+static Vec3f sZeroVector_34 = { 0.0f, 0.0f, 0.0f };
+
 
 ActorInit Bg_Haka_Tubo_InitVars = {
     ACTOR_BG_HAKA_TUBO,
@@ -42,6 +46,7 @@ ActorInit Bg_Haka_Tubo_InitVars = {
     (ActorFunc)BgHakaTubo_Destroy,
     (ActorFunc)BgHakaTubo_Update,
     (ActorFunc)BgHakaTubo_Draw,
+    (ActorFunc)BgHakaTubo_Reset,
 };
 
 static ColliderCylinderInit sPotColliderInit = {
@@ -117,7 +122,6 @@ void BgHakaTubo_Destroy(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void BgHakaTubo_Idle(BgHakaTubo* pthis, GlobalContext* globalCtx) {
-    static Vec3f sZeroVector = { 0.0f, 0.0f, 0.0f };
     Vec3f pos;
 
     if (pthis->dyna.actor.room == 12) { // 3 spinning pots room in Shadow Temple
@@ -140,7 +144,7 @@ void BgHakaTubo_Idle(BgHakaTubo* pthis, GlobalContext* globalCtx) {
             pos.x = pthis->dyna.actor.world.pos.x;
             pos.z = pthis->dyna.actor.world.pos.z;
             pos.y = pthis->dyna.actor.world.pos.y + 80.0f;
-            EffectSsBomb2_SpawnLayered(globalCtx, &pos, &sZeroVector, &sZeroVector, 100, 45);
+            EffectSsBomb2_SpawnLayered(globalCtx, &pos, &sZeroVector_34, &sZeroVector_34, 100, 45);
             Audio_PlaySoundAtPosition(globalCtx, &pthis->dyna.actor.world.pos, 50, NA_SE_EV_BOX_BREAK);
             EffectSsHahen_SpawnBurst(globalCtx, &pos, 20.0f, 0, 350, 100, 50, OBJECT_HAKA_OBJECTS, 40,
                                      gEffFragments2DL);
@@ -260,4 +264,64 @@ void BgHakaTubo_Draw(Actor* thisx, GlobalContext* globalCtx) {
 
     Gfx_DrawDListOpa(globalCtx, object_haka_objects_DL_00FE40);
     BgHakaTubo_DrawFlameCircle(pthis, globalCtx);
+}
+
+void BgHakaTubo_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    sZeroVector_34 = { 0.0f, 0.0f, 0.0f };
+
+    Bg_Haka_Tubo_InitVars = {
+        ACTOR_BG_HAKA_TUBO,
+        ACTORCAT_BG,
+        FLAGS,
+        OBJECT_HAKA_OBJECTS,
+        sizeof(BgHakaTubo),
+        (ActorFunc)BgHakaTubo_Init,
+        (ActorFunc)BgHakaTubo_Destroy,
+        (ActorFunc)BgHakaTubo_Update,
+        (ActorFunc)BgHakaTubo_Draw,
+        (ActorFunc)BgHakaTubo_Reset,
+    };
+
+    sPotColliderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_ON | AC_TYPE_PLAYER,
+            OC1_NONE,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000008, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_ON,
+            OCELEM_NONE,
+        },
+        { 25, 60, 30, { 0, 0, 0 } },
+    };
+
+    sFlamesColliderInit = {
+        {
+            COLTYPE_NONE,
+            AT_ON | AT_TYPE_ENEMY,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_PLAYER,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x20000000, 0x01, 0x04 },
+            { 0x00000008, 0x00, 0x00 },
+            TOUCH_ON | TOUCH_SFX_NONE,
+            BUMP_NONE,
+            OCELEM_ON,
+        },
+        { 60, 45, 235, { 0, 0, 0 } },
+    };
+
+    sPotsDestroyed = 0;
+
 }

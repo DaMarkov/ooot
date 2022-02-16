@@ -18,25 +18,6 @@
 
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3 | ACTOR_FLAG_4)
 
-typedef struct {
-    AnimationHeader* anim;
-    f32 unk_4;
-    u8 mode;
-    f32 transitionRate;
-} EnDaikuAnimation;
-
-typedef enum {
-    /* 0 */ ENDAIKU_ANIM_SHOUT,
-    /* 1 */ ENDAIKU_ANIM_STAND,
-    /* 2 */ ENDAIKU_ANIM_CELEBRATE,
-    /* 3 */ ENDAIKU_ANIM_RUN,
-    /* 4 */ ENDAIKU_ANIM_SIT
-} EnDaikuAnimationIdx;
-
-typedef struct {
-    Vec3f eyePosDeltaLocal;
-    s32 maxFramesActive;
-} EnDaikuEscapeSubCamParam;
 
 // state flags
 
@@ -49,13 +30,9 @@ typedef struct {
 // the gerudo guard was defeated
 #define ENDAIKU_STATEFLAG_GERUDODEFEATED (1 << 4)
 
-typedef enum {
-    /* 0 */ ENDAIKU_STATE_CAN_TALK,
-    /* 2 */ ENDAIKU_STATE_TALKING = 2,
-    /* 3 */ ENDAIKU_STATE_NO_TALK
-} EnDaikuTalkState;
 
 void EnDaiku_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnDaiku_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnDaiku_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnDaiku_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnDaiku_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -70,6 +47,14 @@ void EnDaiku_EscapeRun(EnDaiku* pthis, GlobalContext* globalCtx);
 s32 EnDaiku_OverrideLimbDraw(GlobalContext* globalCtx, s32 limb, Gfx** dList, Vec3f* pos, Vec3s* rot, void* thisx);
 void EnDaiku_PostLimbDraw(GlobalContext* globalCtx, s32 limb, Gfx** dList, Vec3s* rot, void* thisx);
 
+static Vec3f D_809E4148_73 = { 0.0f, 0.0f, 120.0f };
+
+static Gfx* hairDLists_80[] = { object_daiku_DL_005BD0, object_daiku_DL_005AC0, object_daiku_DL_005990,
+                             object_daiku_DL_005880 };
+
+static Vec3f targetPosHeadLocal_80 = { 700, 1100, 0 };
+
+
 ActorInit En_Daiku_InitVars = {
     ACTOR_EN_DAIKU,
     ACTORCAT_NPC,
@@ -80,6 +65,7 @@ ActorInit En_Daiku_InitVars = {
     (ActorFunc)EnDaiku_Destroy,
     (ActorFunc)EnDaiku_Update,
     (ActorFunc)EnDaiku_Draw,
+    (ActorFunc)EnDaiku_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -506,7 +492,6 @@ void EnDaiku_UpdateSubCamera(EnDaiku* pthis, GlobalContext* globalCtx) {
 }
 
 void EnDaiku_EscapeSuccess(EnDaiku* pthis, GlobalContext* globalCtx) {
-    static Vec3f D_809E4148 = { 0.0f, 0.0f, 120.0f };
     Actor* gerudoGuard;
     Vec3f vec;
 
@@ -516,7 +501,7 @@ void EnDaiku_EscapeSuccess(EnDaiku* pthis, GlobalContext* globalCtx) {
 
     if ((gSaveContext.eventChkInf[9] & 0xF) == 0xF) {
         Matrix_RotateY(pthis->initRot.y * (M_PI / 0x8000), MTXMODE_NEW);
-        Matrix_MultVec3f(&D_809E4148, &vec);
+        Matrix_MultVec3f(&D_809E4148_73, &vec);
         gerudoGuard =
             Actor_Spawn(&globalCtx->actorCtx, globalCtx, ACTOR_EN_GE3, pthis->initPos.x + vec.x, pthis->initPos.y + vec.y,
                         pthis->initPos.z + vec.z, 0, Math_FAtan2F(-vec.x, -vec.z) * (0x8000 / M_PI), 0, 2);
@@ -646,17 +631,91 @@ s32 EnDaiku_OverrideLimbDraw(GlobalContext* globalCtx, s32 limb, Gfx** dList, Ve
 }
 
 void EnDaiku_PostLimbDraw(GlobalContext* globalCtx, s32 limb, Gfx** dList, Vec3s* rot, void* thisx) {
-    static Gfx* hairDLists[] = { object_daiku_DL_005BD0, object_daiku_DL_005AC0, object_daiku_DL_005990,
-                                 object_daiku_DL_005880 };
-    static Vec3f targetPosHeadLocal = { 700, 1100, 0 };
     EnDaiku* pthis = (EnDaiku*)thisx;
 
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_en_daiku.c", 1323);
 
     if (limb == 15) { // head
-        Matrix_MultVec3f(&targetPosHeadLocal, &pthis->actor.focus.pos);
-        gSPDisplayList(POLY_OPA_DISP++, hairDLists[pthis->actor.params & 3]);
+        Matrix_MultVec3f(&targetPosHeadLocal_80, &pthis->actor.focus.pos);
+        gSPDisplayList(POLY_OPA_DISP++, hairDLists_80[pthis->actor.params & 3]);
     }
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_daiku.c", 1330);
+}
+
+void EnDaiku_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    D_809E4148_73 = { 0.0f, 0.0f, 120.0f };
+
+    targetPosHeadLocal_80 = { 700, 1100, 0 };
+
+    En_Daiku_InitVars = {
+        ACTOR_EN_DAIKU,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_DAIKU,
+        sizeof(EnDaiku),
+        (ActorFunc)EnDaiku_Init,
+        (ActorFunc)EnDaiku_Destroy,
+        (ActorFunc)EnDaiku_Update,
+        (ActorFunc)EnDaiku_Draw,
+        (ActorFunc)EnDaiku_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_NONE,
+            OCELEM_ON,
+        },
+        { 18, 66, 0, { 0, 0, 0 } },
+    };
+
+    sColChkInfoInit2 = { 0, 0, 0, 0, MASS_IMMOVABLE };
+
+    sDamageTable = {
+        /* Deku nut      */ DMG_ENTRY(0, 0x0),
+        /* Deku stick    */ DMG_ENTRY(0, 0x0),
+        /* Slingshot     */ DMG_ENTRY(0, 0x0),
+        /* Explosive     */ DMG_ENTRY(0, 0x0),
+        /* Boomerang     */ DMG_ENTRY(0, 0x0),
+        /* Normal arrow  */ DMG_ENTRY(0, 0x0),
+        /* Hammer swing  */ DMG_ENTRY(0, 0x0),
+        /* Hookshot      */ DMG_ENTRY(0, 0x0),
+        /* Kokiri sword  */ DMG_ENTRY(0, 0x0),
+        /* Master sword  */ DMG_ENTRY(0, 0x0),
+        /* Giant's Knife */ DMG_ENTRY(0, 0x0),
+        /* Fire arrow    */ DMG_ENTRY(0, 0x0),
+        /* Ice arrow     */ DMG_ENTRY(0, 0x0),
+        /* Light arrow   */ DMG_ENTRY(0, 0x0),
+        /* Unk arrow 1   */ DMG_ENTRY(0, 0x0),
+        /* Unk arrow 2   */ DMG_ENTRY(0, 0x0),
+        /* Unk arrow 3   */ DMG_ENTRY(0, 0x0),
+        /* Fire magic    */ DMG_ENTRY(0, 0x0),
+        /* Ice magic     */ DMG_ENTRY(0, 0x0),
+        /* Light magic   */ DMG_ENTRY(0, 0x0),
+        /* Shield        */ DMG_ENTRY(0, 0x0),
+        /* Mirror Ray    */ DMG_ENTRY(0, 0x0),
+        /* Kokiri spin   */ DMG_ENTRY(0, 0x0),
+        /* Giant spin    */ DMG_ENTRY(0, 0x0),
+        /* Master spin   */ DMG_ENTRY(0, 0x0),
+        /* Kokiri jump   */ DMG_ENTRY(0, 0x0),
+        /* Giant jump    */ DMG_ENTRY(0, 0x0),
+        /* Master jump   */ DMG_ENTRY(0, 0x0),
+        /* Unknown 1     */ DMG_ENTRY(0, 0x0),
+        /* Unblockable   */ DMG_ENTRY(0, 0x0),
+        /* Hammer jump   */ DMG_ENTRY(0, 0x0),
+        /* Unknown 2     */ DMG_ENTRY(0, 0x0),
+    };
+
 }

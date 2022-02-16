@@ -27,22 +27,9 @@
 
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3 | ACTOR_FLAG_4)
 
-typedef enum {
-    /* 0 */ RM_ANIM_RUN,
-    /* 1 */ RM_ANIM_SIT,
-    /* 2 */ RM_ANIM_SIT_WAIT,
-    /* 3 */ RM_ANIM_STAND,
-    /* 4 */ RM_ANIM_SPRINT,
-    /* 5 */ RM_ANIM_EXCITED, // plays when talking to him with bunny hood on
-    /* 6 */ RM_ANIM_HAPPY    // plays when you sell him the bunny hood
-} RunningManAnimIndex;
-
-typedef enum {
-    /* 0 */ RM_MOUTH_CLOSED,
-    /* 1 */ RM_MOUTH_OPEN
-} RunningManMouthTex;
 
 void EnMm_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnMm_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnMm_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnMm_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnMm_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -56,6 +43,11 @@ s32 func_80AADA70(void);
 s32 EnMm_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s* rot, void* thisx);
 void EnMm_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void*);
 
+static void* mouthTextures_61[] = { gRunningManMouthOpenTex, gRunningManMouthClosedTex };
+
+static Vec3f headOffset_63 = { 200.0f, 800.0f, 0.0f };
+
+
 ActorInit En_Mm_InitVars = {
     ACTOR_EN_MM,
     ACTORCAT_NPC,
@@ -66,6 +58,7 @@ ActorInit En_Mm_InitVars = {
     (ActorFunc)EnMm_Destroy,
     (ActorFunc)EnMm_Update,
     (ActorFunc)EnMm_Draw,
+    (ActorFunc)EnMm_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -123,14 +116,7 @@ static DamageTable sDamageTable = {
     /* Unblockable   */ DMG_ENTRY(0, 0x0),
     /* Hammer jump   */ DMG_ENTRY(0, 0x0),
     /* Unknown 2     */ DMG_ENTRY(0, 0x0),
-};
-
-typedef struct {
-    /* 0x00 */ AnimationHeader* animation;
-    /* 0x04 */ f32 playSpeed;
-    /* 0x08 */ u8 mode;
-    /* 0x0C */ f32 morphFrames;
-} EnMmAnimEntry; // size = 0x10
+}; 
 
 static EnMmAnimEntry sAnimationEntries[] = {
     { &gRunningManRunAnim, 1.0f, ANIMMODE_LOOP, -7.0f },     { &gRunningManSitStandAnim, -1.0f, ANIMMODE_ONCE, -7.0f },
@@ -138,13 +124,6 @@ static EnMmAnimEntry sAnimationEntries[] = {
     { &gRunningManSprintAnim, 1.0f, ANIMMODE_LOOP, -7.0f },  { &gRunningManExcitedAnim, 1.0f, ANIMMODE_LOOP, -12.0f },
     { &gRunningManHappyAnim, 1.0f, ANIMMODE_LOOP, -12.0f },
 };
-
-typedef struct {
-    /* 0x00 */ s32 unk_00;
-    /* 0x04 */ s32 unk_04;
-    /* 0x08 */ s32 unk_08;
-    /* 0x0C */ s32 unk_0C;
-} EnMmPathInfo;
 
 static EnMmPathInfo sPathInfo[] = {
     { 0, 1, 0, 0 },
@@ -536,7 +515,6 @@ void EnMm_Update(Actor* thisx, GlobalContext* globalCtx) {
 }
 
 void EnMm_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static void* mouthTextures[] = { gRunningManMouthOpenTex, gRunningManMouthClosedTex };
     s32 pad;
     EnMm* pthis = (EnMm*)thisx;
 
@@ -545,7 +523,7 @@ void EnMm_Draw(Actor* thisx, GlobalContext* globalCtx) {
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_en_mm.c", 1065);
 
     func_80093D18(globalCtx->state.gfxCtx);
-    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(mouthTextures[pthis->mouthTexIndex]));
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(mouthTextures_61[pthis->mouthTexIndex]));
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           EnMm_OverrideLimbDraw, EnMm_PostLimbDraw, pthis);
 
@@ -610,11 +588,10 @@ s32 EnMm_OverrideLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, 
 }
 
 void EnMm_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx) {
-    static Vec3f headOffset = { 200.0f, 800.0f, 0.0f };
     EnMm* pthis = (EnMm*)thisx;
 
     if (limbIndex == 15) {
-        Matrix_MultVec3f(&headOffset, &pthis->actor.focus.pos);
+        Matrix_MultVec3f(&headOffset_63, &pthis->actor.focus.pos);
         Matrix_Translate(260.0f, 20.0f, 0.0f, MTXMODE_APPLY);
         Matrix_RotateY(0.0f, MTXMODE_APPLY);
         Matrix_RotateX(0.0f, MTXMODE_APPLY);
@@ -622,4 +599,77 @@ void EnMm_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec
         Matrix_Translate(-260.0f, 58.0f, 10.0f, MTXMODE_APPLY);
         Matrix_Get(&pthis->unk_208);
     }
+}
+
+void EnMm_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    headOffset_63 = { 200.0f, 800.0f, 0.0f };
+
+    En_Mm_InitVars = {
+        ACTOR_EN_MM,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_MM,
+        sizeof(EnMm),
+        (ActorFunc)EnMm_Init,
+        (ActorFunc)EnMm_Destroy,
+        (ActorFunc)EnMm_Update,
+        (ActorFunc)EnMm_Draw,
+        (ActorFunc)EnMm_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_NONE,
+            OCELEM_ON,
+        },
+        { 18, 63, 0, { 0, 0, 0 } },
+    };
+
+    sDamageTable = {
+        /* Deku nut      */ DMG_ENTRY(0, 0x0),
+        /* Deku stick    */ DMG_ENTRY(0, 0x0),
+        /* Slingshot     */ DMG_ENTRY(0, 0x0),
+        /* Explosive     */ DMG_ENTRY(0, 0x0),
+        /* Boomerang     */ DMG_ENTRY(0, 0x0),
+        /* Normal arrow  */ DMG_ENTRY(0, 0x0),
+        /* Hammer swing  */ DMG_ENTRY(0, 0x0),
+        /* Hookshot      */ DMG_ENTRY(0, 0x0),
+        /* Kokiri sword  */ DMG_ENTRY(0, 0x0),
+        /* Master sword  */ DMG_ENTRY(0, 0x0),
+        /* Giant's Knife */ DMG_ENTRY(0, 0x0),
+        /* Fire arrow    */ DMG_ENTRY(0, 0x0),
+        /* Ice arrow     */ DMG_ENTRY(0, 0x0),
+        /* Light arrow   */ DMG_ENTRY(0, 0x0),
+        /* Unk arrow 1   */ DMG_ENTRY(0, 0x0),
+        /* Unk arrow 2   */ DMG_ENTRY(0, 0x0),
+        /* Unk arrow 3   */ DMG_ENTRY(0, 0x0),
+        /* Fire magic    */ DMG_ENTRY(0, 0x0),
+        /* Ice magic     */ DMG_ENTRY(0, 0x0),
+        /* Light magic   */ DMG_ENTRY(0, 0x0),
+        /* Shield        */ DMG_ENTRY(0, 0x0),
+        /* Mirror Ray    */ DMG_ENTRY(0, 0x0),
+        /* Kokiri spin   */ DMG_ENTRY(0, 0x0),
+        /* Giant spin    */ DMG_ENTRY(0, 0x0),
+        /* Master spin   */ DMG_ENTRY(0, 0x0),
+        /* Kokiri jump   */ DMG_ENTRY(0, 0x0),
+        /* Giant jump    */ DMG_ENTRY(0, 0x0),
+        /* Master jump   */ DMG_ENTRY(0, 0x0),
+        /* Unknown 1     */ DMG_ENTRY(0, 0x0),
+        /* Unblockable   */ DMG_ENTRY(0, 0x0),
+        /* Hammer jump   */ DMG_ENTRY(0, 0x0),
+        /* Unknown 2     */ DMG_ENTRY(0, 0x0),
+    };
+
 }

@@ -25,6 +25,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3)
 
 void EnKz_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnKz_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnKz_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnKz_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnKz_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -37,6 +38,13 @@ void EnKz_Wait(EnKz* pthis, GlobalContext* globalCtx);
 void EnKz_SetupGetItem(EnKz* pthis, GlobalContext* globalCtx);
 void EnKz_StartTimer(EnKz* pthis, GlobalContext* globalCtx);
 
+static void* sEyeSegments_57[] = {
+    gKzEyeOpenTex,
+    gKzEyeHalfTex,
+    gKzEyeClosedTex,
+};
+
+
 ActorInit En_Kz_InitVars = {
     ACTOR_EN_KZ,
     ACTORCAT_NPC,
@@ -47,6 +55,7 @@ ActorInit En_Kz_InitVars = {
     (ActorFunc)EnKz_Destroy,
     (ActorFunc)EnKz_Update,
     (ActorFunc)EnKz_Draw,
+    (ActorFunc)EnKz_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -498,19 +507,52 @@ void EnKz_PostLimbDraw(GlobalContext* globalCtx, s32 limbIndex, Gfx** dList, Vec
 }
 
 void EnKz_Draw(Actor* thisx, GlobalContext* globalCtx) {
-    static void* sEyeSegments[] = {
-        gKzEyeOpenTex,
-        gKzEyeHalfTex,
-        gKzEyeClosedTex,
-    };
     EnKz* pthis = (EnKz*)thisx;
 
     OPEN_DISPS(globalCtx->state.gfxCtx, "../z_en_kz.c", 1259);
 
-    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sEyeSegments[pthis->eyeIdx]));
+    gSPSegment(POLY_OPA_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(sEyeSegments_57[pthis->eyeIdx]));
     func_800943C8(globalCtx->state.gfxCtx);
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelanime.skeleton, pthis->skelanime.jointTable, pthis->skelanime.dListCount,
                           EnKz_OverrideLimbDraw, EnKz_PostLimbDraw, pthis);
 
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_kz.c", 1281);
+}
+
+void EnKz_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_Kz_InitVars = {
+        ACTOR_EN_KZ,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_KZ,
+        sizeof(EnKz),
+        (ActorFunc)EnKz_Init,
+        (ActorFunc)EnKz_Destroy,
+        (ActorFunc)EnKz_Update,
+        (ActorFunc)EnKz_Draw,
+        (ActorFunc)EnKz_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_NONE,
+            OCELEM_ON,
+        },
+        { 80, 120, 0, { 0, 0, 0 } },
+    };
+
+    sColChkInfoInit = { 0, 0, 0, 0, MASS_IMMOVABLE };
+
 }

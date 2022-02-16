@@ -19,6 +19,7 @@
 #define FLAGS ACTOR_FLAG_4
 
 void EnRl_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnRl_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnRl_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnRl_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnRl_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -34,6 +35,9 @@ void func_80AE7D40(EnRl* pthis, GlobalContext* globalCtx);
 void func_80AE7FD0(EnRl* pthis, GlobalContext* globalCtx);
 void func_80AE7FDC(EnRl* pthis, GlobalContext* globalCtx);
 void func_80AE7D94(EnRl* pthis, GlobalContext* globalCtx);
+
+static s32 D_80AE81AC_34 = 0;
+
 
 static void* D_80AE81A0[] = { object_rl_Tex_003620, object_rl_Tex_003960, object_rl_Tex_003B60 };
 
@@ -70,17 +74,16 @@ void func_80AE7358(EnRl* pthis) {
 }
 
 void func_80AE73D8(EnRl* pthis, GlobalContext* globalCtx) {
-    static s32 D_80AE81AC = 0;
 
     if (globalCtx->csCtx.state == CS_STATE_IDLE) {
-        if (D_80AE81AC) {
+        if (D_80AE81AC_34) {
             if (pthis->actor.params == 2) {
                 func_80AE7358(pthis);
             }
-            D_80AE81AC = 0;
+            D_80AE81AC_34 = 0;
         }
-    } else if (!D_80AE81AC) {
-        D_80AE81AC = 1;
+    } else if (!D_80AE81AC_34) {
+        D_80AE81AC_34 = 1;
     }
 }
 
@@ -398,4 +401,23 @@ ActorInit En_Rl_InitVars = {
     (ActorFunc)EnRl_Destroy,
     (ActorFunc)EnRl_Update,
     (ActorFunc)EnRl_Draw,
+    (ActorFunc)EnRl_Reset,
 };
+
+void EnRl_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    D_80AE81AC_34 = 0;
+
+    En_Rl_InitVars = {
+        ACTOR_EN_RL,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_RL,
+        sizeof(EnRl),
+        (ActorFunc)EnRl_Init,
+        (ActorFunc)EnRl_Destroy,
+        (ActorFunc)EnRl_Update,
+        (ActorFunc)EnRl_Draw,
+        (ActorFunc)EnRl_Reset,
+    };
+
+}

@@ -23,6 +23,7 @@
 #define FLAGS (ACTOR_FLAG_0 | ACTOR_FLAG_3 | ACTOR_FLAG_4 | ACTOR_FLAG_5)
 
 void EnGo_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnGo_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnGo_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnGo_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnGo_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -50,6 +51,9 @@ void EnGo_AddDust(EnGo* pthis, Vec3f* pos, Vec3f* velocity, Vec3f* accel, u8 ini
 void EnGo_UpdateDust(EnGo* pthis);
 void EnGo_DrawDust(EnGo* pthis, GlobalContext* globalCtx);
 
+static void* dustTex_95[] = { gDust8Tex, gDust7Tex, gDust6Tex, gDust5Tex, gDust4Tex, gDust3Tex, gDust2Tex, gDust1Tex };
+
+
 ActorInit En_Go_InitVars = {
     ACTOR_EN_GO,
     ACTORCAT_NPC,
@@ -60,6 +64,7 @@ ActorInit En_Go_InitVars = {
     (ActorFunc)EnGo_Destroy,
     (ActorFunc)EnGo_Update,
     (ActorFunc)EnGo_Draw,
+    (ActorFunc)EnGo_Reset,
 };
 
 static ColliderCylinderInit sCylinderInit = {
@@ -85,13 +90,6 @@ static ColliderCylinderInit sCylinderInit = {
 static CollisionCheckInfoInit2 sColChkInfoInit = {
     0, 0, 0, 0, MASS_IMMOVABLE,
 };
-
-typedef struct {
-    AnimationHeader* animation;
-    f32 playSpeed;
-    u8 mode;
-    f32 morphRate;
-} EnGoAnimation;
 
 static EnGoAnimation sAnimationEntries[] = {
     { &gGoronAnim_004930, 0.0f, ANIMMODE_LOOP_INTERP, 0.0f },
@@ -1215,7 +1213,6 @@ void EnGo_UpdateDust(EnGo* pthis) {
 }
 
 void EnGo_DrawDust(EnGo* pthis, GlobalContext* globalCtx) {
-    static void* dustTex[] = { gDust8Tex, gDust7Tex, gDust6Tex, gDust5Tex, gDust4Tex, gDust3Tex, gDust2Tex, gDust1Tex };
     EnGoEffect* dustEffect = pthis->dustEffects;
     s16 alpha;
     s16 firstDone;
@@ -1245,9 +1242,49 @@ void EnGo_DrawDust(EnGo* pthis, GlobalContext* globalCtx) {
                       G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
 
             index = dustEffect->timer * (8.0f / dustEffect->initialTimer);
-            gSPSegment(POLY_XLU_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(dustTex[index]));
+            gSPSegment(POLY_XLU_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(dustTex_95[index]));
             gSPDisplayList(POLY_XLU_DISP++, gGoronDL_00FD50);
         }
     }
     CLOSE_DISPS(globalCtx->state.gfxCtx, "../z_en_go.c", 2678);
+}
+
+void EnGo_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    En_Go_InitVars = {
+        ACTOR_EN_GO,
+        ACTORCAT_NPC,
+        FLAGS,
+        OBJECT_OF1D_MAP,
+        sizeof(EnGo),
+        (ActorFunc)EnGo_Init,
+        (ActorFunc)EnGo_Destroy,
+        (ActorFunc)EnGo_Update,
+        (ActorFunc)EnGo_Draw,
+        (ActorFunc)EnGo_Reset,
+    };
+
+    sCylinderInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_2,
+            COLSHAPE_CYLINDER,
+        },
+        {
+            ELEMTYPE_UNK0,
+            { 0x00000000, 0x00, 0x00 },
+            { 0x00000000, 0x00, 0x00 },
+            TOUCH_NONE,
+            BUMP_NONE,
+            OCELEM_ON,
+        },
+        { 20, 46, 0, { 0, 0, 0 } },
+    };
+
+    sColChkInfoInit = {
+        0, 0, 0, 0, MASS_IMMOVABLE,
+    };
+
 }

@@ -21,6 +21,7 @@
 #define FLAGS 0
 
 void EnFish_Init(Actor* thisx, GlobalContext* globalCtx);
+void EnFish_Reset(Actor* pthisx, GlobalContext* globalCtx);
 void EnFish_Destroy(Actor* thisx, GlobalContext* globalCtx);
 void EnFish_Update(Actor* thisx, GlobalContext* globalCtx);
 void EnFish_Draw(Actor* thisx, GlobalContext* globalCtx);
@@ -41,6 +42,11 @@ void EnFish_Dropped_SetupSwimAway(EnFish* pthis);
 void EnFish_Dropped_SwimAway(EnFish* pthis, GlobalContext* globalCtx);
 void EnFish_Unique_SetupSwimIdle(EnFish* pthis);
 void EnFish_Unique_SwimIdle(EnFish* pthis, GlobalContext* globalCtx);
+
+static f32 speedStopping_77[] = { 0.0f, 0.04f, 0.09f };
+
+static f32 speedMoving_77[] = { 0.5f, 0.1f, 0.15f };
+
 
 // Used in the cutscene functions
 static Actor* D_80A17010 = NULL;
@@ -84,6 +90,7 @@ ActorInit En_Fish_InitVars = {
     (ActorFunc)EnFish_Destroy,
     (ActorFunc)EnFish_Update,
     (ActorFunc)EnFish_Draw,
+    (ActorFunc)EnFish_Reset,
 };
 
 static InitChainEntry sInitChain[] = {
@@ -541,8 +548,6 @@ void EnFish_Unique_SetupSwimIdle(EnFish* pthis) {
 }
 
 void EnFish_Unique_SwimIdle(EnFish* pthis, GlobalContext* globalCtx) {
-    static f32 speedStopping[] = { 0.0f, 0.04f, 0.09f };
-    static f32 speedMoving[] = { 0.5f, 0.1f, 0.15f };
     f32 playSpeed;
     u32 frames = globalCtx->gameplayFrames;
     f32* speed;
@@ -552,15 +557,15 @@ void EnFish_Unique_SwimIdle(EnFish* pthis, GlobalContext* globalCtx) {
 
     if (pthis->actor.xzDistToPlayer < 60.0f) {
         if (pthis->timer < 12) {
-            speed = speedMoving;
+            speed = speedMoving_77;
         } else {
-            speed = speedStopping;
+            speed = speedStopping_77;
         }
     } else {
         if (pthis->timer < 4) {
-            speed = speedMoving;
+            speed = speedMoving_77;
         } else {
-            speed = speedStopping;
+            speed = speedStopping_77;
         }
     }
 
@@ -773,4 +778,39 @@ void EnFish_Draw(Actor* thisx, GlobalContext* globalCtx) {
     SkelAnime_DrawFlexOpa(globalCtx, pthis->skelAnime.skeleton, pthis->skelAnime.jointTable, pthis->skelAnime.dListCount,
                           NULL, NULL, NULL);
     Collider_UpdateSpheres(0, &pthis->collider);
+}
+
+void EnFish_Reset(Actor* pthisx, GlobalContext* globalCtx) {
+    D_80A17010 = NULL;
+
+    D_80A17014 = 0.0f;
+
+    D_80A17018 = 0.0f;
+
+    sJntSphInit = {
+        {
+            COLTYPE_NONE,
+            AT_NONE,
+            AC_NONE,
+            OC1_ON | OC1_TYPE_ALL,
+            OC2_TYPE_1,
+            COLSHAPE_JNTSPH,
+        },
+        1,
+        sJntSphElementsInit,
+    };
+
+    En_Fish_InitVars = {
+        ACTOR_EN_FISH,
+        ACTORCAT_ITEMACTION,
+        FLAGS,
+        OBJECT_GAMEPLAY_KEEP,
+        sizeof(EnFish),
+        (ActorFunc)EnFish_Init,
+        (ActorFunc)EnFish_Destroy,
+        (ActorFunc)EnFish_Update,
+        (ActorFunc)EnFish_Draw,
+        (ActorFunc)EnFish_Reset,
+    };
+
 }
