@@ -23,9 +23,12 @@ jobs:
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
-      
+    
+    - name: Copy roms Folder
+      run: cd ooot-master ; Remove-Item roms -Recurse -Force -ErrorAction SilentlyContinue ; cp -r ../roms . ;
+
     - name: Extract Assets
-      run: cd ooot-master ; cp -r ../roms . ; python setup.py
+      run: python setup.py
       
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
