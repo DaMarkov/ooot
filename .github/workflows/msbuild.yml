@@ -28,7 +28,7 @@ jobs:
       run: cd ooot-master ; Remove-Item roms -Recurse -Force -ErrorAction SilentlyContinue ; cp -r ../roms . ;
 
     - name: Extract Assets
-      run: python setup.py
+      run: cd ooot-master ; setup.py -b EUR_MQD
       
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
