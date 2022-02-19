@@ -1,4 +1,4 @@
-[![Build](https://github.com/blawar/ooot/actions/workflows/build.yml/badge.svg)](https://github.com/blawar/ooot/actions/workflows/build.yml)
+[![Build](https://github.com/blawar/ooot/actions/workflows/msbuild.yml/badge.svg)](https://github.com/blawar/ooot/actions/workflows/msbuild.yml)
 
 # Open Ocarina - The Master Port
 
