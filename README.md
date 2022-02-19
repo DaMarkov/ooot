@@ -1,3 +1,5 @@
+[![Build](https://github.com/blawar/ooot/actions/workflows/build.yml/badge.svg)](https://github.com/blawar/ooot/actions/workflows/build.yml)
+
 # Open Ocarina - The Master Port
 
 
