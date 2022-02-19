@@ -25,10 +25,10 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
     
     - name: Copy roms Folder
-      run: cd ooot-master ; Remove-Item roms -Recurse -Force -ErrorAction SilentlyContinue ; cp -r ../roms . ;
+      run: cd ooot-master ; Remove-Item roms -Recurse -Force -ErrorAction SilentlyContinue ; cp -r ../roms .
 
     - name: Extract Assets
-      run: cd ooot-master ; setup.py -b EUR_MQD
+      run: cd ooot-master ; python setup.py -b EUR_MQD
       
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
