@@ -2,6 +2,8 @@ name: Build
 
 on:
   push:
+    branches: [ master, github-actions-build2 ]
+  pull_request:
     branches: [ master ]
 
 env:
@@ -18,8 +20,9 @@ jobs:
     - name: Cleanup
       run: Remove-Item ooot-master -Recurse -Force -ErrorAction SilentlyContinue
 
-    - name: Clone OOT
-      run: git clone --recursive https://github.com/blawar/ooot.git ooot-master
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
