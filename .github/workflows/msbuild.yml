@@ -18,11 +18,10 @@ jobs:
 
     steps:
     - name: Cleanup
-      run: Remove-Item ooot-master -Recurse -Force -ErrorAction SilentlyContinue
+      run: Remove-Item ooot -Recurse -Force -ErrorAction SilentlyContinue
 
     - uses: actions/checkout@v2
       with:
-        path: 'ooot-master'
         submodules: 'recursive'
 
     - name: Add MSBuild to PATH
