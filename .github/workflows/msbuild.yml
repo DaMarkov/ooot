@@ -28,13 +28,13 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
     
     - name: Copy roms Folder
-      run: cd ooot ; Remove-Item roms -Recurse -Force -ErrorAction SilentlyContinue ; cp -r ../roms .
+      run: Remove-Item roms -Recurse -Force -ErrorAction SilentlyContinue ; cp -r ../roms .
 
     - name: Extract Assets
-      run: cd ooot ; python setup.py -b EUR_MQD
+      run: python setup.py -b EUR_MQD
       
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
-      run: cd ooot ; msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} vs/OOT.sln
+      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} vs/OOT.sln
