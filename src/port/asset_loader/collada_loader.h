@@ -111,6 +111,7 @@ namespace oot
 			};
 
 			FloatArray* FindType(FloatArray::Type Type);
+			int AddVertex(int PositionIndex, int NormalIndex = -1, int TexcoordIndex = -1);
 
 			std::vector<FloatArray> m_Data;
 

@@ -131,6 +131,8 @@ oot::ColladaAsset::Mesh::Mesh(tinyxml2::XMLElement* Mesh)
 
 	bool error = false;
 
+	//Part 1 - read all sources (position, normal, texcoord data)
+	
 	//For all sources
 	for (auto source = Mesh->FirstChildElement("source"); source; source = source->NextSiblingElement())
 	{
@@ -145,12 +147,15 @@ oot::ColladaAsset::Mesh::Mesh(tinyxml2::XMLElement* Mesh)
 		m_Data.emplace_back(std::move(geometry_data));
 	}
 
+	//Part 2 - Read the IDs of the data blobs we just read
+	
 	//Read vertex data
 	std::string position_id;
 	std::string vertex_id;
 	std::string normal_id;
 	std::string texcoord_id;
 
+	//Find position
 	auto vertices = Mesh->FirstChildElement("vertices");
 	if (!vertices)
 		error = true;
@@ -169,20 +174,20 @@ oot::ColladaAsset::Mesh::Mesh(tinyxml2::XMLElement* Mesh)
 	}
 
 
-	//Find references
-		ForAllChilden(polylist, "input", [&](auto element) {
-			auto semantic = FindAttribute(element, "semantic");
+	//Find other references
+	ForAllChilden(polylist, "input", [&](auto element) {
+		auto semantic = FindAttribute(element, "semantic");
 
-			if (semantic == "VERTEX")
-				vertex_id = FindAttribute(element, "source");
-			else if (semantic == "NORMAL")
-				normal_id = FindAttribute(element, "source");
-			else if (semantic == "TEXCOORD")
-				texcoord_id = FindAttribute(element, "source");
-		});
+		if (semantic == "VERTEX")
+			vertex_id = FindAttribute(element, "source");
+		else if (semantic == "NORMAL")
+			normal_id = FindAttribute(element, "source");
+		else if (semantic == "TEXCOORD")
+			texcoord_id = FindAttribute(element, "source");
+	});
 
 
-	//Part 3 - Start to build vertices
+	//Part 3 - Label our data
 
 	position_id.erase(0, 1);//removes the first character
 	normal_id.erase(0, 1);//removes the first character
@@ -199,18 +204,14 @@ oot::ColladaAsset::Mesh::Mesh(tinyxml2::XMLElement* Mesh)
 			data.SetType(FloatArray::Type::TexCoord);
 	}
 
-	//TODO: in debug build if we have unassigned data and report this as an error
+	//TODO: in debug build check if we have unassigned data and report this as an error
 
 	//Reserve space for vertices, we need to read the indices first
-	m_VerticesNum = 0;
 	m_pVertices = new Vtx[FindType(FloatArray::Type::Normal)->GetCount() * 30];//TODO
 
-	auto position_data = FindType(FloatArray::Type::Position)->GetData();
-	auto normal_data   = FindType(FloatArray::Type::Normal)->GetData();
-	auto texcoord_data = FindType(FloatArray::Type::TexCoord)->GetData();
 
+	//Part 4 - Read indices
 
-	//Part 3 - Read indices
 	auto vcount = polylist->FirstChildElement("vcount");
 	auto count  = FindAttributeInt(polylist, "count");
 
@@ -229,11 +230,10 @@ oot::ColladaAsset::Mesh::Mesh(tinyxml2::XMLElement* Mesh)
 	ParseValues(indices, indices_loaded, indices_loaded_num);
 
 
-	m_IndicesNum = 0;
 	m_pIndices = new int[count*30];//TODO FIX
-
-#define VTX(x,y,z,s,t,crnx,cgny,cbnz,a) { { { x, y, z }, 0, { s, t }, { crnx, cgny, cbnz, a } } }
 		
+	//Part 5 - Build vertices and indices one polygon at a time
+
 	int k = 0;
 	int l = 0;
 	for (uint32_t i = 0; i < count; ++i)//For every polygon
@@ -288,59 +288,34 @@ oot::ColladaAsset::Mesh::Mesh(tinyxml2::XMLElement* Mesh)
 		{
 			for (const auto& vi : polygon)
 			{
-				//Generate vertex data
-				int16_t x = (int16_t)(position_data[vi.position_index*3 + 0] * 1000.0f);
-				int16_t y = (int16_t)(position_data[vi.position_index*3 + 1] * 1000.0f);
-				int16_t z = (int16_t)(position_data[vi.position_index*3 + 2] * 1000.0f);
+				auto index_of_vertex = AddVertex(vi.position_index, vi.normal_index, vi.texcoord_index);
 
-				int16_t tu = (int16_t)((texcoord_data[vi.texcoord_index*2 + 0] + 1.0f) * 10000.0f);
-				int16_t tv = (int16_t)((texcoord_data[vi.texcoord_index*2 + 1] + 1.0f) * 10000.0f);
-
-				m_pVertices[m_VerticesNum] = VTX(x, y, z,
-					tu, tv,
-					(uint8_t)(rand()%230), (uint8_t)(rand()%50), (uint8_t)(rand()%100), 255);
-
-				m_pIndices[m_IndicesNum] = m_VerticesNum;//Yes this is stupid
-
-				m_VerticesNum++;
-				m_IndicesNum++;
+				m_pIndices[m_IndicesNum++] = index_of_vertex;
 			}
 		}
 
 		else if (polygon.size() == 4)
 		{
-			const int vertex_offset = m_VerticesNum;
+			//TODO his entire code path should be removed
+
+			int vertex_indices[4];
+			int i = 0;
 
 			for (const auto& vi : polygon)
-			{
-				//Generate vertex data
-				int16_t x = (int16_t)(position_data[vi.position_index * 3 + 0] * 1000.0f);
-				int16_t y = (int16_t)(position_data[vi.position_index * 3 + 1] * 1000.0f);
-				int16_t z = (int16_t)(position_data[vi.position_index * 3 + 2] * 1000.0f);
-
-				int16_t tu = (int16_t)((texcoord_data[vi.texcoord_index*2 + 0] + 1.0f) * 10000.0f);
-				int16_t tv = (int16_t)((texcoord_data[vi.texcoord_index*2 + 1] + 1.0f) * 10000.0f);
-
-				m_pVertices[m_VerticesNum] = VTX(x, y, z,
-					tu, tv,
-					(uint8_t)(rand()%230), (uint8_t)(rand()%50), (uint8_t)(rand()%100), 255);
-					//230, 50, 100, 255);
-
-				m_VerticesNum++;
-			}
+				vertex_indices[i++] = AddVertex(vi.position_index, vi.normal_index, vi.texcoord_index);
 
 
-			m_pIndices[m_IndicesNum++] = vertex_offset + 0;
-			m_pIndices[m_IndicesNum++] = vertex_offset + 1;
-			m_pIndices[m_IndicesNum++] = vertex_offset + 2;
+			m_pIndices[m_IndicesNum++] = vertex_indices[0];
+			m_pIndices[m_IndicesNum++] = vertex_indices[1];
+			m_pIndices[m_IndicesNum++] = vertex_indices[2];
 
-			m_pIndices[m_IndicesNum++] = vertex_offset + 1;
-			m_pIndices[m_IndicesNum++] = vertex_offset + 2;
-			m_pIndices[m_IndicesNum++] = vertex_offset + 3;
+			m_pIndices[m_IndicesNum++] = vertex_indices[1];
+			m_pIndices[m_IndicesNum++] = vertex_indices[2];
+			m_pIndices[m_IndicesNum++] = vertex_indices[3];
 
-			m_pIndices[m_IndicesNum++] = vertex_offset + 2;
-			m_pIndices[m_IndicesNum++] = vertex_offset + 3;
-			m_pIndices[m_IndicesNum++] = vertex_offset + 0;
+			m_pIndices[m_IndicesNum++] = vertex_indices[2];
+			m_pIndices[m_IndicesNum++] = vertex_indices[3];
+			m_pIndices[m_IndicesNum++] = vertex_indices[0];
 		}
 
 		else
@@ -351,26 +326,6 @@ oot::ColladaAsset::Mesh::Mesh(tinyxml2::XMLElement* Mesh)
 
 	delete[] indices_loaded;
 	delete[] vcounts;
-
-
-
-
-	for (int i = 0; i < m_VerticesNum; ++i)
-	{
-		int16_t x = (int16_t)(position_data[i*3 + 0] * 1000.0f);
-		int16_t y = (int16_t)(position_data[i*3 + 1] * 1000.0f);
-		int16_t z = (int16_t)(position_data[i*3 + 2] * 1000.0f);
-
-		//int16_t z = (int16_t)(texcoord_data[i*2 + 2] * 1000.0f);
-
-		//m_pVertices[i] = VTX(x, y, z,
-							//(int16_t)rand(), (int16_t)rand(),
-							//255, 255, 255, 255);
-	}
-
-	//m_pVertices[0] = VTX(-5, 22, 11, 0, 0, 37, 85, 76, 255);
-	//m_pVertices[1] = VTX(5, 11, 5, 0, 0, 191, 29, 160, 255);
-	//m_pVertices[2] = VTX(-5, 22, 5, 0, 0, 25, 57, 154, 255);
 
 	m_Valid = !error;
 }
@@ -385,6 +340,52 @@ oot::ColladaAsset::Mesh::FloatArray* oot::ColladaAsset::Mesh::FindType(FloatArra
 			return &data_array;
 	}
 	return nullptr;
+}
+
+
+
+int oot::ColladaAsset::Mesh::AddVertex(int PositionIndex, int NormalIndex, int TexcoordIndex)
+{
+	auto position_data = FindType(FloatArray::Type::Position)->GetData();
+	auto normal_data   = FindType(FloatArray::Type::Normal)->GetData();
+	auto texcoord_data = FindType(FloatArray::Type::TexCoord)->GetData();
+
+	auto TransformVertex = [&](int position_index, int normal_index, int texcoord_index) {
+//#define VTX(x,y,z,s,t,crnx,cgny,cbnz,a) { { { x, y, z }, 0, { s, t }, { crnx, cgny, cbnz, a } } }
+#define VTX_N(x,y,z,nx,ny,nz,s,t,a) { { { x, y, z }, 0, { s, t }, { nx, ny, nz}, a } }
+
+		int16_t x = (int16_t)(position_data[position_index * 3 + 0] * 1000.0f);
+		int16_t y = (int16_t)(position_data[position_index * 3 + 1] * 1000.0f);
+		int16_t z = (int16_t)(position_data[position_index * 3 + 2] * 1000.0f);
+
+		int16_t tu = 0, tv = 0;
+		if (texcoord_index >= 0)
+		{
+			tu = (int16_t)((texcoord_data[texcoord_index * 2 + 0] + 1.0f) * 10000.0f);
+			tv = (int16_t)((texcoord_data[texcoord_index * 2 + 1] + 1.0f) * 10000.0f);
+		}
+
+		int16_t nx = 0, ny = 0, nz = 0;
+		if (normal_index >= 0)
+		{
+			nx = (int16_t)(normal_data[normal_index * 3 + 0] * 127.0f);
+			ny = (int16_t)(normal_data[normal_index * 3 + 1] * 127.0f);
+			nz = (int16_t)(normal_data[normal_index * 3 + 1] * 127.0f);
+		}
+
+		return Vtx(Vtx_tn(x, y, z, nx, ny, nz, tu, tv, 255));
+	};
+
+	Vtx new_vertex = TransformVertex(PositionIndex, NormalIndex, TexcoordIndex);
+
+	for (int i = 0; i < m_VerticesNum; ++i)
+	{
+		if (m_pVertices[i] == new_vertex)//Duplicate?
+			return i;//No need to add that vertex again
+	}
+
+	m_pVertices[m_VerticesNum++]  = new_vertex;
+	return m_VerticesNum - 1;//Return the index of the new vertex
 }
 
 
@@ -444,8 +445,10 @@ Gfx* oot::ColladaAsset::CreateDisplayList()
 	display_list[count++] = gsDPSetCombineLERP(TEXEL0, PRIMITIVE, ENV_ALPHA, TEXEL0, 0, 0, 0, 0, PRIMITIVE, ENVIRONMENT, COMBINED, ENVIRONMENT, 0, 0, 0, 1);
 	display_list[count++] = gsDPSetRenderMode(G_RM_PASS, G_RM_AA_ZB_OPA_SURF2);
 	display_list[count++] = gsSPClearGeometryMode(G_FOG);
+	//display_list[count++] = gsDPSetCombineMode(G_CC_MODULATEI, G_CC_MODULATEI);
 	display_list[count++] = gsSPSetGeometryMode(G_CULL_BACK | G_LIGHTING | G_TEXTURE_GEN | G_TEXTURE_GEN_LINEAR);
-	display_list[count++] = gsDPSetPrimColor(0, 0, 255, 170, 255, 255);
+	//display_list[count++] = gsSPSetGeometryMode(G_CULL_BACK | G_SHADE | G_SHADING_SMOOTH | G_LIGHTING | G_TEXTURE_GEN | G_TEXTURE_GEN_LINEAR);
+	display_list[count++] = gsDPSetPrimColor(0, 0, 255, 170, 255, 100);
 	display_list[count++] = gsDPSetEnvColor(150, 0, 50, 128);
 	display_list[count++] = gsSPVertex(m_Meshes[0].GetVB(), m_Meshes[0].GetVBSize(), 0);
 
@@ -462,8 +465,24 @@ Gfx* oot::ColladaAsset::CreateDisplayList()
 int oot::ColladaAsset::AppendToDisplayList(Gfx* DisplayList)
 {
 	int count = 0;
+
+	//DisplayList[count++] = gsDPSetCombineMode(G_CC_BLENDI, G_CC_BLENDI);
+	//DisplayList[count++] = gsDPSetCombineMode(G_CC_HILITERGB, G_CC_HILITERGB);
+
+	//DisplayList[count++] = gsDPSetPrimColor(0, 0, 255, 170, 255, 100);
+	//DisplayList[count++] = gsDPSetEnvColor(0, 0, 0, 128);
+	//DisplayList[count++] = gsDPSetBlendColor(255, 170, 255, 100);
+
+	DisplayList[count++] = gsSPSetGeometryMode(G_CULL_BACK | G_SHADE | G_SHADING_SMOOTH | G_LIGHTING | G_TEXTURE_GEN | G_TEXTURE_GEN_LINEAR);
+	int i = 0;
 	for (const auto& mesh : m_Meshes)
 	{
+		if (i == 0)
+			DisplayList[count++] = gsDPSetPrimColor(0, 0, 150, 160, 255, 255);
+		else
+			DisplayList[count++] = gsDPSetPrimColor(0, 0, 255, 170, 255, 255);
+		i++;
+
 		//DisplayList[count++] = gsSPVertex(mesh.GetVB(), mesh.GetVBSize(), 0);
 		DisplayList[count++] = gsSPVertex(mesh.GetVB(), 80, 0);
 
