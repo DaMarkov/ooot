@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include "displaylist.h"
 
 
 
@@ -24,6 +25,8 @@ namespace oot
 
 		Gfx* CreateDisplayList();
 		int AppendToDisplayList(Gfx* DisplayList);
+
+		void operator >> (DisplayList& List) const;
 
 		operator bool () const { return m_Valid; }
 

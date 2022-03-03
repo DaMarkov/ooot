@@ -528,3 +528,62 @@ int oot::ColladaAsset::AppendToDisplayList(Gfx* DisplayList)
 	DisplayList[count++] = gsSPEndDisplayList();
 	return count;
 }
+
+
+
+void oot::ColladaAsset::operator >> (DisplayList& List) const
+{
+	List << Gfx(gsSPSetGeometryMode(G_CULL_BACK | G_SHADE | G_SHADING_SMOOTH | G_LIGHTING | G_TEXTURE_GEN | G_TEXTURE_GEN_LINEAR));
+
+	int i = 0;
+	for (const auto& mesh : m_Meshes)
+	{
+		if (i == 0)
+			List << Gfx(gsDPSetPrimColor(0, 0, 150, 160, 255, 255));
+		else
+			List << Gfx(gsDPSetPrimColor(0, 0, 255, 170, 255, 255));
+		i++;
+
+		List << Gfx(gsSPVertex(mesh.GetVB(), 80, 0));
+		int current_offset = 0;
+
+		for (int i = 0; i < mesh.GetIBSize(); i += 3)
+		{
+			int index1 = mesh.GetIB()[i+0];
+			int index2 = mesh.GetIB()[i+1];
+			int index3 = mesh.GetIB()[i+2];
+
+			int index1_fixed = index1 - current_offset;
+			int index2_fixed = index2 - current_offset;
+			int index3_fixed = index3 - current_offset;
+
+			if (index1_fixed < 0 || index1_fixed >= 80 ||
+				index2_fixed < 0 || index2_fixed >= 80 ||
+				index3_fixed < 0 || index3_fixed >= 80)
+			{
+				//find minimum
+				int new_offset = index1;
+				if (index2 < new_offset)
+					new_offset = index2;
+				if (index3 < new_offset)
+					new_offset = index3;
+
+				index1_fixed = index1 - new_offset;
+				index2_fixed = index2 - new_offset;
+				index3_fixed = index3 - new_offset;
+
+				if (index1_fixed >= 80 || index2_fixed >= 80 || index3_fixed >= 80)
+					continue;
+
+				List << Gfx(gsSPVertex(&mesh.GetVB()[new_offset], 80, 0));
+				current_offset = new_offset;
+
+				List << Gfx(gsSP1Triangle(index1_fixed, index2_fixed, index3_fixed, 0));
+			}
+			
+			List << Gfx(gsSP1Triangle(index1_fixed, index2_fixed, index3_fixed, 0));
+		}
+	}
+
+	List << Gfx(gsSPEndDisplayList());
+}
