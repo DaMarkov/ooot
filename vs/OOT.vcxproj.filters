@@ -5136,6 +5136,15 @@
     <ClCompile Include="..\assets\$(buildrom)\scenes\test_levels\testroom\testroom_scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\tinyxml2\tinyxml2.cpp">
+      <Filter>Source Files\port</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\port\asset_loader\collada_loader.cpp">
+      <Filter>Source Files\port</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\port\asset_loader\displaylist.cpp">
+      <Filter>Source Files\port</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\segment_symbols.h">
@@ -5287,6 +5296,15 @@
     </ClInclude>
     <ClInclude Include="..\src\port\controller\xcontroller.h">
       <Filter>Source Files\port\controller</Filter>
+    </ClInclude>
+    <ClInclude Include="..\tinyxml2\tinyxml2.h">
+      <Filter>Source Files\port</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\port\asset_loader\collada_loader.h">
+      <Filter>Source Files\port</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\port\asset_loader\displaylist.h">
+      <Filter>Source Files\port</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

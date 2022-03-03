@@ -1182,7 +1182,7 @@ void KaleidoScope_DrawInfoPanel(GlobalContext* globalCtx) {
             POLY_OPA_DISP = KaleidoScope_QuadTextureIA4(POLY_OPA_DISP, pauseCtx->nameSegment, 128, 16, 0);
         }
 
-#ifdef DEBUG_ROM//Debug feature to test skulltula
+#ifdef DEBUG_ROM//Debug feature to test_asset skulltula
         if (pauseCtx->pageIndex == PAUSE_MAP) {
             if (YREG(7) != 0) {
                 osSyncPrintf(VT_FGCOL(YELLOW));

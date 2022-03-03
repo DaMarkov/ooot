@@ -3527,7 +3527,7 @@ void BossMo_DrawEffects(BossMoEffect* effect, GlobalContext* globalCtx) {
 }
 
 void BossMo_Unknown(void) {
-    // Appears to be a test function for sound effects.
+    // Appears to be a test_asset function for sound effects.
 
     if (BREG(32) != 0) {
         BREG(32)--;

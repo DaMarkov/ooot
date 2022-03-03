@@ -4,6 +4,7 @@
 #include "z_title.h"
 #include "z_opening.h"
 #include <malloc.h>
+#include "port/asset_loader/collada_loader.h"
 /*
  * File: z_title.c
  * Overlay: ovl_title
@@ -64,8 +65,8 @@ void Title_Calc(TitleContext* pthis) {
     }
 
     if (pthis->coverAlpha == 0 && pthis->visibleDuration != 0) {
-        pthis->visibleDuration--;
-        pthis->unk_1D4--;
+        //pthis->visibleDuration--;
+        //pthis->unk_1D4--;
         if (pthis->unk_1D4 == 0) {
             pthis->unk_1D4 = 0x190;
         }
@@ -82,10 +83,10 @@ void Title_Calc(TitleContext* pthis) {
     }
 
     pthis->uls = pthis->ult & 0x7F;
-    pthis->ult++;
+    //pthis->ult++;
     //pthis->exit = true;
 }
-
+oot::ColladaAsset test_asset;
 void Title_SetupView(TitleContext* pthis, f32 x, f32 y, f32 z) {
     View* view = &pthis->view;
     Vec3f eye;
@@ -128,16 +129,139 @@ void Title_Draw(TitleContext* pthis) {
     v1.z = 0;
     v2.z = 1119.0837;
 
+    
+    oot::DisplayList DL;
+    DL << Gfx::gxDPPipeSync();
+    DL << Gfx::gxDPSetTextureLUT(G_TT_NONE);
+    DL << Gfx::gxSPTexture(0x0ED8, 0x0ED8, 0, G_TX_RENDERTILE, G_ON);
+    DL << Gfx::gxDPSetTextureImage(G_IM_FMT_I, G_IM_SIZ_8b_LOAD_BLOCK, 1, nintendo_rogo_staticTex_0029C0);
+    DL << Gfx::gxDPLoadSync();
+    DL << Gfx::gxDPLoadBlock(G_TX_LOADTILE, 0, 0, (((32)*(32) + G_IM_SIZ_8b_INCR) >> G_IM_SIZ_8b_SHIFT)-1,  CALC_DXT(32, G_IM_SIZ_8b_BYTES));
+    DL << Gfx::gxDPPipeSync();
+    DL << Gfx::gxDPSetTile(G_IM_FMT_I, G_IM_SIZ_8b, ((((32) * G_IM_SIZ_8b_LINE_BYTES)+7)>>3), 0,  G_TX_RENDERTILE, 0, G_TX_NOMIRROR | G_TX_WRAP, 5, 1, G_TX_NOMIRROR | G_TX_WRAP, 5, 2);
+    DL << Gfx::gxDPSetTileSize(G_TX_RENDERTILE, 0, 0,  ((32)-1) << G_TEXTURE_IMAGE_FRAC,   ((32)-1) << G_TEXTURE_IMAGE_FRAC);
+    //DL << Gfx::gxDPSetCombineLERP(TEXEL0, PRIMITIVE, ENV_ALPHA, TEXEL0, 0, 0, 0, 0, PRIMITIVE, ENVIRONMENT, COMBINED, ENVIRONMENT, 0, 0, 0, 1);
+    DL << Gfx::gxDPSetRenderMode(G_RM_PASS, G_RM_AA_ZB_OPA_SURF2);
+    DL << Gfx::gxSPClearGeometryMode(G_FOG);
+    DL << Gfx::gxSPSetGeometryMode(G_CULL_BACK | G_LIGHTING | G_TEXTURE_GEN | G_TEXTURE_GEN_LINEAR);
+    DL << Gfx::gxDPSetPrimColor(0, 0, 255, 170, 255, 255);
+    DL << Gfx::gxDPSetEnvColor(150, 0, 50, 128);
+    test_asset >> DL;
+
+    Gfx* debug_dl = new Gfx[1000];
+    int count = 0;
+    debug_dl[count++] = gsDPPipeSync();
+    debug_dl[count++] = gsDPSetTextureLUT(G_TT_NONE);
+    debug_dl[count++] = gsSPTexture(0x0ED8, 0x0ED8, 0, G_TX_RENDERTILE, G_ON);
+
+    //debug_dl[count++] = gsDPLoadTextureBlock(nintendo_rogo_staticTex_0029C0, G_IM_FMT_I, G_IM_SIZ_8b, 32, 32, 0, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, 5, 5, 2, 1);
+    debug_dl[count++] = gsDPSetTextureImage(G_IM_FMT_I, G_IM_SIZ_8b_LOAD_BLOCK, 1, nintendo_rogo_staticTex_0029C0);
+    debug_dl[count++] = gsDPSetTile(G_IM_FMT_I, G_IM_SIZ_8b_LOAD_BLOCK, 0, 0, G_TX_LOADTILE,  0 , G_TX_NOMIRROR | G_TX_WRAP, 5, 1, G_TX_NOMIRROR | G_TX_WRAP, 5, 2);
+    debug_dl[count++] = gsDPLoadSync();
+    debug_dl[count++] = gsDPLoadBlock(G_TX_LOADTILE, 0, 0, (((32)*(32) + G_IM_SIZ_8b_INCR) >> G_IM_SIZ_8b_SHIFT)-1,  CALC_DXT(32, G_IM_SIZ_8b_BYTES));
+    debug_dl[count++] = gsDPPipeSync();
+    debug_dl[count++] = gsDPSetTile(G_IM_FMT_I, G_IM_SIZ_8b, ((((32) * G_IM_SIZ_8b_LINE_BYTES)+7)>>3), 0,  G_TX_RENDERTILE, 0, G_TX_NOMIRROR | G_TX_WRAP, 5, 1, G_TX_NOMIRROR | G_TX_WRAP, 5, 2);
+    debug_dl[count++] = gsDPSetTileSize(G_TX_RENDERTILE, 0, 0,  ((32)-1) << G_TEXTURE_IMAGE_FRAC,   ((32)-1) << G_TEXTURE_IMAGE_FRAC);
+
+    
+
+    debug_dl[count++] = gsDPSetCombineLERP(TEXEL0, PRIMITIVE, ENV_ALPHA, TEXEL0, 0, 0, 0, 0, PRIMITIVE, ENVIRONMENT, COMBINED, ENVIRONMENT, 0, 0, 0, 1);
+    debug_dl[count++] = gsDPSetRenderMode(G_RM_PASS, G_RM_AA_ZB_OPA_SURF2);
+    debug_dl[count++] = gsSPClearGeometryMode(G_FOG);
+    debug_dl[count++] = gsSPSetGeometryMode(G_CULL_BACK | G_LIGHTING | G_TEXTURE_GEN | G_TEXTURE_GEN_LINEAR);
+    debug_dl[count++] = gsDPSetPrimColor(0, 0, 255, 170, 255, 255);
+    debug_dl[count++] = gsDPSetEnvColor(150, 0, 50, 128);
+
+    count += test_asset.AppendToDisplayList(&debug_dl[count]);
+
+    //debug_dl[count++] = gsSPVertex(nintendo_rogo_staticVtx_001C00, 3, 0);
+    //debug_dl[count++] = gsSPVertex(test_asset.m_Meshes[0].GetVB(), test_asset.m_Meshes[0].GetVBSize() , 0);
+    //debug_dl[count++] = gsSPVertex(m_pVertices, 30 , 0);
+
+    //for (int i = 0; i < test_asset.m_Meshes[0].GetIBSize(); i+=3)
+        //debug_dl[count++] = gsSP1Triangle(test_asset.m_Meshes[0].GetIB()[i], test_asset.m_Meshes[0].GetIB()[i+1], test_asset.m_Meshes[0].GetIB()[i+2], 0);
+
+    //debug_dl[count++] = gsSPEndDisplayList();
+
+    /*debug_dl[count++] = gsSP1Triangle(0, 1, 2, 0);
+    debug_dl[count++] = gsSPVertex(&nintendo_rogo_staticVtx_001C00[3], 14, 0);
+    debug_dl[count++] = gsSP2Triangles(0, 1, 2, 0, 3, 4, 5, 0);
+    debug_dl[count++] = gsSP2Triangles(3, 5, 6, 0, 7, 8, 2, 0);
+    debug_dl[count++] = gsSP2Triangles(7, 2, 9, 0, 10, 11, 12, 0);
+    debug_dl[count++] = gsSP1Triangle(10, 12, 13, 0);
+    debug_dl[count++] = gsDPPipeSync();
+    debug_dl[count++] = gsDPSetPrimColor(0, 0, 170, 255, 255, 255);
+    debug_dl[count++] = gsDPSetEnvColor(0, 50, 150, 128);
+    debug_dl[count++] = gsSPVertex(&nintendo_rogo_staticVtx_001C00[17], 32, 0);
+    debug_dl[count++] = gsSP2Triangles(0, 1, 2, 0, 0, 3, 1, 0);
+    debug_dl[count++] = gsSP2Triangles(4, 5, 6, 0, 4, 7, 5, 0);
+    debug_dl[count++] = gsSP2Triangles(8, 9, 10, 0, 8, 11, 9, 0),
+    debug_dl[count++] = gsSP2Triangles(12, 13, 14, 0, 13, 15, 14, 0);
+    debug_dl[count++] = gsSP2Triangles(16, 17, 18, 0, 16, 19, 17, 0);
+    debug_dl[count++] = gsSP2Triangles(20, 21, 22, 0, 21, 23, 22, 0);
+    debug_dl[count++] = gsSP2Triangles(24, 25, 26, 0, 24, 27, 25, 0);
+    debug_dl[count++] = gsSP2Triangles(28, 29, 30, 0, 29, 31, 30, 0);
+    debug_dl[count++] = gsSPVertex(&nintendo_rogo_staticVtx_001C00[49], 32, 0);
+    debug_dl[count++] = gsSP2Triangles(0, 1, 2, 0, 0, 3, 1, 0);
+    debug_dl[count++] = gsSP2Triangles(4, 5, 6, 0, 4, 7, 5, 0);
+    debug_dl[count++] = gsSP2Triangles(8, 9, 10, 0, 9, 11, 10, 0);
+    debug_dl[count++] = gsSP2Triangles(12, 11, 13, 0, 13, 14, 12, 0);
+    debug_dl[count++] = gsSP2Triangles(15, 16, 17, 0, 16, 18, 17, 0);
+    debug_dl[count++] = gsSP2Triangles(19, 20, 21, 0, 20, 22, 21, 0);
+    debug_dl[count++] = gsSP2Triangles(23, 24, 25, 0, 25, 22, 23, 0);
+    debug_dl[count++] = gsSP2Triangles(26, 27, 24, 0, 26, 28, 27, 0);
+    debug_dl[count++] = gsSP2Triangles(29, 5, 30, 0, 29, 30, 31, 0);
+    debug_dl[count++] = gsSPVertex(&nintendo_rogo_staticVtx_001C00[81], 4, 0);
+    debug_dl[count++] = gsSP2Triangles(0, 1, 2, 0, 0, 2, 3, 0);
+    debug_dl[count++] = gsDPPipeSync();
+    debug_dl[count++] = gsDPSetPrimColor(0, 0, 255, 255, 170, 255);
+    debug_dl[count++] = gsDPSetEnvColor(50, 100, 0, 128);
+    debug_dl[count++] = gsSPVertex(&nintendo_rogo_staticVtx_001C00[85], 32, 0);
+    debug_dl[count++] = gsSP2Triangles(0, 1, 2, 0, 0, 2, 3, 0);
+    debug_dl[count++] = gsSP2Triangles(4, 5, 6, 0, 4, 6, 7, 0);
+    debug_dl[count++] = gsSP2Triangles(8, 9, 10, 0, 8, 11, 9, 0);
+    debug_dl[count++] = gsSP2Triangles(12, 7, 6, 0, 12, 13, 7, 0);
+    debug_dl[count++] = gsSP2Triangles(14, 2, 1, 0, 14, 15, 2, 0);
+    debug_dl[count++] = gsSP2Triangles(16, 17, 18, 0, 17, 19, 18, 0);
+    debug_dl[count++] = gsSP2Triangles(20, 21, 22, 0, 20, 23, 21, 0);
+    debug_dl[count++] = gsSP2Triangles(24, 25, 26, 0, 25, 27, 26, 0);
+    debug_dl[count++] = gsSP2Triangles(28, 29, 30, 0, 28, 31, 29, 0);
+    debug_dl[count++] = gsSPVertex(&nintendo_rogo_staticVtx_001C00[117], 29, 0);
+    debug_dl[count++] = gsSP2Triangles(0, 1, 2, 0, 1, 3, 2, 0);
+    debug_dl[count++] = gsSP2Triangles(4, 5, 6, 0, 5, 7, 6, 0);
+    debug_dl[count++] = gsSP2Triangles(8, 9, 10, 0, 9, 11, 10, 0);
+    debug_dl[count++] = gsSP2Triangles(11, 12, 13, 0, 12, 7, 13, 0);
+    debug_dl[count++] = gsSP2Triangles(14, 15, 3, 0, 15, 2, 3, 0);
+    debug_dl[count++] = gsSP2Triangles(2, 16, 0, 0, 16, 17, 0, 0);
+    debug_dl[count++] = gsSP2Triangles(17, 18, 19, 0, 18, 20, 19, 0);
+    debug_dl[count++] = gsSP2Triangles(21, 22, 23, 0, 22, 24, 23, 0);
+    debug_dl[count++] = gsSP2Triangles(25, 26, 27, 0, 26, 28, 27, 0);
+    debug_dl[count++] = gsDPPipeSync();
+    debug_dl[count++] = gsDPSetPrimColor(0, 0, 255, 255, 170, 255);
+    debug_dl[count++] = gsDPSetEnvColor(200, 150, 0, 128);
+    debug_dl[count++] = gsSPVertex(&nintendo_rogo_staticVtx_001C00[146], 32, 0);
+    debug_dl[count++] = gsSP2Triangles(0, 1, 2, 0, 1, 3, 2, 0);
+    debug_dl[count++] = gsSP2Triangles(4, 5, 6, 0, 5, 7, 6, 0);
+    debug_dl[count++] = gsSP2Triangles(8, 9, 10, 0, 8, 11, 9, 0);
+    debug_dl[count++] = gsSP2Triangles(12, 13, 14, 0, 13, 15, 14, 0);
+    debug_dl[count++] = gsSP2Triangles(16, 17, 18, 0, 16, 19, 17, 0);
+    debug_dl[count++] = gsSP2Triangles(20, 21, 22, 0, 21, 23, 22, 0);
+    debug_dl[count++] = gsSP2Triangles(24, 25, 26, 0, 25, 27, 26, 0);
+    debug_dl[count++] = gsSP2Triangles(28, 29, 30, 0, 29, 31, 30, 0);
+    debug_dl[count++] = gsSPEndDisplayList();*/
+
+
     func_8002EABC(&v1, &v2, &v3, pthis->state.gfxCtx);
     gSPSetLights1(POLY_OPA_DISP++, sTitleLights);
     Title_SetupView(pthis, 0, 150.0, 300.0);
     func_80093D18(pthis->state.gfxCtx);
-    Matrix_Translate(-53.0, -5.0, 0, MTXMODE_NEW);
-    Matrix_Scale(1.0, 1.0, 1.0, MTXMODE_APPLY);
-    Matrix_RotateZYX(0, sTitleRotY, 0, MTXMODE_APPLY);
+    Matrix_Translate(-60.0, -5.0, 0, MTXMODE_NEW);
+    Matrix_Scale(1.5, 1.5, 1.5, MTXMODE_APPLY);
+    Matrix_RotateZYX(sTitleRotY*2, sTitleRotY*7, 0, MTXMODE_APPLY);
 
     gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtx(pthis->state.gfxCtx, "../z_title.c", 424), G_MTX_LOAD);
-    gSPDisplayList(POLY_OPA_DISP++, gNintendo64LogoDL);
+    //gSPDisplayList(POLY_OPA_DISP++, gNintendo64LogoDL);
+    gSPDisplayList(POLY_OPA_DISP++, debug_dl);
     func_800944C4(pthis->state.gfxCtx);
     gDPPipeSync(POLY_OPA_DISP++);
     gDPSetCycleType(POLY_OPA_DISP++, G_CYC_2CYCLE);
@@ -161,7 +285,7 @@ void Title_Draw(TitleContext* pthis) {
 
     Environment_FillScreen(pthis->state.gfxCtx, 0, 0, 0, (s16)pthis->coverAlpha, FILL_SCREEN_XLU);
 
-    sTitleRotY += 300;
+    sTitleRotY += 100;
 
     CLOSE_DISPS(pthis->state.gfxCtx, "../z_title.c", 483);
 }
@@ -203,6 +327,9 @@ void Title_Destroy(GameState* thisx) {
 }
 
 void Title_Init(GameState* thisx) {
+    test_asset = oot::ColladaAsset("diamond.dae");
+    auto dp = test_asset.CreateDisplayList();
+
     size_t size = POINTER_SUB(_nintendo_rogo_staticSegmentRomEnd, _nintendo_rogo_staticSegmentRomStart);
     TitleContext* pthis = (TitleContext*)thisx;
 

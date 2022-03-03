@@ -756,7 +756,7 @@ void EnDodongo_UpdateQuad(EnDodongo* pthis, GlobalContext* globalCtx) {
     s32 pad4C[9]; // Possibly 3 more Vec3fs?
     s32 a = 0;
     s32 b = 1; // These indices are needed to match.
-    s32 c = 2; // Might be a way to quickly test vertex arrangements
+    s32 c = 2; // Might be a way to quickly test_asset vertex arrangements
     s32 d = 3;
     f32 xMod = Math_SinF((pthis->skelAnime.curFrame - 28.0f) * 0.08f) * 5500.0f;
 

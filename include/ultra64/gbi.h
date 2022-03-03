@@ -203,7 +203,7 @@
 #define BOWTIE_VAL  0
 
 
-/* gets added to RDP command, in order to test for addres fixup: */
+/* gets added to RDP command, in order to test_asset for addres fixup: */
 #define G_RDP_ADDR_FIXUP    3   /* |RDP cmds| <= this, do addr fixup */
 #ifdef _LANGUAGE_ASSEMBLY
 #define G_RDP_TEXRECT_CHECK ((-1*G_TEXRECTFLIP)& 0xff)
@@ -1031,6 +1031,16 @@ struct Vtx_t {
  * Vertex (set up for use with normals)
  */
 struct Vtx_tn {
+    Vtx_tn() = default;
+    Vtx_tn(short x_, short y_, short z_, char nx_, char ny_, char nz_, short tu_, short tv_, unsigned char a_) :
+        ob{ x_, y_, z_ },
+        tc{ tu_, tv_ },
+        n{ nx_, ny_, nz_ },
+        a{ a_ }
+    {
+        flag = 0;
+    }
+
     short       ob[3];  /* x, y, z */
     unsigned short  flag;
     short       tc[2];  /* texture coord */
@@ -1039,10 +1049,33 @@ struct Vtx_tn {
 };
 
 union Vtx {
+    Vtx() = default;
+    Vtx(const Vtx_t&  vtx) : v{ vtx } {}
+    Vtx(const Vtx_tn& vtx) : n{ vtx } {}
+
     Vtx_t       v;  /* Use this one for colors  */
     Vtx_tn              n;  /* Use this one for normals */
     long long int   force_structure_alignment;
 };
+
+inline bool operator == (const Vtx& lhs, const Vtx& rhs)
+{
+    return lhs.v.ob[0] == rhs.v.ob[0] &&
+           lhs.v.ob[1] == rhs.v.ob[1] &&
+           lhs.v.ob[2] == rhs.v.ob[2] &&
+           lhs.v.flag  == rhs.v.flag  &&
+           lhs.v.tc[0] == rhs.v.tc[0] &&
+           lhs.v.tc[1] == rhs.v.tc[1] &&
+           lhs.v.cn[0] == rhs.v.tc[0] &&
+           lhs.v.cn[1] == rhs.v.cn[1] &&
+           lhs.v.cn[2] == rhs.v.cn[2] &&
+           lhs.v.cn[3] == rhs.v.cn[3];
+}
+
+inline bool operator != (const Vtx& lhs, const Vtx& rhs)
+{
+    return !(lhs == rhs);
+}
 
 /*
  * Sprite structure
@@ -1621,35 +1654,6 @@ struct GDwords {
 };
 #endif
 
-/*
- * This union is the fundamental type of the display list.
- * It is, by law, exactly 64 bits in size.
- */
-union Gfx {
-    Gwords      words;
-#ifdef EXTENDED_GFX
-    GDwords dwords;
-#endif
-    Gdma        dma;
-    Gtri        tri;
-    Gline3D     line;
-    Gpopmtx     popmtx;
-    Gsegment    segment;
-    GsetothermodeH  setothermodeH;
-    GsetothermodeL  setothermodeL;
-    Gtexture    texture;
-    Gperspnorm  perspnorm;
-    Gsetimg     setimg;
-    Gsetcombine setcombine;
-    Gsetcolor   setcolor;
-    Gfillrect   fillrect;   /* use for setscissor also */
-    Gsettile    settile;
-    Gloadtile   loadtile;   /* use for loadblock also, th is dxt */
-    Gsettilesize    settilesize;
-    Gloadtlut   loadtlut;
-//        long long int   force_structure_alignment;
-};
-
 static_assert(sizeof(Gwords) == (WORD_BITS / 8 * 2), "Gwords is incorrect size");
 static_assert(sizeof(Gdma) == (WORD_BITS / 8 * 2), "Gdma is incorrect size");
 static_assert(sizeof(Gtri) == (WORD_BITS / 8 * 2), "Gtri is incorrect size");
@@ -1669,11 +1673,6 @@ static_assert(sizeof(Gloadtile) == (WORD_BITS / 8 * 2), "Gloadtile is incorrect 
 static_assert(sizeof(Gsettilesize) == (WORD_BITS / 8 * 2), "Gsettilesize is incorrect size");
 static_assert(sizeof(Gloadtlut) == (WORD_BITS / 8 * 2), "Gloadtlut is incorrect size");
 
-#ifdef EXTENDED_GFX
-static_assert(sizeof(Gfx) == (WORD_BITS / 8 * 4), "Gfx is incorrect size");
-#else
-static_assert(sizeof(Gfx) == (WORD_BITS / 8 * 2), "Gfx is incorrect size");
-#endif
 
 /*
  * Macros to assemble the graphics display list
@@ -4640,3 +4639,55 @@ _DW({                           \
 #endif
 
 //#pragma pack(pop)
+
+
+/*
+* This union is the fundamental type of the display list.
+* It is, by law, exactly 64 bits in size.
+*/
+union Gfx {
+    static Gfx gxDPPipeSync() { return Gfx(gsDPPipeSync()); }
+    static Gfx gxDPSetTextureLUT(int x1) { return Gfx(gsDPSetTextureLUT(x1)); }
+    static Gfx gxSPTexture(int x1, int x2, int x3, int x4, int x5) { return Gfx(gsSPTexture(x1, x2, x3, x4, x5)); }
+    static Gfx gxDPSetTextureImage(int x1, int x2, int x3, u8* x4) { return Gfx(gsDPSetTextureImage(x1, x2, x3, x4)); }
+    static Gfx gxDPSetTile(int x1, int x2, int x3, int x4, int x5, int x6, int x7, int x8, int x9, int x10, int x11, int x12) { return Gfx(gsDPSetTile(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12)); }
+    static Gfx gxDPLoadSync() { return Gfx(gsDPLoadSync()); }
+    static Gfx gxDPLoadBlock(int x1, int x2, int x3, int x4, int x5) { return Gfx(gsDPLoadBlock(x1, x2, x3, x4, x5)); }
+    //static Gfx gxDPSetCombineLERP(int x1, int x2, int x3, int x4, int x5, int x6, int x7, int x8, int x9, int x10, int x11, int x12, int x13, int x14, int x15, int x16) { return Gfx(gsDPSetCombineLERP(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16)); }    
+    static Gfx gxDPSetTileSize(int x1, int x2, int x3, int x4, int x5) { return Gfx(gsDPSetTileSize(x1, x2, x3, x4, x5)); }
+    static Gfx gxDPSetRenderMode(int x1, int x2) { return Gfx(gsDPSetRenderMode(x1, x2)); }
+    static Gfx gxSPClearGeometryMode(int x1) { return Gfx(gsSPClearGeometryMode(x1)); }
+    static Gfx gxSPSetGeometryMode(int x1) { return Gfx(gsSPSetGeometryMode(x1)); }
+    static Gfx gxDPSetPrimColor(int x1, int x2, int x3, int x4, int x5, int x6) { return Gfx(gsDPSetPrimColor(x1, x2, x3, x4, x5, x6)); }
+    static Gfx gxDPSetEnvColor(int x1, int x2, int x3, int x4) { return Gfx(gsDPSetEnvColor(x1, x2, x3, x4)); }
+
+    Gwords      words;
+#ifdef EXTENDED_GFX
+    GDwords dwords;
+#endif
+    Gdma        dma;
+    Gtri        tri;
+    Gline3D     line;
+    Gpopmtx     popmtx;
+    Gsegment    segment;
+    GsetothermodeH  setothermodeH;
+    GsetothermodeL  setothermodeL;
+    Gtexture    texture;
+    Gperspnorm  perspnorm;
+    Gsetimg     setimg;
+    Gsetcombine setcombine;
+    Gsetcolor   setcolor;
+    Gfillrect   fillrect;   /* use for setscissor also */
+    Gsettile    settile;
+    Gloadtile   loadtile;   /* use for loadblock also, th is dxt */
+    Gsettilesize    settilesize;
+    Gloadtlut   loadtlut;
+    //        long long int   force_structure_alignment;
+};
+
+
+#ifdef EXTENDED_GFX
+static_assert(sizeof(Gfx) == (WORD_BITS / 8 * 4), "Gfx is incorrect size");
+#else
+static_assert(sizeof(Gfx) == (WORD_BITS / 8 * 2), "Gfx is incorrect size");
+#endif

@@ -1703,6 +1703,8 @@
     <ClCompile Include="..\src\overlays\misc\ovl_kaleido_scope\z_lmap_mark.cpp" />
     <ClCompile Include="..\roms\$(buildrom)\src\overlays\misc\ovl_kaleido_scope\z_lmap_mark_data.cpp" />
     <ClCompile Include="..\roms\$(buildrom)\src\overlays\misc\ovl_map_mark_data\z_map_mark_data.cpp" />
+    <ClCompile Include="..\src\port\asset_loader\collada_loader.cpp" />
+    <ClCompile Include="..\src\port\asset_loader\displaylist.cpp" />
     <ClCompile Include="..\src\port\configfile.cpp" />
     <ClCompile Include="..\src\port\controller\controller.cpp" />
     <ClCompile Include="..\src\port\controller\controllers.cpp" />
@@ -1723,6 +1725,7 @@
     <ClCompile Include="..\src\port\ultra_reimplementation.cpp" />
     <ClCompile Include="..\src\port\window\sdl\window_sdl2.cpp" />
     <ClCompile Include="..\src\port\window\window.cpp" />
+    <ClCompile Include="..\tinyxml2\tinyxml2.cpp" />
   </ItemGroup>
   <ItemGroup Condition="'$(buildrom)'=='EUR_MQD'">
     <ClCompile Include="..\assets\$(buildrom)\scenes\indoors\hairal_niwa2\hairal_niwa2_room_0.cpp" />
@@ -1791,6 +1794,8 @@
     <ClInclude Include="..\include\z_vismono.h" />
     <ClInclude Include="..\src\code\z_prenmi_buff.h" />
     <ClInclude Include="..\src\overlays\gamestates\ovl_opening\z_opening.h" />
+    <ClInclude Include="..\src\port\asset_loader\collada_loader.h" />
+    <ClInclude Include="..\src\port\asset_loader\displaylist.h" />
     <ClInclude Include="..\src\port\controller\controller.h" />
     <ClInclude Include="..\src\port\controller\controllers.h" />
     <ClInclude Include="..\src\port\controller\keyboard.h" />
@@ -1799,6 +1804,7 @@
     <ClInclude Include="..\src\port\controller\xcontroller.h" />
     <ClInclude Include="..\src\port\player\player.h" />
     <ClInclude Include="..\src\port\player\players.h" />
+    <ClInclude Include="..\tinyxml2\tinyxml2.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

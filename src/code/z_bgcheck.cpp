@@ -1933,12 +1933,12 @@ s32 BgCheck_CheckWallImpl(CollisionContext* colCtx, u16 xpFlags, Vec3f* posResul
                 *outBgId = bgId;
             }
         } else {
-            // if the radius is less than the distance travelled on the xz plane, also test for floor collisions
+            // if the radius is less than the distance travelled on the xz plane, also test_asset for floor collisions
             bccFlags = SQ(radius) < (SQ(dx) + SQ(dz))
                            ? (BGCHECK_CHECK_ALL & ~BGCHECK_CHECK_CEILING)
                            : (BGCHECK_CHECK_ALL & ~BGCHECK_CHECK_FLOOR & ~BGCHECK_CHECK_CEILING);
 
-            // perform a straight line test to see if a line at posNext.y + checkHeight from posPrev.xz to posNext.xz
+            // perform a straight line test_asset to see if a line at posNext.y + checkHeight from posPrev.xz to posNext.xz
             // passes through any wall and possibly floor polys
             checkLineNext = *posNext;
             checkLineNext.y += checkHeight;
@@ -1970,7 +1970,7 @@ s32 BgCheck_CheckWallImpl(CollisionContext* colCtx, u16 xpFlags, Vec3f* posResul
     sphCenter = *posResult;
     dynaPolyCollision = false;
     sphCenter.y += checkHeight;
-    // test if sphere (sphCenter, radius) collides with a dynamic wall, displacing the x/z coordinates
+    // test_asset if sphere (sphCenter, radius) collides with a dynamic wall, displacing the x/z coordinates
     if (BgCheck_SphVsDynaWall(colCtx, xpFlags, &posResult->x, &posResult->z, &sphCenter, radius, outPoly, outBgId,
                               actor)) {
         result = true;
@@ -1978,7 +1978,7 @@ s32 BgCheck_CheckWallImpl(CollisionContext* colCtx, u16 xpFlags, Vec3f* posResul
         sphCenter = *posResult;
         sphCenter.y += checkHeight;
     }
-    // test if sphere (sphCenter, radius) collides with a static wall, displacing the x/z coordinates
+    // test_asset if sphere (sphCenter, radius) collides with a static wall, displacing the x/z coordinates
     if (BgCheck_PosInStaticBoundingBox(colCtx, posNext) == true &&
         // possible bug? if the sphere's radius is smaller than the distance to a subdivision boundary, some static
         // polys will be missed
@@ -2482,7 +2482,7 @@ void ScaleRotPos_SetValue(ScaleRotPos* srp, Vec3f* scale, Vec3s* rot, Vec3f* pos
 }
 
 /**
- * ScaleRotPos equality test
+ * ScaleRotPos equality test_asset
  */
 s32 ScaleRotPos_Equals(ScaleRotPos* a, ScaleRotPos* b) {
     if (a->scale.x != b->scale.x || a->scale.y != b->scale.y || a->scale.z != b->scale.z || a->rot.x != b->rot.x ||

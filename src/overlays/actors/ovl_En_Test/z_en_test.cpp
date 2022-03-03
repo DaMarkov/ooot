@@ -2003,7 +2003,7 @@ void func_80864158(EnTest* pthis, f32 xzSpeed) {
 
 /**
  * Check if a projectile actor is within 300 units and react accordingly.
- * Returns true if the projectile test passes and a new action is performed.
+ * Returns true if the projectile test_asset passes and a new action is performed.
  */
 s32 EnTest_ReactToProjectile(GlobalContext* globalCtx, EnTest* pthis) {
     Actor* projectileActor;

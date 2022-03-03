@@ -269,7 +269,7 @@ s32 EnZf_PrimaryFloorCheck(EnZf* pthis, GlobalContext* globalCtx, f32 dist) {
 }
 
 /**
- * Supplementary floor test.
+ * Supplementary floor test_asset.
  */
 s16 EnZf_SecondaryFloorCheck(EnZf* pthis, GlobalContext* globalCtx, f32 dist) {
     s16 ret;
